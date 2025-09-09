@@ -2,7 +2,15 @@
 .SYNOPSIS
     Checks music folder structures for compliance with                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
             if( $LogTo -and $Good) {
-                    Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($folder))
+                    Add        $badFolders = @{}
+
+        if ($LogTo) {
+            $logDir = Split-Path -Path $LogTo -Parent
+            if (-not (Test-Path -Path $logDir)) {
+                New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+            }
+            # Don't initialize with empty string to avoid malformed JSON
+        }Path $LogTo -Value ("GoodFolderStructure " + ($folder))
                 }ected naming conventions.
 
 .DESCRIPTION
@@ -22,6 +30,9 @@
 .PARAMETER WhatToLog
     Specifies what types of folders to log. Options are 'Good', 'Bad', or 'All'. Default is 'All'.
 
+.PARAMETER LogFormat
+    Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text'.
+
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music"
     Returns all folders with bad music structure under C:\Music.
@@ -39,8 +50,8 @@
     Logs only folders with good structure to the log file.
 
 .EXAMPLE
-    Find-BadMusicFolderStructure -StartingPath "C:\Music" -LogTo "C:\Logs\bad.log" -WhatToLog Bad
-    Logs only folders with bad structure to the log file.
+    Find-BadMusicFolderStructure -StartingPath "C:\Music" -LogTo "C:\Logs\structure.json" -LogFormat JSON
+    Logs results in JSON format for easy programmatic parsing.
 
 .NOTES
     Supported audio extensions: .mp3, .wav, .flac, .aac, .ogg, .wma
@@ -58,7 +69,11 @@ function Find-BadMusicFolderStructure {
 
         [Parameter()]
         [ValidateSet('Good', 'Bad', 'All')]
-        [string]$WhatToLog = 'All'
+        [string]$WhatToLog = 'All',
+
+        [Parameter()]
+        [ValidateSet('Text', 'JSON')]
+        [string]$LogFormat = 'Text'
     )
 
     begin {
@@ -72,8 +87,7 @@ function Find-BadMusicFolderStructure {
             if (-not (Test-Path -Path $logDir)) {
                 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
             }
-            # Initialize a fresh log file
-            "" | Out-File -FilePath $LogTo -Encoding UTF8
+            # Don't initialize with empty string to avoid malformed JSON
         }
     }
 
@@ -96,14 +110,36 @@ function Find-BadMusicFolderStructure {
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
                 $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
                 if ($LogTo -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All')) {
-                    Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($artistFolderPath))
+                    if ($LogFormat -eq 'JSON') {
+                        $logEntry = @{
+                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                            Status = 'Good'
+                            Path = $artistFolderPath
+                            Function = 'Find-BadMusicFolderStructure'
+                            Type = 'ArtistFolder'
+                        } | ConvertTo-Json -Compress
+                        Add-Content -Path $LogTo -Value $logEntry
+                    } else {
+                        Add-Content -Path $LogTo -Value ("GoodFolder " + ($artistFolderPath))
+                    }
                 }
             }
             else {
                 $badFolder = $firstAudioFile.DirectoryName
                 $results += [PSCustomObject]@{ Status = 'Bad'; StartingPath = $badFolder }
                 if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All')) {
-                    Add-Content -Path $LogTo -Value ("BadFolderStructure " + ($badFolder))
+                    if ($LogFormat -eq 'JSON') {
+                        $logEntry = @{
+                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                            Status = 'Bad'
+                            Path = $badFolder
+                            Function = 'Find-BadMusicFolderStructure'
+                            Type = 'AlbumFolder'
+                        } | ConvertTo-Json -Compress
+                        Add-Content -Path $LogTo -Value $logEntry
+                    } else {
+                        Add-Content -Path $LogTo -Value ("BadFolder " + ($badFolder))
+                    }
                 }
             }
         }
@@ -141,6 +177,9 @@ function Find-BadMusicFolderStructure {
 .PARAMETER LogTo
     Optional path to a log file where any errors or issues will be written.
 
+.PARAMETER LogFormat
+    Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text'.
+
 .EXAMPLE
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Artist\2020 - Album"
     Processes the specified folder and tags its music files.
@@ -153,6 +192,10 @@ function Find-BadMusicFolderStructure {
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Album" -WhatIf
     Shows what would be tagged without actually making changes.
 
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" -LogTo "C:\Logs\tagging.json" -LogFormat JSON
+    Tags music files and logs any errors in JSON format.
+
 .NOTES
     Requires TagLib-Sharp.dll in the module's lib directory.
     Only processes folders with compliant structure.
@@ -164,7 +207,11 @@ function Save-TagsFromGoodMusicFolders {
         [Parameter(Mandatory, ValueFromPipeline)]
         [string]$FolderPath,
 
-        [string]$LogTo
+        [string]$LogTo,
+
+        [Parameter()]
+        [ValidateSet('Text', 'JSON')]
+        [string]$LogFormat = 'Text'
     )
 
     begin {
@@ -313,7 +360,19 @@ function Save-TagsFromGoodMusicFolders {
         if ($LogTo -and $badFolders.Count -gt 0) {
             foreach ($folder in $badFolders.Keys) {
                 $reasons = ($badFolders[$folder] | Sort-Object -Unique) -join ", "
-                [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
+                if ($LogFormat -eq 'JSON') {
+                    $logEntry = @{
+                        Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                        Status = 'Error'
+                        Path = $folder
+                        Function = 'Save-TagsFromGoodMusicFolders'
+                        Reasons = $reasons
+                        Type = 'TaggingError'
+                    } | ConvertTo-Json -Compress
+                    [System.IO.File]::AppendAllText($LogTo, "$logEntry`r`n", [System.Text.Encoding]::UTF8)
+                } else {
+                    [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
+                }
             }
             Write-Host "📝 Bad folders logged to: $LogTo"
         }
@@ -489,4 +548,165 @@ function Merge-AlbumInArtistFolder {
             Write-Host "✅ Merged: $FolderPath to $destinationPath"
         }
     }
+}
+
+<#
+.SYNOPSIS
+    Processes music folders from a log file by tagging and moving them.
+
+.DESCRIPTION
+    This function reads a log file (JSON or text format) containing folder information,
+    filters the entries by status, and processes the folders by tagging their music files
+    and moving them to a destination folder. Much cleaner than complex pipeline commands.
+
+.PARAMETER LogFile
+    Path to the log file to process. Supports both JSON and text formats.
+
+.PARAMETER Status
+    Filter entries by status. Options are 'Good', 'Bad', or 'All'. Default is 'Good'.
+
+.PARAMETER DestinationFolder
+    The destination directory where processed folders will be moved.
+
+.PARAMETER MaxItems
+    Maximum number of folders to process. Default is to process all matching entries.
+
+.PARAMETER LogFormat
+    Format of the log file. Options are 'Auto' (detect automatically), 'JSON', or 'Text'. Default is 'Auto'.
+
+.EXAMPLE
+    Process-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -WhatIf
+    Processes all good folders from the JSON log file and shows what would be done.
+
+.EXAMPLE
+    Process-LoggedFolders -LogFile "C:\Logs\structure.log" -Status Bad -MaxItems 5 -DestinationFolder "E:\BadMusic"
+    Processes first 5 bad folders from a text log file.
+
+.EXAMPLE
+    Process-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\Processed" -Confirm
+    Processes all good folders with confirmation prompts.
+
+.NOTES
+    Automatically detects log format if set to 'Auto'.
+    Supports -WhatIf and -Confirm parameters for safe operation.
+    Requires TagLib-Sharp.dll for tagging operations.
+#>
+function Process-LoggedFolders {
+    [CmdletBinding(SupportsShouldProcess)]
+    param (
+        [Parameter(Mandatory)]
+        [string]$LogFile,
+
+        [Parameter()]
+        [ValidateSet('Good', 'Bad', 'All')]
+        [string]$Status = 'Good',
+
+        [Parameter(Mandatory)]
+        [string]$DestinationFolder,
+
+        [Parameter()]
+        [int]$MaxItems,
+
+        [Parameter()]
+        [ValidateSet('Auto', 'JSON', 'Text')]
+        [string]$LogFormat = 'Auto'
+    )
+
+    # Validate log file exists
+    if (-not (Test-Path $LogFile)) {
+        throw "Log file not found: $LogFile"
+    }
+
+    # Read and parse log file
+    try {
+        $logContent = Get-Content -Path $LogFile -Raw
+
+        if ($LogFormat -eq 'Auto') {
+            # Try to detect format
+            if ($logContent.TrimStart().StartsWith('{')) {
+                $LogFormat = 'JSON'
+            } else {
+                $LogFormat = 'Text'
+            }
+        }
+
+        if ($LogFormat -eq 'JSON') {
+            # Parse JSON (one object per line)
+            $logEntries = $logContent -split "`n" | Where-Object { $_ -match '\S' } | ForEach-Object {
+                try {
+                    $_ | ConvertFrom-Json
+                } catch {
+                    Write-Warning "Skipping malformed JSON line: $_"
+                    $null
+                }
+            } | Where-Object { $_ -ne $null }
+        } else {
+            # Parse text format
+            $logEntries = $logContent -split "`n" | Where-Object { $_ -match '\S' } | ForEach-Object {
+                $line = $_.Trim()
+                if ($line -match '^(GoodFolder|BadFolder)\s+(.+)$') {
+                    [PSCustomObject]@{
+                        Status = if ($matches[1] -eq 'GoodFolder') { 'Good' } else { 'Bad' }
+                        Path = $matches[2]
+                        Function = 'Find-BadMusicFolderStructure'
+                        Type = if ($matches[1] -eq 'GoodFolder') { 'ArtistFolder' } else { 'AlbumFolder' }
+                    }
+                } else {
+                    Write-Warning "Skipping malformed text line: $line"
+                    $null
+                }
+            } | Where-Object { $_ -ne $null }
+        }
+    }
+    catch {
+        throw "Failed to read log file: $_"
+    }
+
+    # Filter entries by status
+    if ($Status -ne 'All') {
+        $logEntries = $logEntries | Where-Object { $_.Status -eq $Status }
+    }
+
+    # Limit number of items if specified
+    if ($MaxItems -and $MaxItems -gt 0) {
+        $logEntries = $logEntries | Select-Object -First $MaxItems
+    }
+
+    if (-not $logEntries -or $logEntries.Count -eq 0) {
+        Write-Host "No matching entries found in log file."
+        return
+    }
+
+    Write-Host "Found $($logEntries.Count) folders to process..."
+
+    # Process each folder
+    $processedCount = 0
+    foreach ($entry in $logEntries) {
+        $folderPath = $entry.Path
+
+        if (-not (Test-Path $folderPath)) {
+            Write-Warning "Folder not found, skipping: $folderPath"
+            continue
+        }
+
+        Write-Host "Processing: $folderPath"
+
+        try {
+            # Tag the folder (this will validate it's still good)
+            $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference
+
+            if ($taggedFolders) {
+                # Move the successfully tagged folder
+                $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference
+                $processedCount++
+            } else {
+                Write-Warning "Failed to tag folder: $folderPath"
+            }
+        }
+        catch {
+            Write-Warning "Error processing folder $folderPath`: $_"
+        }
+    }
+
+    Write-Host "✅ Completed processing $processedCount folders."
 }
