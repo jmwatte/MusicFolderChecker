@@ -82,7 +82,7 @@ Description = 'Module for checking music folder structures and saving tags from 
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 
-FunctionsToExport = @('Find-BadMusicFolderStructure', 'Save-TagsFromGoodMusicFolders', 'Move-GoodFolders')
+FunctionsToExport = @('Find-BadMusicFolderStructure', 'Save-TagsFromGoodMusicFolders', 'Move-GoodFolders', 'Merge-AlbumInArtistFolder')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 

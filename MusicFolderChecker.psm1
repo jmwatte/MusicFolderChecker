@@ -347,12 +347,123 @@ function Move-GoodFolders {
     }
 
     process {
-        $folderName = Split-Path $FolderPath -Leaf
-        $destinationPath = Join-Path $DestinationFolder $folderName
+        # Extract artist and album from the path
+        $parentPath = Split-Path $FolderPath -Parent
+        $artist = Split-Path $parentPath -Leaf
+        $album = Split-Path $FolderPath -Leaf
+
+        $artistDest = Join-Path $DestinationFolder $artist
+        if (-not (Test-Path $artistDest)) {
+            New-Item -ItemType Directory -Path $artistDest -Force | Out-Null
+        }
+
+        $destinationPath = Join-Path $artistDest $album
 
         if ($PSCmdlet.ShouldProcess($FolderPath, "Move to $destinationPath")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
             Write-Host "✅ Moved: $FolderPath to $destinationPath"
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Merges album folders into artist subfolders based on metadata.
+
+.DESCRIPTION
+    This function reads the album artist from audio files in the provided folders
+    and moves each folder into the appropriate artist subfolder in the destination.
+    Supports pipeline input and -WhatIf for safe operation.
+
+.PARAMETER FolderPath
+    The path to the album folder to process. Accepts pipeline input.
+
+.PARAMETER DestinationFolder
+    The destination directory where artist folders will be created.
+
+.EXAMPLE
+    Merge-AlbumInArtistFolder -FolderPath "C:\Music\Album1" -DestinationFolder "C:\Organized"
+    Moves the folder based on its album artist metadata.
+
+.EXAMPLE
+    Get-ChildItem "C:\Music" -Directory | Merge-AlbumInArtistFolder -DestinationFolder "C:\Organized" -WhatIf
+    Previews moving all album folders to artist-organized structure.
+
+.NOTES
+    Requires TagLib-Sharp.dll for reading audio metadata.
+    If no album artist is found, the folder is skipped with a warning.
+#>
+function Merge-AlbumInArtistFolder {
+    [CmdletBinding(SupportsShouldProcess)]
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string]$FolderPath,
+
+        [Parameter(Mandatory)]
+        [string]$DestinationFolder
+    )
+
+    begin {
+        $dllPath = Join-Path $PSScriptRoot "lib\taglib-sharp.dll"
+        if (-not (Test-Path $dllPath)) {
+            throw "TagLib-Sharp.dll not found at $dllPath. Please ensure the DLL is placed in the module's lib directory."
+        }
+        Add-Type -Path $dllPath
+        [TagLib.Id3v2.Tag]::DefaultVersion = 4
+        [TagLib.Id3v2.Tag]::ForceDefaultVersion = $true
+
+        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
+
+        if (-not (Test-Path $DestinationFolder)) {
+            New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
+        }
+    }
+
+    process {
+        # Find the first audio file in the folder
+        $firstAudioFile = $null
+        foreach ($extension in $musicExtensions) {
+            $firstAudioFile = Get-ChildItem -LiteralPath $FolderPath -File -Filter "*$extension" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($firstAudioFile) { break }
+        }
+
+        if (-not $firstAudioFile) {
+            Write-Warning "No audio files found in: $FolderPath"
+            return
+        }
+
+        # Read the album artist from the file
+        try {
+            $tagFile = [TagLib.File]::Create($firstAudioFile.FullName)
+            $albumArtist = $tagFile.Tag.AlbumArtists
+            if (-not $albumArtist -or $albumArtist.Count -eq 0) {
+                $albumArtist = $tagFile.Tag.Performers
+            }
+            if (-not $albumArtist -or $albumArtist.Count -eq 0) {
+                Write-Warning "No album artist found in: $($firstAudioFile.FullName)"
+                return
+            }
+            $albumArtist = $albumArtist[0]  # Take the first one
+        }
+        catch {
+            Write-Warning "Failed to read tags from: $($firstAudioFile.FullName) — $_"
+            return
+        }
+
+        # Create artist folder and move
+        $artistDest = Join-Path $DestinationFolder $albumArtist
+        if (-not (Test-Path $artistDest)) {
+            if ($PSCmdlet.ShouldProcess($artistDest, "Create directory")) {
+                New-Item -ItemType Directory -Path $artistDest -Force | Out-Null
+            }
+        }
+
+        $folderName = Split-Path $FolderPath -Leaf
+        $destinationPath = Join-Path $artistDest $folderName
+
+        if ($PSCmdlet.ShouldProcess($FolderPath, "Move to $destinationPath")) {
+            Move-Item -Path $FolderPath -Destination $destinationPath
+            Write-Host "✅ Merged: $FolderPath to $destinationPath"
         }
     }
 }
