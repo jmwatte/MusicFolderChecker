@@ -1,6 +1,9 @@
 <#
 .SYNOPSIS
-    Checks music folder structures for compliance with expected naming conventions.
+    Checks music folder structures for compliance with                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
+            if( $LogTo -and $Good) {
+                    Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($folder))
+                }ected naming conventions.
 
 .DESCRIPTION
     This function recursively scans a starting path for music folders and determines if they follow
@@ -45,13 +48,13 @@ function Find-BadMusicFolderStructure {
 
     begin {
         $audioExtensions = @(".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma")
-        $patternMain = '(?i)\\([^\\]+)\\\d{4} - [^\\]+\\\d{2} - .+\.[a-z0-9]+$'
-        $patternDisc = '(?i)\\([^\\]+)\\\d{4} - [^\\]+\\Disc \d+\\\d{2} - .+\.[a-z0-9]+$'
+        $patternMain = '(?i).*\\([^\\]+)\\\d{4} - (?!.*(?:CD|Disc)\d+)[^\\]+\\\d{2} - .+\.[a-z0-9]+$'
+        $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\Disc \d+|- CD\d+)\\\d{2} - .+\.[a-z0-9]+$'
         $results = @()
     }
 
     process {
-        $folders = Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName }
+        $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName })
 
         foreach ($folder in $folders) {
             Write-Host "🔍 Checking folder: $folder"
@@ -67,7 +70,7 @@ function Find-BadMusicFolderStructure {
             if ($fullPath -match $patternMain -or $fullPath -match $patternDisc) {
                 $artistFolderName = $matches[1]
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
-                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $artistFolderPath }
+                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
             if( $LogTo -and $Good) {
                     Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($artistFolderPath))
                 }
@@ -167,7 +170,7 @@ function Save-TagsFromGoodMusicFolders {
 
     process {
         # Safety: verify compliance before tagging
-        $isGoodMusic = (Find-BadMusicFolderStructure -Path $FolderPath -Compliant | Where-Object { $_.StartingPath -eq $FolderPath })
+        $isGoodMusic = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good
         if (-not $isGoodMusic) {
             Write-Warning "Skipping non-compliant folder: $FolderPath"
             if ($LogTo) { $badFolders[$FolderPath] = @("NonCompliant") }
@@ -182,7 +185,7 @@ function Save-TagsFromGoodMusicFolders {
 
             # Extract album info
             $albumIndex = -1
-            for ($i = $parts.Count - 2; $i -ge 0; $i--) {
+            for ($i = 1; $i -lt $parts.Count; $i++) {
                 if ($parts[$i] -match '^(\d{4}) - (.+)$') {
                     $albumIndex = $i
                     $year = $matches[1]
@@ -195,16 +198,22 @@ function Save-TagsFromGoodMusicFolders {
                 $albumArtist = $parts[$albumIndex - 1]
                 $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
 
+                # Extract disc number from directory if it's a CD folder
+                $directory = Split-Path $file.FullName -Parent
+                $discNumber = 1
+                if ($directory -match ".*\\$year - $album - CD(\d+)$") {
+                    $discNumber = [uint]$matches[1]
+                }
+
                 if ($fileName -match '^([\d-]+)\s*-\s*(.+)$') {
                     $trackNumber = $matches[1]
                     $title = $matches[2].Trim()
 
                     if ($trackNumber -match '^(?:CD)?(\d+)[.-](\d+)$') {
-                        $discNumber = [uint]$matches[1]
+                        if ($discNumber -eq 1) { $discNumber = [uint]$matches[1] }
                         $trackNumber = [uint]$matches[2]
                     }
                     else {
-                        $discNumber = 1
                         $trackNumber = [uint]$trackNumber
                     }
 
