@@ -19,6 +19,9 @@
 .PARAMETER LogTo
     Optional path to a log file where results will be written.
 
+.PARAMETER WhatToLog
+    Specifies what types of folders to log. Options are 'Good', 'Bad', or 'All'. Default is 'All'.
+
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music"
     Returns all folders with bad music structure under C:\Music.
@@ -30,6 +33,14 @@
 .EXAMPLE
     Get-ChildItem "C:\Music" -Directory | Find-BadMusicFolderStructure -LogTo "C:\Logs\structure.log"
     Pipes directories to check and logs results.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "C:\Music" -LogTo "C:\Logs\good.log" -WhatToLog Good
+    Logs only folders with good structure to the log file.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "C:\Music" -LogTo "C:\Logs\bad.log" -WhatToLog Bad
+    Logs only folders with bad structure to the log file.
 
 .NOTES
     Supported audio extensions: .mp3, .wav, .flac, .aac, .ogg, .wma
@@ -43,7 +54,11 @@ function Find-BadMusicFolderStructure {
 
         [switch]$Good,
 
-        [string]$LogTo
+        [string]$LogTo,
+
+        [Parameter()]
+        [ValidateSet('Good', 'Bad', 'All')]
+        [string]$WhatToLog = 'All'
     )
 
     begin {
@@ -51,6 +66,15 @@ function Find-BadMusicFolderStructure {
         $patternMain = '(?i).*\\([^\\]+)\\\d{4} - (?!.*(?:CD|Disc)\d+)[^\\]+\\\d{2} - .+\.[a-z0-9]+$'
         $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\Disc \d+|- CD\d+)\\\d{2} - .+\.[a-z0-9]+$'
         $results = @()
+
+        if ($LogTo) {
+            $logDir = Split-Path -Path $LogTo -Parent
+            if (-not (Test-Path -Path $logDir)) {
+                New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+            }
+            # Initialize a fresh log file
+            "" | Out-File -FilePath $LogTo -Encoding UTF8
+        }
     }
 
     process {
@@ -71,14 +95,14 @@ function Find-BadMusicFolderStructure {
                 $artistFolderName = $matches[1]
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
                 $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
-            if( $LogTo -and $Good) {
+                if ($LogTo -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All')) {
                     Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($artistFolderPath))
                 }
             }
             else {
                 $badFolder = $firstAudioFile.DirectoryName
                 $results += [PSCustomObject]@{ Status = 'Bad'; StartingPath = $badFolder }
-                if ($LogTo) {
+                if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All')) {
                     Add-Content -Path $LogTo -Value ("BadFolderStructure " + ($badFolder))
                 }
             }
@@ -137,8 +161,7 @@ function Find-BadMusicFolderStructure {
 function Save-TagsFromGoodMusicFolders {
     [CmdletBinding(SupportsShouldProcess)]
     param (
-        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
-        [Alias('StartingPath')]
+        [Parameter(Mandatory, ValueFromPipeline)]
         [string]$FolderPath,
 
         [string]$LogTo
