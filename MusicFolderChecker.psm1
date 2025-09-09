@@ -1,3 +1,36 @@
+<#
+.SYNOPSIS
+    Checks music folder structures for compliance with expected naming conventions.
+
+.DESCRIPTION
+    This function recursively scans a starting path for music folders and determines if they follow
+    the expected structure: Artist\Year - Album\Track - Title.ext or with Disc folders.
+    It returns folders that have bad structure or good structure based on the -Good switch.
+
+.PARAMETER StartingPath
+    The root path to start scanning for music folders. This can be a directory path.
+
+.PARAMETER Good
+    Switch to return only folders with good structure instead of bad ones.
+
+.PARAMETER LogTo
+    Optional path to a log file where results will be written.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "C:\Music"
+    Returns all folders with bad music structure under C:\Music.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "C:\Music" -Good
+    Returns all folders with good music structure under C:\Music.
+
+.EXAMPLE
+    Get-ChildItem "C:\Music" -Directory | Find-BadMusicFolderStructure -LogTo "C:\Logs\structure.log"
+    Pipes directories to check and logs results.
+
+.NOTES
+    Supported audio extensions: .mp3, .wav, .flac, .aac, .ogg, .wma
+#>
 function Find-BadMusicFolderStructure {
     [CmdletBinding()]
     param(
@@ -66,6 +99,38 @@ function Find-BadMusicFolderStructure {
     }
 }
 
+<#
+.SYNOPSIS
+    Saves metadata tags to music files in folders with good structure.
+
+.DESCRIPTION
+    This function processes music folders that have good structure (as determined by Find-BadMusicFolderStructure)
+    and updates the ID3 tags of audio files based on the folder and file naming conventions.
+    It outputs the paths of successfully processed folders to the pipeline.
+
+.PARAMETER FolderPath
+    The path to the music folder to process. Accepts pipeline input.
+
+.PARAMETER LogTo
+    Optional path to a log file where any errors or issues will be written.
+
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Artist\2020 - Album"
+    Processes the specified folder and tags its music files.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "C:\Music" -Good | Save-TagsFromGoodMusicFolders -LogTo "C:\Logs\tagging.log"
+    Finds good folders and pipes them to be tagged, with logging.
+
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Album" -WhatIf
+    Shows what would be tagged without actually making changes.
+
+.NOTES
+    Requires TagLib-Sharp.dll in the module's lib directory.
+    Only processes folders with compliant structure.
+    Outputs successfully processed folder paths.
+#>
 function Save-TagsFromGoodMusicFolders {
     [CmdletBinding(SupportsShouldProcess)]
     param (
@@ -87,12 +152,16 @@ function Save-TagsFromGoodMusicFolders {
 
         $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
 
+        $badFolders = @{}
+        $goodFolders = @()
+
         if ($LogTo) {
             $logDir = Split-Path -Path $LogTo -Parent
             if (-not (Test-Path -Path $logDir)) {
                 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
             }
-            $badFolders = @{}
+            # Initialize a fresh log file
+            "" | Out-File -FilePath $LogTo -Encoding UTF8
         }
     }
 
@@ -201,6 +270,11 @@ function Save-TagsFromGoodMusicFolders {
                 if ($LogTo) { $badFolders[$FolderPath] += "ShallowPath" }
             }
         }
+        
+        # If no errors for this folder, mark as good
+        if (-not $badFolders.ContainsKey($FolderPath)) {
+            $goodFolders += $FolderPath
+        }
     }
 
     end {
@@ -210,6 +284,66 @@ function Save-TagsFromGoodMusicFolders {
                 [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
             }
             Write-Host "📝 Bad folders logged to: $LogTo"
+        }
+        
+        # Output successfully processed folders
+        Write-Output $goodFolders
+    }
+}
+
+<#
+.SYNOPSIS
+    Moves music folders to a specified destination.
+
+.DESCRIPTION
+    This function moves music folders from their current location to a destination folder.
+    It preserves the folder name and supports pipeline input for batch operations.
+
+.PARAMETER FolderPath
+    The path to the folder to move. Accepts pipeline input.
+
+.PARAMETER DestinationFolder
+    The destination directory where folders will be moved.
+
+.EXAMPLE
+    Move-GoodFolders -FolderPath "C:\Music\Processed\Album1" -DestinationFolder "C:\Archive"
+    Moves the specified folder to the archive directory.
+
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" | Move-GoodFolders -DestinationFolder "C:\Processed"
+    Tags folders and then moves the successfully processed ones.
+
+.EXAMPLE
+    Move-GoodFolders -FolderPath "C:\Music\Album" -DestinationFolder "C:\Backup" -WhatIf
+    Shows what would be moved without actually performing the move.
+
+.NOTES
+    Creates the destination folder if it doesn't exist.
+    Supports -WhatIf and -Confirm parameters.
+#>
+function Move-GoodFolders {
+    [CmdletBinding(SupportsShouldProcess)]
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string]$FolderPath,
+
+        [Parameter(Mandatory)]
+        [string]$DestinationFolder
+    )
+
+    begin {
+        if (-not (Test-Path $DestinationFolder)) {
+            New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
+        }
+    }
+
+    process {
+        $folderName = Split-Path $FolderPath -Leaf
+        $destinationPath = Join-Path $DestinationFolder $folderName
+
+        if ($PSCmdlet.ShouldProcess($FolderPath, "Move to $destinationPath")) {
+            Move-Item -Path $FolderPath -Destination $destinationPath
+            Write-Host "✅ Moved: $FolderPath to $destinationPath"
         }
     }
 }

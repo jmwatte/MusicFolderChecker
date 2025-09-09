@@ -212,8 +212,7 @@ function Save-TagsFromGoodMusicFolders {
 
 
 #Get-ChildItem -LiteralPath E:\ -Directory | 
-#Select-Object -First 10 | 
-#Find-BadMusicFolderStructure -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | #BadFolderStructur E:\_testb\220 Greatest Old Songs [MP3-128 & 320kbps]
+#Select-Object -First 10 | #BadFolderStructur E:\_testb\220 Greatest Old Songs [MP3-128 & 320kbps]
 #Save-TagsFromGoodMusicFolders -LogFile "C:\Logs\BadFolders.log" -WhatIf
 #Find-BadMusicFolderStructure -Path (Get-ChildItem -Path E:\ -Directory |Select-Object -first 10) -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | Save-TagsFromGoodMusicFolders -LogFile "C:\Logs\BadFolders.log" -WhatIf
 #Find-BadMusicFolderStructure -Path E: -Compliant |
