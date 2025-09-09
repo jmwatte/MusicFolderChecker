@@ -5,7 +5,7 @@ function Find-BadMusicFolderStructure {
         [Alias('FullName')]
         [string]$StartingPath,
 
-        [switch]$FindGoodOnes,
+        [switch]$Good,
 
         [string]$LogTo
     )
@@ -34,8 +34,8 @@ function Find-BadMusicFolderStructure {
             if ($fullPath -match $patternMain -or $fullPath -match $patternDisc) {
                 $artistFolderName = $matches[1]
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
-                $results += [PSCustomObject]@{ Status = 'FindGoodOnes'; StartingPath = $artistFolderPath }
-            if( $LogTo -and $FindGoodOnes) {
+                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $artistFolderPath }
+            if( $LogTo -and $Good) {
                     Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($artistFolderPath))
                 }
             }
@@ -54,8 +54,8 @@ function Find-BadMusicFolderStructure {
             [PSCustomObject]@{ Status = $_.Group[0].Status; StartingPath = $_.Name }
         }
 
-        if ($FindGoodOnes) {
-            $uniqueResults | Where-Object { $_.Status -eq 'FindGoodOnes' } | Select-Object StartingPath
+        if ($Good) {
+            $uniqueResults | Where-Object { $_.Status -eq 'Good' } | Select-Object StartingPath
         }
         else {
             $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object StartingPath
@@ -66,14 +66,14 @@ function Find-BadMusicFolderStructure {
     }
 }
 
-function Save-TagsFromFolderStructure {
+function Save-TagsFromGoodMusicFolders {
     [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [Alias('StartingPath')]
         [string]$FolderPath,
 
-        [string]$LogFile
+        [string]$LogTo
     )
 
     begin {
@@ -83,8 +83,8 @@ function Save-TagsFromFolderStructure {
 
         $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
 
-        if ($LogFile) {
-            $logDir = Split-Path -Path $LogFile -Parent
+        if ($LogTo) {
+            $logDir = Split-Path -Path $LogTo -Parent
             if (-not (Test-Path -Path $logDir)) {
                 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
             }
@@ -94,10 +94,10 @@ function Save-TagsFromFolderStructure {
 
     process {
         # Safety: verify compliance before tagging
-        $isCompliant = (Find-BadMusicFolderStructure -Path $FolderPath -Compliant | Where-Object { $_.StartingPath -eq $FolderPath })
-        if (-not $isCompliant) {
+        $isGoodMusic = (Find-BadMusicFolderStructure -Path $FolderPath -Compliant | Where-Object { $_.StartingPath -eq $FolderPath })
+        if (-not $isGoodMusic) {
             Write-Warning "Skipping non-compliant folder: $FolderPath"
-            if ($LogFile) { $badFolders[$FolderPath] = @("NonCompliant") }
+            if ($LogTo) { $badFolders[$FolderPath] = @("NonCompliant") }
             return
         }
 
@@ -184,28 +184,28 @@ function Save-TagsFromFolderStructure {
                     }
                     catch {
                         Write-Warning "⚠️ Failed to tag: $($file.FullName) — $_"
-                        if ($LogFile) { $badFolders[$FolderPath] += "FailedTagging" }
+                        if ($LogTo) { $badFolders[$FolderPath] += "FailedTagging" }
                     }
                 }
                 else {
                     Write-Warning "❌ Bad filename format: $fileName"
-                    if ($LogFile) { $badFolders[$FolderPath] += "WrongTitleFormat" }
+                    if ($LogTo) { $badFolders[$FolderPath] += "WrongTitleFormat" }
                 }
             }
             else {
                 Write-Warning "❌ No album folder found: $($file.FullName)"
-                if ($LogFile) { $badFolders[$FolderPath] += "ShallowPath" }
+                if ($LogTo) { $badFolders[$FolderPath] += "ShallowPath" }
             }
         }
     }
 
     end {
-        if ($LogFile -and $badFolders.Count -gt 0) {
+        if ($LogTo -and $badFolders.Count -gt 0) {
             foreach ($folder in $badFolders.Keys) {
                 $reasons = ($badFolders[$folder] | Sort-Object -Unique) -join ", "
-                [System.IO.File]::AppendAllText($LogFile, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
+                [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
             }
-            Write-Host "📝 Bad folders logged to: $LogFile"
+            Write-Host "📝 Bad folders logged to: $LogTo"
         }
     }
 }
@@ -214,7 +214,7 @@ function Save-TagsFromFolderStructure {
 #Get-ChildItem -LiteralPath E:\ -Directory | 
 #Select-Object -First 10 | 
 #Find-BadMusicFolderStructure -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | #BadFolderStructur E:\_testb\220 Greatest Old Songs [MP3-128 & 320kbps]
-#Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
-#Find-BadMusicFolderStructure -Path (Get-ChildItem -Path E:\ -Directory |Select-Object -first 10) -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
+#Save-TagsFromGoodMusicFolders -LogFile "C:\Logs\BadFolders.log" -WhatIf
+#Find-BadMusicFolderStructure -Path (Get-ChildItem -Path E:\ -Directory |Select-Object -first 10) -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | Save-TagsFromGoodMusicFolders -LogFile "C:\Logs\BadFolders.log" -WhatIf
 #Find-BadMusicFolderStructure -Path E: -Compliant |
-# Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
+# Save-TagsFromGoodMusicFolders -LogFile "C:\Logs\BadFolders.log" -WhatIf
