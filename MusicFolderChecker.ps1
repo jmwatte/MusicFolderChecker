@@ -1,11 +1,11 @@
-function Measure-MusicStructure {
+function Find-BadMusicFolderStructure {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias('FullName')]
-        [string]$Path,
+        [string]$StartingPath,
 
-        [switch]$Compliant,
+        [switch]$FindGoodOnes,
 
         [string]$LogTo
     )
@@ -18,7 +18,7 @@ function Measure-MusicStructure {
     }
 
     process {
-        $folders = Get-ChildItem -LiteralPath $Path -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName }
+        $folders = Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName }
 
         foreach ($folder in $folders) {
             Write-Host "🔍 Checking folder: $folder"
@@ -34,28 +34,31 @@ function Measure-MusicStructure {
             if ($fullPath -match $patternMain -or $fullPath -match $patternDisc) {
                 $artistFolderName = $matches[1]
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
-                $results += [PSCustomObject]@{ Status = 'Compliant'; Path = $artistFolderPath }
+                $results += [PSCustomObject]@{ Status = 'FindGoodOnes'; StartingPath = $artistFolderPath }
+            if( $LogTo -and $FindGoodOnes) {
+                    Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($artistFolderPath))
+                }
             }
             else {
                 $badFolder = $firstAudioFile.DirectoryName
-                $results += [PSCustomObject]@{ Status = 'Noncompliant'; Path = $badFolder }
+                $results += [PSCustomObject]@{ Status = 'Bad'; StartingPath = $badFolder }
                 if ($LogTo) {
-                    Add-Content -Path $LogTo -Value ("BadFolderStructur " + ($badFolder))
+                    Add-Content -Path $LogTo -Value ("BadFolderStructure " + ($badFolder))
                 }
             }
         }
     }
 
     end {
-        $uniqueResults = $results | Group-Object -Property Path | ForEach-Object {
-            [PSCustomObject]@{ Status = $_.Group[0].Status; Path = $_.Name }
+        $uniqueResults = $results | Group-Object -Property StartingPath | ForEach-Object {
+            [PSCustomObject]@{ Status = $_.Group[0].Status; StartingPath = $_.Name }
         }
 
-        if ($Compliant) {
-            $uniqueResults | Where-Object { $_.Status -eq 'Compliant' } | Select-Object Path
+        if ($FindGoodOnes) {
+            $uniqueResults | Where-Object { $_.Status -eq 'FindGoodOnes' } | Select-Object StartingPath
         }
         else {
-            $uniqueResults | Where-Object { $_.Status -eq 'Noncompliant' } | Select-Object Path
+            $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object StartingPath
         }
         if ($LogTo) {
             Write-Host "✅ Measurement complete. Logs Saved at $LogTo"
@@ -67,7 +70,7 @@ function Save-TagsFromFolderStructure {
     [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
-        [Alias('Path')]
+        [Alias('StartingPath')]
         [string]$FolderPath,
 
         [string]$LogFile
@@ -91,7 +94,7 @@ function Save-TagsFromFolderStructure {
 
     process {
         # Safety: verify compliance before tagging
-        $isCompliant = (Measure-MusicStructure -Path $FolderPath -Compliant | Where-Object { $_.Path -eq $FolderPath })
+        $isCompliant = (Find-BadMusicFolderStructure -Path $FolderPath -Compliant | Where-Object { $_.StartingPath -eq $FolderPath })
         if (-not $isCompliant) {
             Write-Warning "Skipping non-compliant folder: $FolderPath"
             if ($LogFile) { $badFolders[$FolderPath] = @("NonCompliant") }
@@ -117,7 +120,7 @@ function Save-TagsFromFolderStructure {
 
             if ($albumIndex -ge 1) {
                 $albumArtist = $parts[$albumIndex - 1]
-                $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+                $fileName = [System.IO.StartingPath]::GetFileNameWithoutExtension($file.Name)
 
                 if ($fileName -match '^([\d-]+)\s*-\s*(.+)$') {
                     $trackNumber = $matches[1]
@@ -210,8 +213,8 @@ function Save-TagsFromFolderStructure {
 
 #Get-ChildItem -LiteralPath E:\ -Directory | 
 #Select-Object -First 10 | 
-#Measure-MusicStructure -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | #BadFolderStructur E:\_testb\220 Greatest Old Songs [MP3-128 & 320kbps]
+#Find-BadMusicFolderStructure -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | #BadFolderStructur E:\_testb\220 Greatest Old Songs [MP3-128 & 320kbps]
 #Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
-#Measure-MusicStructure -Path (Get-ChildItem -Path E:\ -Directory |Select-Object -first 10) -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
-#Measure-MusicStructure -Path E: -Compliant |
+#Find-BadMusicFolderStructure -Path (Get-ChildItem -Path E:\ -Directory |Select-Object -first 10) -Compliant -LogTo "C:\Logs\MusicStructureLog.txt" | Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
+#Find-BadMusicFolderStructure -Path E: -Compliant |
 # Save-TagsFromFolderStructure -LogFile "C:\Logs\BadFolders.log" -WhatIf
