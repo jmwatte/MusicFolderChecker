@@ -761,15 +761,19 @@ function Save-TagsFromGoodMusicFolders {
 
 .EXAMPLE
     Move-GoodFolders -FolderPath "C:\Music\Processed\Album1" -DestinationFolder "C:\Archive"
-    Moves the specified folder to the archive directory.
+    Moves the specified folder to the archive directory, overwriting any existing folder.
 
 .EXAMPLE
-    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" | Move-GoodFolders -DestinationFolder "C:\Processed"
-    Tags folders and then moves the successfully processed ones.
+    Move-GoodFolders -FolderPath "C:\Music\Processed\Album1" -DestinationFolder "C:\Archive" -DuplicateAction Skip
+    Moves the folder but skips if a folder with the same name already exists.
 
 .EXAMPLE
-    Move-GoodFolders -FolderPath "C:\Music\Album" -DestinationFolder "C:\Backup" -WhatIf
-    Shows what would be moved without actually performing the move.
+    Move-GoodFolders -FolderPath "C:\Music\Processed\Album1" -DestinationFolder "C:\Archive" -DuplicateAction Rename
+    Moves the folder, creating 'Album1 (2)' if 'Album1' already exists.
+
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" | Move-GoodFolders -DestinationFolder "C:\Processed" -DuplicateAction Rename
+    Tags folders and then moves the successfully processed ones, renaming duplicates.
 
 .NOTES
     Creates the destination folder if it doesn't exist.
@@ -784,7 +788,11 @@ function Move-GoodFolders {
         [Parameter(Mandatory)]
         [string]$DestinationFolder,
 
-        [switch]$Quiet
+        [switch]$Quiet,
+
+        [Parameter()]
+        [ValidateSet('Overwrite', 'Skip', 'Rename')]
+        [string]$DuplicateAction = 'Rename'
     )
 
     begin {
@@ -813,7 +821,7 @@ function Move-GoodFolders {
                 
                 if ($validationResult -and $validationResult.IsValid) {
                     # Recursively call Move-GoodFolders on each good album folder
-                    $albumFolder | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
+                    $albumFolder | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet -DuplicateAction:$DuplicateAction
                 } else {
                     $reason = if ($validationResult) { $validationResult.Reason } else { "Unknown" }
                     if (-not $Quiet) {
@@ -854,6 +862,39 @@ function Move-GoodFolders {
         if ($WhatIfPreference) {
             Write-Host "What if: Moving `"$FolderPath`"`nto `"$destinationPath`"" -ForegroundColor Yellow
         } elseif ($PSCmdlet.ShouldProcess($destinationPath, "Move")) {
+            # Handle duplicate folders based on DuplicateAction
+            if (Test-Path $destinationPath) {
+                switch ($DuplicateAction) {
+                    'Skip' {
+                        if (-not $Quiet) {
+                            Write-Host "⚠️  Skipping duplicate folder: $destinationPath"
+                        }
+                        return
+                    }
+                    'Rename' {
+                        # Create numbered duplicate
+                        $counter = 1
+                        $folderName = Split-Path $destinationPath -Leaf
+                        $parentPath = Split-Path $destinationPath -Parent
+                        $newDest = Join-Path $parentPath "$folderName ($counter)"
+                        while (Test-Path $newDest) {
+                            $counter++
+                            $newDest = Join-Path $parentPath "$folderName ($counter)"
+                        }
+                        $destinationPath = $newDest
+                        if (-not $Quiet) {
+                            Write-Host "📝 Renaming to avoid conflict: $destinationPath"
+                        }
+                    }
+                    'Overwrite' {
+                        # Default behavior - continue with overwrite
+                        if (-not $Quiet) {
+                            Write-Host "⚠️  Overwriting existing folder: $destinationPath"
+                        }
+                    }
+                }
+            }
+            
             Move-Item -Path $FolderPath -Destination $destinationPath
             if (-not $Quiet) {
                 Write-Host "✅ Moved: $FolderPath to $destinationPath"
@@ -923,7 +964,11 @@ function Merge-AlbumInArtistFolder {
         [string]$FolderPath,
 
         [Parameter(Mandatory)]
-        [string]$DestinationFolder
+        [string]$DestinationFolder,
+
+        [Parameter()]
+        [ValidateSet('Overwrite', 'Skip', 'Rename')]
+        [string]$DuplicateAction = 'Rename'
     )
 
     begin {
@@ -987,6 +1032,39 @@ function Merge-AlbumInArtistFolder {
         if ($WhatIfPreference) {
             Write-Host "What if: Moving `"$FolderPath`"`nto `"$destinationPath`"" -ForegroundColor Yellow
         } elseif ($PSCmdlet.ShouldProcess($destinationPath, "Move")) {
+            # Handle duplicate folders based on DuplicateAction
+            if (Test-Path $destinationPath) {
+                switch ($DuplicateAction) {
+                    'Skip' {
+                        if (-not $Quiet) {
+                            Write-Host "⚠️  Skipping duplicate folder: $destinationPath"
+                        }
+                        return
+                    }
+                    'Rename' {
+                        # Create numbered duplicate
+                        $counter = 1
+                        $folderName = Split-Path $destinationPath -Leaf
+                        $parentPath = Split-Path $destinationPath -Parent
+                        $newDest = Join-Path $parentPath "$folderName ($counter)"
+                        while (Test-Path $newDest) {
+                            $counter++
+                            $newDest = Join-Path $parentPath "$folderName ($counter)"
+                        }
+                        $destinationPath = $newDest
+                        if (-not $Quiet) {
+                            Write-Host "📝 Renaming to avoid conflict: $destinationPath"
+                        }
+                    }
+                    'Overwrite' {
+                        # Default behavior - continue with overwrite
+                        if (-not $Quiet) {
+                            Write-Host "⚠️  Overwriting existing folder: $destinationPath"
+                        }
+                    }
+                }
+            }
+            
             Move-Item -Path $FolderPath -Destination $destinationPath
             Write-Host "✅ Merged: $FolderPath to $destinationPath"
         }
@@ -1033,9 +1111,13 @@ function Merge-AlbumInArtistFolder {
 .PARAMETER DetailedLog
     Enables detailed logging during dry runs (-WhatIf), showing specific reasons for folder processing outcomes.
 
+.PARAMETER DuplicateAction
+    Specifies how to handle duplicate folders. Options are 'Overwrite', 'Skip', or 'Rename' (default).
+    'Overwrite' replaces existing folders, 'Skip' ignores duplicates, 'Rename' creates numbered duplicates like 'Album (2)'.
+
 .EXAMPLE
-    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -DetailedLog -WhatIf
-    Processes folders with detailed logging to see specific validation results for each folder.
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -DuplicateAction Rename
+    Processes folders from the log file, renaming duplicates to avoid conflicts.
 
 .EXAMPLE
     Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -Quiet -WhatIf
@@ -1099,7 +1181,11 @@ function Import-LoggedFolders {
 
         [switch]$hideTags,
 
-        [switch]$DetailedLog  # New parameter for detailed logging during dry runs
+        [switch]$DetailedLog,  # New parameter for detailed logging during dry runs
+
+        [Parameter()]
+        [ValidateSet('Overwrite', 'Skip', 'Rename')]
+        [string]$DuplicateAction = 'Rename'
     )
 
     # Validate log file exists
@@ -1213,7 +1299,7 @@ function Import-LoggedFolders {
 
             if ($taggedFolders) {
                 # Move the successfully tagged folder
-                $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
+                $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet -DuplicateAction:$DuplicateAction
                 
                 # Create corrupt files log in destination if any corrupt files were found
                 if ($corruptFiles.ContainsKey($folderPath) -and $corruptFiles[$folderPath].Count -gt 0 -and -not $WhatIfPreference) {
