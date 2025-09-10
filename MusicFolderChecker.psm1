@@ -560,19 +560,40 @@ function Save-TagsFromGoodMusicFolders {
         foreach ($file in $musicFiles) {
             $parts = $file.FullName -split '\\'
 
-            # Extract album info
+            # Extract album info - handle both nested and direct album structures
             $albumIndex = -1
+            $year = ""
+            $album = ""
+            $albumArtist = ""
+
             for ($i = 1; $i -lt $parts.Count; $i++) {
-                if ($parts[$i] -match '^(\d{4}) - (.+)$') {
+                if ($parts[$i] -match '^(\d{4})\s*-\s*(.+)$') {
                     $albumIndex = $i
                     $year = $matches[1]
                     $album = $matches[2]
+                    # Get artist from the previous part
+                    if ($i -gt 1) {
+                        $albumArtist = $parts[$i - 1]
+                    }
                     break
                 }
             }
 
-            if ($albumIndex -ge 1) {
-                $albumArtist = $parts[$albumIndex - 1]
+            # If no album folder found in path, check if current folder is the album folder
+            if ($albumIndex -eq -1) {
+                $currentFolder = Split-Path $file.DirectoryName -Leaf
+                if ($currentFolder -match '^(\d{4})\s*-\s*(.+)$') {
+                    $albumIndex = $parts.Count - 1  # Point to the file's directory
+                    $year = $matches[1]
+                    $album = $matches[2]
+                    # Get artist from parent directory
+                    $parentDir = Split-Path $file.DirectoryName -Parent
+                    $albumArtist = Split-Path $parentDir -Leaf
+                }
+            }
+
+            if ($albumIndex -ge 1 -and $year -and $album) {
+                $albumArtist = $albumArtist  # Already set above
                 $fileName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
 
                 # Extract disc number from directory if it's a CD folder
@@ -1289,10 +1310,16 @@ Please check and fix them manually before re-processing.
                         if (-not $Quiet) {
                             Write-Host "DEBUG: Removing original text entry for $folderPath" -ForegroundColor Cyan
                         }
-                        $originalLine = "GoodFolder $folderPath"
-                        $updatedContent = $updatedContent -replace [regex]::Escape("$originalLine`r`n"), ""
-                        $updatedContent = $updatedContent -replace [regex]::Escape("$originalLine`n"), ""
-                        $updatedContent = $updatedContent -replace [regex]::Escape($originalLine), ""
+
+                        # More robust line removal - split into lines, remove matching line, rejoin
+                        $lines = $updatedContent -split "`n"
+                        $targetLine = "GoodFolder $folderPath"
+                        $lines = $lines | Where-Object {
+                            $_.Trim() -ne $targetLine -and
+                            $_.Trim() -ne "$targetLine`r" -and
+                            $_ -ne $targetLine
+                        }
+                        $updatedContent = $lines -join "`n"
                     }
                     
                     # Write back the updated content (removing original entry)
@@ -1358,11 +1385,17 @@ Please check and fix them manually before re-processing.
                     $updatedContent = $updatedContent -replace [regex]::Escape("$entryJson`n"), ""
                     $updatedContent = $updatedContent -replace [regex]::Escape($entryJson), ""
                 } else {
-                    # For text format, remove the line
-                    $entryLine = "GoodFolder $($processedEntry.Path)"
-                    $updatedContent = $updatedContent -replace [regex]::Escape("$entryLine`r`n"), ""
-                    $updatedContent = $updatedContent -replace [regex]::Escape("$entryLine`n"), ""
-                    $updatedContent = $updatedContent -replace [regex]::Escape($entryLine), ""
+                    # For text format, remove the line using robust line-by-line approach
+                    $lines = $updatedContent -split "`n"
+                    $targetLines = @(
+                        "GoodFolder $($processedEntry.Path)",
+                        "CheckThisGoodOne $($processedEntry.Path)"
+                    )
+                    $lines = $lines | Where-Object {
+                        $line = $_.Trim()
+                        -not ($targetLines | Where-Object { $line -eq $_ -or $line -eq "$_`r" -or $_ -eq $line })
+                    }
+                    $updatedContent = $lines -join "`n"
                 }
             }
             
