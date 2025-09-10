@@ -82,6 +82,17 @@ function Find-BadMusicFolderStructure {
         $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\Disc \d+|- CD\d+)\\\d{2} - .+\.[a-z0-9]+$'
         $results = @()
 
+        # Set default log path if not provided
+        if (-not $LogTo) {
+            $defaultDir = Join-Path $env:TEMP "MusicFolderChecker"
+            if (-not (Test-Path $defaultDir)) {
+                New-Item -ItemType Directory -Path $defaultDir -Force | Out-Null
+            }
+            $LogTo = Join-Path $defaultDir "MusicFolderStructureScan_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+            # Default to JSON format for auto-generated logs
+            $LogFormat = 'JSON'
+        }
+
         if ($LogTo) {
             $logDir = Split-Path -Path $LogTo -Parent
             if (-not (Test-Path -Path $logDir)) {
@@ -128,13 +139,16 @@ function Find-BadMusicFolderStructure {
                 $badFolder = $firstAudioFile.DirectoryName
                 $results += [PSCustomObject]@{ Status = 'Bad'; StartingPath = $badFolder }
                 if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All')) {
+                    # Determine the type based on folder name
+                    $folderName = Split-Path $badFolder -Leaf
+                    $badType = if ($folderName -match '^\d{4} - .+$') { 'AlbumFolder' } else { 'ArtistFolder' }
                     if ($LogFormat -eq 'JSON') {
                         $logEntry = @{
                             Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
                             Status = 'Bad'
                             Path = $badFolder
                             Function = 'Find-BadMusicFolderStructure'
-                            Type = 'AlbumFolder'
+                            Type = $badType
                         } | ConvertTo-Json -Compress
                         Add-Content -Path $LogTo -Value $logEntry
                     } else {
@@ -180,6 +194,9 @@ function Find-BadMusicFolderStructure {
 .PARAMETER LogFormat
     Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text'.
 
+.PARAMETER Quiet
+    Suppresses verbose output during tagging operations.
+
 .EXAMPLE
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Artist\2020 - Album"
     Processes the specified folder and tags its music files.
@@ -196,6 +213,10 @@ function Find-BadMusicFolderStructure {
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" -LogTo "C:\Logs\tagging.json" -LogFormat JSON
     Tags music files and logs any errors in JSON format.
 
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" -Quiet -WhatIf
+    Shows what would be tagged without verbose output cluttering the results.
+
 .NOTES
     Requires TagLib-Sharp.dll in the module's lib directory.
     Only processes folders with compliant structure.
@@ -211,7 +232,9 @@ function Save-TagsFromGoodMusicFolders {
 
         [Parameter()]
         [ValidateSet('Text', 'JSON')]
-        [string]$LogFormat = 'Text'
+        [string]$LogFormat = 'Text',
+
+        [switch]$Quiet
     )
 
     begin {
@@ -292,15 +315,17 @@ function Save-TagsFromGoodMusicFolders {
                         $existingGenres = $tagFile.Tag.Genres
 
                         if ($WhatIfPreference) {
-                            Write-Host "🔍 [WhatIf] Would tag: $($file.FullName)"
-                            Write-Host ("    👥 Album Artist : {0}" -f $albumArtist)
-                            Write-Host ("    🎤 Track Artist : {0}" -f $albumArtist)
-                            Write-Host ("    💿 Album        : {0}" -f $album)
-                            Write-Host ("    📅 Year         : {0}" -f $year)
-                            Write-Host ("    💽 Disc         : {0}" -f $discNumber)
-                            Write-Host ("    🔢 Track        : {0}" -f $trackNumber)
-                            Write-Host ("    🎵 Title        : {0}" -f $title)
-                            Write-Host ("    🎼 Genres       : {0}" -f (($existingGenres -join ', ') -replace '^\s*$', '<none>'))
+                            if (-not $Quiet) {
+                                Write-Host "🔍 [WhatIf] Would tag: $($file.FullName)"
+                                Write-Host ("    👥 Album Artist : {0}" -f $albumArtist)
+                                Write-Host ("    🎤 Track Artist : {0}" -f $albumArtist)
+                                Write-Host ("    💿 Album        : {0}" -f $album)
+                                Write-Host ("    📅 Year         : {0}" -f $year)
+                                Write-Host ("    💽 Disc         : {0}" -f $discNumber)
+                                Write-Host ("    🔢 Track        : {0}" -f $trackNumber)
+                                Write-Host ("    🎵 Title        : {0}" -f $title)
+                                Write-Host ("    🎼 Genres       : {0}" -f (($existingGenres -join ', ') -replace '^\s*$', '<none>'))
+                            }
                         }
 
 
@@ -330,7 +355,9 @@ function Save-TagsFromGoodMusicFolders {
                             $tagFile.Tag.Title = $title
 
                             $tagFile.Save()
-                            Write-Host "✅ Retagged: $($file.Name)"
+                            if (-not $Quiet) {
+                                Write-Host "✅ Retagged: $($file.Name)"
+                            }
                             
                         }
                     }
@@ -419,31 +446,102 @@ function Move-GoodFolders {
         [string]$FolderPath,
 
         [Parameter(Mandatory)]
-        [string]$DestinationFolder
+        [string]$DestinationFolder,
+
+        [switch]$Quiet
     )
 
     begin {
         if (-not (Test-Path $DestinationFolder)) {
             New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
         }
+        $movedFoldersByArtist = @{}
     }
 
     process {
+        # Check if this is an artist folder containing album subfolders
+        $subfolders = Get-ChildItem -LiteralPath $FolderPath -Directory -ErrorAction SilentlyContinue
+        $albumSubfolders = @()
+        foreach ($subfolder in $subfolders) {
+            if ($subfolder.Name -match '^\d{4} - .+$') {
+                $albumSubfolders += $subfolder.FullName
+            }
+        }
+
+        if ($albumSubfolders) {
+            # This is an artist folder, validate and move only good album subfolders
+            foreach ($albumFolder in $albumSubfolders) {
+                # Re-validate each album subfolder
+                $isGoodAlbum = Find-BadMusicFolderStructure -StartingPath $albumFolder -Good
+                if ($isGoodAlbum) {
+                    # Recursively call Move-GoodFolders on each good album folder
+                    $albumFolder | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
+                } else {
+                    Write-Warning "Skipping bad album folder: $albumFolder"
+                }
+            }
+            return
+        }
+
         # Extract artist and album from the path
         $parentPath = Split-Path $FolderPath -Parent
         $artist = Split-Path $parentPath -Leaf
-        $album = Split-Path $FolderPath -Leaf
+
+        # Handle different path scenarios
+        if ($parentPath -match '^[A-Za-z]:\\$') {
+            # Parent is drive root (e.g., "E:\") - current folder is the artist
+            $artist = Split-Path $FolderPath -Leaf
+            $album = ""  # No album subfolder
+        } elseif ($artist -match '^([A-Za-z]):\\(.+)$') {
+            $artist = $matches[2]
+            $album = Split-Path $FolderPath -Leaf
+        } else {
+            $album = Split-Path $FolderPath -Leaf
+        }
 
         $artistDest = Join-Path $DestinationFolder $artist
         if (-not (Test-Path $artistDest)) {
             New-Item -ItemType Directory -Path $artistDest -Force | Out-Null
         }
 
-        $destinationPath = Join-Path $artistDest $album
+        if ($album) {
+            $destinationPath = Join-Path $artistDest $album
+        } else {
+            $destinationPath = $artistDest
+        }
 
-        if ($PSCmdlet.ShouldProcess($FolderPath, "Move to $destinationPath")) {
+        if ($PSCmdlet.ShouldProcess($destinationPath, "Move from $FolderPath")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
-            Write-Host "✅ Moved: $FolderPath to $destinationPath"
+            if (-not $Quiet) {
+                Write-Host "✅ Moved: $FolderPath to $destinationPath"
+            }
+            # Track moved folders for summary
+            if (-not $movedFoldersByArtist.ContainsKey($artist)) {
+                $movedFoldersByArtist[$artist] = @()
+            }
+            if ($album) {
+                $movedFoldersByArtist[$artist] += $album
+            } else {
+                $movedFoldersByArtist[$artist] += $artist
+            }
+        }
+    }
+
+    end {
+        if ($movedFoldersByArtist.Count -gt 0) {
+            Write-Host "\n📦 Move Summary:"
+            foreach ($artist in $movedFoldersByArtist.Keys) {
+                $albums = $movedFoldersByArtist[$artist] | Sort-Object -Unique
+                if ($albums.Count -eq 1 -and $albums[0] -eq $artist) {
+                    Write-Host ("  - Artist: {0} (entire folder moved)" -f $artist)
+                } else {
+                    Write-Host ("  - Artist: {0}" -f $artist)
+                    foreach ($album in $albums) {
+                        Write-Host ("      • {0}" -f $album)
+                    }
+                }
+            }
+            Write-Host ""
         }
     }
 }
@@ -543,7 +641,7 @@ function Merge-AlbumInArtistFolder {
         $folderName = Split-Path $FolderPath -Leaf
         $destinationPath = Join-Path $artistDest $folderName
 
-        if ($PSCmdlet.ShouldProcess($FolderPath, "Move to $destinationPath")) {
+        if ($PSCmdlet.ShouldProcess($destinationPath, "Move from $FolderPath")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
             Write-Host "✅ Merged: $FolderPath to $destinationPath"
         }
@@ -552,7 +650,7 @@ function Merge-AlbumInArtistFolder {
 
 <#
 .SYNOPSIS
-    Processes music folders from a log file by tagging and moving them.
+    Imports and processes music folders from a log file by tagging and moving them.
 
 .DESCRIPTION
     This function reads a log file (JSON or text format) containing folder information,
@@ -574,24 +672,31 @@ function Merge-AlbumInArtistFolder {
 .PARAMETER LogFormat
     Format of the log file. Options are 'Auto' (detect automatically), 'JSON', or 'Text'. Default is 'Auto'.
 
+.PARAMETER Quiet
+    Suppresses verbose output during tagging operations.
+
 .EXAMPLE
-    Process-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -WhatIf
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -WhatIf
     Processes all good folders from the JSON log file and shows what would be done.
 
 .EXAMPLE
-    Process-LoggedFolders -LogFile "C:\Logs\structure.log" -Status Bad -MaxItems 5 -DestinationFolder "E:\BadMusic"
+    Import-LoggedFolders -LogFile "C:\Logs\structure.log" -Status Bad -MaxItems 5 -DestinationFolder "E:\BadMusic"
     Processes first 5 bad folders from a text log file.
 
 .EXAMPLE
-    Process-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\Processed" -Confirm
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\Processed" -Confirm
     Processes all good folders with confirmation prompts.
+
+.EXAMPLE
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -Quiet -WhatIf
+    Processes folders quietly, showing only essential moving information.
 
 .NOTES
     Automatically detects log format if set to 'Auto'.
     Supports -WhatIf and -Confirm parameters for safe operation.
     Requires TagLib-Sharp.dll for tagging operations.
 #>
-function Process-LoggedFolders {
+function Import-LoggedFolders {
     [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory)]
@@ -609,7 +714,9 @@ function Process-LoggedFolders {
 
         [Parameter()]
         [ValidateSet('Auto', 'JSON', 'Text')]
-        [string]$LogFormat = 'Auto'
+        [string]$LogFormat = 'Auto',
+
+        [switch]$Quiet
     )
 
     # Validate log file exists
@@ -693,11 +800,11 @@ function Process-LoggedFolders {
 
         try {
             # Tag the folder (this will validate it's still good)
-            $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference
+            $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet
 
             if ($taggedFolders) {
                 # Move the successfully tagged folder
-                $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference
+                $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
                 $processedCount++
             } else {
                 Write-Warning "Failed to tag folder: $folderPath"
