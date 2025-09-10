@@ -775,6 +775,11 @@ function Merge-AlbumInArtistFolder {
     Automatically detects log format if set to 'Auto'.
     Supports -WhatIf and -Confirm parameters for safe operation.
     Requires TagLib-Sharp.dll for tagging operations.
+
+    IMPORTANT: You may notice duplicate "🔍 Checking folder" and "✅ Measurement complete"
+    messages for the same folder. This is normal behavior - the function performs layered
+    validation for safety by checking folder structure both before tagging AND before moving.
+    This double-checking ensures data integrity and is not an error.
 #>
 function Import-LoggedFolders {
     [CmdletBinding(SupportsShouldProcess)]
