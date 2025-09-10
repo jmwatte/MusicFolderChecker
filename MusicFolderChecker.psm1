@@ -29,6 +29,9 @@
     Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text' when -LogTo is specified,
     'JSON' when using automatic logging.
 
+.PARAMETER Quiet
+    Suppresses verbose output and WhatIf messages for logging operations during scanning.
+
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music"
     Returns all folders with bad music structure under C:\Music and logs results to automatic temp location.
@@ -53,10 +56,15 @@
     Find-BadMusicFolderStructure -StartingPath "E:\Music" -WhatToLog Bad
     Scans E:\Music for bad structures and automatically logs to $env:TEMP\MusicFolderChecker\MusicFolderStructureScan_YYYYMMDD_HHMMSS.log
 
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "E:\Music" -WhatToLog Bad -Quiet -WhatIf
+    Scans E:\Music quietly, suppressing logging WhatIf messages but showing move WhatIf messages
+
 .NOTES
     Supported audio extensions: .mp3, .wav, .flac, .aac, .ogg, .wma
     Automatic logs are saved in JSON format for easy programmatic parsing
     Log location is always displayed at the end of execution
+    -Quiet suppresses logging WhatIf messages when used with -WhatIf
 #>
 function Find-BadMusicFolderStructure {
     [CmdletBinding()]
@@ -75,7 +83,9 @@ function Find-BadMusicFolderStructure {
 
         [Parameter()]
         [ValidateSet('Text', 'JSON')]
-        [string]$LogFormat = 'Text'
+        [string]$LogFormat = 'Text',
+
+        [switch]$Quiet
     )
 
     begin {
@@ -108,7 +118,9 @@ function Find-BadMusicFolderStructure {
         $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName })
 
         foreach ($folder in $folders) {
-            Write-Host "🔍 Checking folder: $folder"
+            if (-not $Quiet) {
+                Write-Host "🔍 Checking folder: $folder"
+            }
 
             $firstAudioFile = $null
             foreach ($extension in $audioExtensions) {
@@ -131,9 +143,17 @@ function Find-BadMusicFolderStructure {
                             Function = 'Find-BadMusicFolderStructure'
                             Type = 'ArtistFolder'
                         } | ConvertTo-Json -Compress
-                        Add-Content -Path $LogTo -Value $logEntry
+                        if ($Quiet) {
+                            Add-Content -Path $LogTo -Value $logEntry -WhatIf:$false
+                        } else {
+                            Add-Content -Path $LogTo -Value $logEntry
+                        }
                     } else {
-                        Add-Content -Path $LogTo -Value ("GoodFolder " + ($artistFolderPath))
+                        if ($Quiet) {
+                            Add-Content -Path $LogTo -Value ("GoodFolder " + ($artistFolderPath)) -WhatIf:$false
+                        } else {
+                            Add-Content -Path $LogTo -Value ("GoodFolder " + ($artistFolderPath))
+                        }
                     }
                 }
             }
@@ -152,9 +172,17 @@ function Find-BadMusicFolderStructure {
                             Function = 'Find-BadMusicFolderStructure'
                             Type = $badType
                         } | ConvertTo-Json -Compress
-                        Add-Content -Path $LogTo -Value $logEntry
+                        if ($Quiet) {
+                            Add-Content -Path $LogTo -Value $logEntry -WhatIf:$false
+                        } else {
+                            Add-Content -Path $LogTo -Value $logEntry
+                        }
                     } else {
-                        Add-Content -Path $LogTo -Value ("BadFolder " + ($badFolder))
+                        if ($Quiet) {
+                            Add-Content -Path $LogTo -Value ("BadFolder " + ($badFolder)) -WhatIf:$false
+                        } else {
+                            Add-Content -Path $LogTo -Value ("BadFolder " + ($badFolder))
+                        }
                     }
                 }
             }
@@ -173,7 +201,9 @@ function Find-BadMusicFolderStructure {
             $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object StartingPath
         }
         if ($LogTo) {
-            Write-Host "✅ Measurement complete. Logs Saved at $LogTo"
+            if (-not $Quiet) {
+                Write-Host "✅ Measurement complete. Logs Saved at $LogTo"
+            }
         }
     }
 }
@@ -197,7 +227,7 @@ function Find-BadMusicFolderStructure {
     Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text'.
 
 .PARAMETER Quiet
-    Suppresses verbose output during tagging operations.
+    Suppresses verbose output during tagging operations and WhatIf messages for logging.
 
 .EXAMPLE
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Artist\2020 - Album"
@@ -265,7 +295,7 @@ function Save-TagsFromGoodMusicFolders {
 
     process {
         # Safety: verify compliance before tagging
-        $isGoodMusic = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good
+        $isGoodMusic = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet
         if (-not $isGoodMusic) {
             Write-Warning "Skipping non-compliant folder: $FolderPath"
             if ($LogTo) { $badFolders[$FolderPath] = @("NonCompliant") }
@@ -398,12 +428,22 @@ function Save-TagsFromGoodMusicFolders {
                         Reasons = $reasons
                         Type = 'TaggingError'
                     } | ConvertTo-Json -Compress
-                    [System.IO.File]::AppendAllText($LogTo, "$logEntry`r`n", [System.Text.Encoding]::UTF8)
+                    if ($Quiet) {
+                        [System.IO.File]::AppendAllText($LogTo, "$logEntry`r`n", [System.Text.Encoding]::UTF8)
+                    } else {
+                        [System.IO.File]::AppendAllText($LogTo, "$logEntry`r`n", [System.Text.Encoding]::UTF8)
+                    }
                 } else {
-                    [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
+                    if ($Quiet) {
+                        [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
+                    } else {
+                        [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
+                    }
                 }
             }
-            Write-Host "📝 Bad folders logged to: $LogTo"
+            if (-not $Quiet) {
+                Write-Host "📝 Bad folders logged to: $LogTo"
+            }
         }
         
         # Output successfully processed folders
@@ -474,7 +514,7 @@ function Move-GoodFolders {
             # This is an artist folder, validate and move only good album subfolders
             foreach ($albumFolder in $albumSubfolders) {
                 # Re-validate each album subfolder
-                $isGoodAlbum = Find-BadMusicFolderStructure -StartingPath $albumFolder -Good
+                $isGoodAlbum = Find-BadMusicFolderStructure -StartingPath $albumFolder -Good -Quiet:$Quiet
                 if ($isGoodAlbum) {
                     # Recursively call Move-GoodFolders on each good album folder
                     $albumFolder | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
@@ -675,7 +715,7 @@ function Merge-AlbumInArtistFolder {
     Format of the log file. Options are 'Auto' (detect automatically), 'JSON', or 'Text'. Default is 'Auto'.
 
 .PARAMETER Quiet
-    Suppresses verbose output during tagging operations.
+    Suppresses verbose output during tagging operations and WhatIf messages for logging.
 
 .EXAMPLE
     Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -WhatIf
@@ -782,11 +822,15 @@ function Import-LoggedFolders {
     }
 
     if (-not $logEntries -or $logEntries.Count -eq 0) {
+        if (-not $Quiet) {
         Write-Host "No matching entries found in log file."
+    }
         return
     }
 
-    Write-Host "Found $($logEntries.Count) folders to process..."
+    if (-not $Quiet) {
+        Write-Host "Found $($logEntries.Count) folders to process..."
+    }
 
     # Process each folder
     $processedCount = 0
@@ -798,7 +842,9 @@ function Import-LoggedFolders {
             continue
         }
 
-        Write-Host "Processing: $folderPath"
+        if (-not $Quiet) {
+            Write-Host "Processing: $folderPath"
+        }
 
         try {
             # Tag the folder (this will validate it's still good)
@@ -817,5 +863,7 @@ function Import-LoggedFolders {
         }
     }
 
-    Write-Host "✅ Completed processing $processedCount folders."
+    if (-not $Quiet) {
+        Write-Host "✅ Completed processing $processedCount folders."
+    }
 }
