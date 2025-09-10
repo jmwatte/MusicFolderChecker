@@ -104,7 +104,9 @@ function Find-BadMusicFolderStructure {
         [switch]$Quiet,
 
         [Parameter()]
-        [string[]]$Blacklist
+        [string[]]$Blacklist,
+
+        [switch]$Simple  # New parameter for backward compatibility
     )
 
     begin {
@@ -135,9 +137,17 @@ function Find-BadMusicFolderStructure {
     }
 
     process {
-        $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object -Unique | ForEach-Object { $_.FullName })
+        $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object -Unique | ForEach-Object { $_.FullName }) | Select-Object -Unique
 
         foreach ($folder in $folders) {
+            $validationResult = [PSCustomObject]@{
+                Path = $folder
+                IsValid = $false
+                Reason = "Unknown"
+                Details = ""
+                Status = "Unknown"
+            }
+
             # Check if folder is in blacklist
             if ($Blacklist) {
                 $isBlacklisted = $false
@@ -145,7 +155,7 @@ function Find-BadMusicFolderStructure {
                     # Normalize paths for comparison (handle trailing slashes, case sensitivity)
                     $normalizedFolder = $folder.TrimEnd('\').ToLower()
                     $normalizedBlacklist = $blacklistedPath.TrimEnd('\').ToLower()
-                    
+
                     # Check if folder path starts with blacklisted path (handles subfolders)
                     if ($normalizedFolder -eq $normalizedBlacklist -or $normalizedFolder.StartsWith($normalizedBlacklist + '\')) {
                         $isBlacklisted = $true
@@ -153,29 +163,79 @@ function Find-BadMusicFolderStructure {
                     }
                 }
                 if ($isBlacklisted) {
-                    if (-not $Quiet) {
-                        Write-Host "🚫 Skipping blacklisted folder: $folder"
-                    }
+                    $validationResult.Reason = "Blacklisted"
+                    $validationResult.Details = "Folder is in blacklist"
+                    $validationResult.Status = "Skipped"
+                    $results += $validationResult
                     continue
                 }
             }
 
             if (-not $Quiet) {
-                Write-Host "🔍 Checking folder: $folder"
+                Write-Host "� Checking folder: $folder"
             }
 
+            # Check if folder exists and is accessible
+            if (-not (Test-Path $folder)) {
+                $validationResult.Reason = "NotFound"
+                $validationResult.Details = "Folder does not exist"
+                $validationResult.Status = "Error"
+                $results += $validationResult
+                continue
+            }
+
+            # Check if folder is empty
+            $allItems = Get-ChildItem -LiteralPath $folder -ErrorAction SilentlyContinue
+            if (-not $allItems -or $allItems.Count -eq 0) {
+                $validationResult.Reason = "Empty"
+                $validationResult.Details = "Folder contains no files or subfolders"
+                $validationResult.Status = "Bad"
+                $results += $validationResult
+                continue
+            }
+
+            # Find audio files
             $firstAudioFile = $null
             foreach ($extension in $audioExtensions) {
                 $firstAudioFile = Get-ChildItem -LiteralPath $folder -File -Filter "*$extension" -ErrorAction SilentlyContinue | Select-Object -First 1
                 if ($firstAudioFile) { break }
             }
-            if (-not $firstAudioFile) { continue }
+
+            if (-not $firstAudioFile) {
+                $validationResult.Reason = "NoMusicFiles"
+                $validationResult.Details = "No supported audio files found ($($audioExtensions -join ', '))"
+                $validationResult.Status = "Bad"
+                $results += $validationResult
+                continue
+            }
+
+            # Try to read the audio file to check for corruption
+            try {
+                $dllPath = Join-Path $PSScriptRoot "lib\taglib-sharp.dll"
+                if (Test-Path $dllPath) {
+                    Add-Type -Path $dllPath -ErrorAction SilentlyContinue
+                    [TagLib.File]::Create($firstAudioFile.FullName) | Out-Null
+                    # File is readable
+                }
+            }
+            catch {
+                $validationResult.Reason = "CorruptedFile"
+                $validationResult.Details = "Audio file appears corrupted: $($firstAudioFile.Name) - $_"
+                $validationResult.Status = "Bad"
+                $results += $validationResult
+                continue
+            }
 
             $fullPath = $firstAudioFile.FullName
             if ($fullPath -match $patternMain -or $fullPath -match $patternDisc) {
                 $artistFolderName = $matches[1]
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
-                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
+                $validationResult.IsValid = $true
+                $validationResult.Reason = "Valid"
+                $validationResult.Details = "Matches expected folder structure"
+                $validationResult.Status = "Good"
+                $results += $validationResult
+
                 if ($LogTo -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All')) {
                     if ($LogFormat -eq 'JSON') {
                         $logEntry = @{
@@ -193,7 +253,11 @@ function Find-BadMusicFolderStructure {
             }
             else {
                 $badFolder = $firstAudioFile.DirectoryName
-                $results += [PSCustomObject]@{ Status = 'Bad'; StartingPath = $badFolder }
+                $validationResult.Reason = "BadStructure"
+                $validationResult.Details = "Audio files found but folder structure doesn't match expected pattern"
+                $validationResult.Status = "Bad"
+                $results += $validationResult
+
                 if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All')) {
                     # Determine the type based on folder name
                     $folderName = Split-Path $badFolder -Leaf
@@ -205,10 +269,12 @@ function Find-BadMusicFolderStructure {
                             Path = $badFolder
                             Function = 'Find-BadMusicFolderStructure'
                             Type = $badType
+                            Reason = $validationResult.Reason
+                            Details = $validationResult.Details
                         } | ConvertTo-Json -Compress
                         Write-LogEntry -Path $LogTo -Value "$logEntry`r`n"
                     } else {
-                        Write-LogEntry -Path $LogTo -Value "BadFolder $badFolder`r`n"
+                        Write-LogEntry -Path $LogTo -Value "BadFolder $badFolder ($($validationResult.Reason))`r`n"
                     }
                 }
             }
@@ -216,16 +282,24 @@ function Find-BadMusicFolderStructure {
     }
 
     end {
-        $uniqueResults = $results | Group-Object -Property StartingPath | ForEach-Object {
-            [PSCustomObject]@{ Status = $_.Group[0].Status; StartingPath = $_.Name }
-        }
+        if ($Simple) {
+            # Backward compatibility: return boolean result
+            $uniqueResults = $results | Group-Object -Property Path | ForEach-Object {
+                [PSCustomObject]@{ Status = $_.Group[0].Status; Path = $_.Name }
+            }
 
-        if ($Good) {
-            $uniqueResults | Where-Object { $_.Status -eq 'Good' } | Select-Object -ExpandProperty StartingPath
+            if ($Good) {
+                $uniqueResults | Where-Object { $_.Status -eq 'Good' } | Select-Object -ExpandProperty Path
+            }
+            else {
+                $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object -ExpandProperty Path
+            }
         }
         else {
-            $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object -ExpandProperty StartingPath
+            # New detailed result format
+            $results
         }
+
         if ($LogTo) {
             if (-not $Quiet) {
                 Write-Host "✅ Measurement complete. Logs Saved at $LogTo"
@@ -336,11 +410,66 @@ function Save-TagsFromGoodMusicFolders {
 
     process {
         # Safety: verify compliance before tagging
-        $isGoodMusic = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet -Blacklist:$Blacklist
-        if (-not $isGoodMusic) {
-            Write-Warning "Skipping non-compliant folder: $FolderPath"
-            if ($LogTo) { $badFolders[$FolderPath] = @("NonCompliant") }
-            return
+        $validationResults = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet -Blacklist:$Blacklist -Simple:$false
+        
+        # Handle both old and new result formats for backward compatibility
+        if ($validationResults -is [array] -and $validationResults.Count -gt 0 -and $validationResults[0].PSObject.Properties.Name -contains 'IsValid') {
+            # New detailed result format
+            $validationResult = $validationResults | Where-Object { $_.Path -eq $FolderPath } | Select-Object -First 1
+            
+            if (-not $validationResult -or -not $validationResult.IsValid) {
+                $reason = if ($validationResult) { $validationResult.Reason } else { "Unknown" }
+                $details = if ($validationResult) { $validationResult.Details } else { "Validation failed" }
+                
+                # Provide specific, user-friendly messages based on failure reason
+                switch ($reason) {
+                    "Empty" {
+                        if (-not $Quiet) {
+                            Write-Host "ℹ️  Skipping empty folder: $FolderPath"
+                        }
+                    }
+                    "NoMusicFiles" {
+                        if (-not $Quiet) {
+                            Write-Host "ℹ️  No music files found in: $FolderPath"
+                        }
+                    }
+                    "CorruptedFile" {
+                        Write-Warning "Corrupted audio file in: $FolderPath - $details"
+                    }
+                    "BadStructure" {
+                        if (-not $Quiet) {
+                            Write-Host "ℹ️  Folder structure doesn't match expected pattern: $FolderPath"
+                        }
+                    }
+                    "Blacklisted" {
+                        if (-not $Quiet) {
+                            Write-Host "🚫 Skipping blacklisted folder: $FolderPath"
+                        }
+                    }
+                    "NotFound" {
+                        Write-Warning "Folder not found: $FolderPath"
+                    }
+                    default {
+                        Write-Warning "Skipping folder ($reason): $FolderPath"
+                    }
+                }
+                
+                if ($LogTo) { 
+                    $badFolders[$FolderPath] = @($reason)
+                }
+                return
+            }
+        }
+        else {
+            # Old boolean result format (backward compatibility)
+            $isGoodMusic = $validationResults
+            if (-not $isGoodMusic) {
+                if (-not $Quiet) {
+                    Write-Host "ℹ️  Skipping folder (validation failed): $FolderPath"
+                }
+                if ($LogTo) { $badFolders[$FolderPath] = @("NonCompliant") }
+                return
+            }
         }
 
         $musicFiles = Get-ChildItem -LiteralPath $FolderPath -Recurse -File -ErrorAction SilentlyContinue |
@@ -549,12 +678,17 @@ function Move-GoodFolders {
             # This is an artist folder, validate and move only good album subfolders
             foreach ($albumFolder in $albumSubfolders) {
                 # Re-validate each album subfolder
-                $isGoodAlbum = Find-BadMusicFolderStructure -StartingPath $albumFolder -Good -Quiet:$Quiet
-                if ($isGoodAlbum) {
+                $validationResults = Find-BadMusicFolderStructure -StartingPath $albumFolder -Good -Quiet:$Quiet -Simple:$false
+                $validationResult = $validationResults | Where-Object { $_.Path -eq $albumFolder } | Select-Object -First 1
+                
+                if ($validationResult -and $validationResult.IsValid) {
                     # Recursively call Move-GoodFolders on each good album folder
                     $albumFolder | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
                 } else {
-                    Write-Warning "Skipping bad album folder: $albumFolder"
+                    $reason = if ($validationResult) { $validationResult.Reason } else { "Unknown" }
+                    if (-not $Quiet) {
+                        Write-Host "ℹ️  Skipping album folder ($reason): $albumFolder"
+                    }
                 }
             }
             return
@@ -755,17 +889,12 @@ function Merge-AlbumInArtistFolder {
 .PARAMETER hideTags
     Suppresses detailed tag information display in WhatIf mode, showing only the file path.
 
-.EXAMPLE
-    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -WhatIf
-    Processes all good folders from the JSON log file and shows what would be done.
+.PARAMETER DetailedLog
+    Enables detailed logging during dry runs (-WhatIf), showing specific reasons for folder processing outcomes.
 
 .EXAMPLE
-    Import-LoggedFolders -LogFile "C:\Logs\structure.log" -Status Bad -MaxItems 5 -DestinationFolder "E:\BadMusic"
-    Processes first 5 bad folders from a text log file.
-
-.EXAMPLE
-    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\Processed" -Confirm
-    Processes all good folders with confirmation prompts.
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -DetailedLog -WhatIf
+    Processes folders with detailed logging to see specific validation results for each folder.
 
 .EXAMPLE
     Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -Quiet -WhatIf
@@ -803,7 +932,9 @@ function Import-LoggedFolders {
 
         [switch]$Quiet,
 
-        [switch]$hideTags
+        [switch]$hideTags,
+
+        [switch]$DetailedLog  # New parameter for detailed logging during dry runs
     )
 
     # Validate log file exists
@@ -901,12 +1032,23 @@ function Import-LoggedFolders {
                 $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
                 $processedCount++
                 $processedEntries += $entry
+                
+                if ($DetailedLog -and $WhatIfPreference) {
+                    Write-Host "📝 [DetailedLog] Successfully processed: $folderPath" -ForegroundColor Green
+                }
             } else {
-                Write-Warning "Failed to tag folder: $folderPath"
+                # Save-TagsFromGoodMusicFolders already provided specific error messages
+                # Only show generic message if DetailedLog is requested
+                if ($DetailedLog) {
+                    Write-Host "📝 [DetailedLog] No files processed in: $folderPath" -ForegroundColor Yellow
+                }
             }
         }
         catch {
             Write-Warning "Error processing folder $folderPath`: $_"
+            if ($DetailedLog) {
+                Write-Host "📝 [DetailedLog] Exception details: $_" -ForegroundColor Red
+            }
         }
     }
 

@@ -45,14 +45,30 @@ Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\Co
 
 ### Duplicate Validation Messages
 
-When using `Import-LoggedFolders`, you may notice duplicate "🔍 Checking folder" and "✅ Measurement complete" messages for the same folder. This is **normal behavior** and occurs because the function performs layered validation for safety:
+When using `Import-LoggedFolders`, you may notice duplicate "🔍 Checking folder" and "✅ Measurement complete"
+messages for the same folder. This is **normal behavior** - the function performs layered
+validation for safety by checking folder structure both before tagging AND before moving.
+This double-checking ensures data integrity and is not an error.
 
-1. **First validation**: Before tagging files, the folder structure is checked
-2. **Second validation**: Before moving folders, the structure is checked again
+### Detailed Error Messages
 
-This double-checking ensures data integrity by catching any changes that might occur between the tagging and moving operations. The messages appear twice because the same validation function (`Find-BadMusicFolderStructure`) is called at two different stages of the process.
+The module now provides specific, user-friendly messages for different failure scenarios:
 
-**This is not an error** - it's a safety feature designed to prevent processing corrupted or modified folders.
+- **Empty folder**: "ℹ️ Skipping empty folder: [path]"
+- **No music files**: "ℹ️ No music files found in: [path]"
+- **Corrupted files**: "Corrupted audio file in: [path] - [details]"
+- **Bad structure**: "ℹ️ Folder structure doesn't match expected pattern: [path]"
+- **Blacklisted**: "🚫 Skipping blacklisted folder: [path]"
+
+### Detailed Logging
+
+Use the `-DetailedLog` parameter with `-WhatIf` for verbose logging during dry runs:
+
+```powershell
+Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -DetailedLog -WhatIf
+```
+
+This shows specific validation results for each folder without cluttering normal operation output.
 
 ## License
 This module includes TagLib-Sharp.dll, which is licensed under LGPL 2.1. See the [LICENSE](LICENSE) file for full details.
