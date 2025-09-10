@@ -15,6 +15,41 @@ function Write-LogEntry {
     [System.IO.File]::AppendAllText($Path, $Value, [System.Text.Encoding]::UTF8)
 }
 
+function Get-DestinationPath {
+    param (
+        [Parameter(Mandatory)]
+        [string]$SourcePath,
+        
+        [Parameter(Mandatory)]
+        [string]$DestinationFolder
+    )
+    
+    # Extract artist and album from the path (same logic as Move-GoodFolders)
+    $parentPath = Split-Path $SourcePath -Parent
+    $artist = Split-Path $parentPath -Leaf
+
+    # Handle different path scenarios
+    if ($parentPath -match '^[A-Za-z]:\\$') {
+        # Parent is drive root (e.g., "E:\") - current folder is the artist
+        $artist = Split-Path $SourcePath -Leaf
+        $album = ""  # No album subfolder
+    } elseif ($artist -match '^([A-Za-z]):\\(.+)$') {
+        $artist = $matches[2]
+        $album = Split-Path $SourcePath -Leaf
+    } else {
+        $album = Split-Path $SourcePath -Leaf
+    }
+
+    $artistDest = Join-Path $DestinationFolder $artist
+    if ($album) {
+        $destinationPath = Join-Path $artistDest $album
+    } else {
+        $destinationPath = $artistDest
+    }
+    
+    return $destinationPath
+}
+
 <#
 .SYNOPSIS
     Checks music folder structures for compliance with expected naming conventions.
@@ -408,6 +443,7 @@ function Find-BadMusicFolderStructure {
     Requires TagLib-Sharp.dll in the module's lib directory.
     Only processes folders with compliant structure.
     Outputs successfully processed folder paths.
+    Creates CORRUPT_FILES.txt in folders with problematic audio files for easy tracking.
 #>
 function Save-TagsFromGoodMusicFolders {
     [CmdletBinding(SupportsShouldProcess)]
@@ -442,6 +478,7 @@ function Save-TagsFromGoodMusicFolders {
 
         $badFolders = @{}
         $goodFolders = @()
+        $allCorruptFiles = @{}
 
         if ($LogTo) {
             $logDir = Split-Path -Path $LogTo -Parent
@@ -479,7 +516,7 @@ function Save-TagsFromGoodMusicFolders {
                         }
                     }
                     "CorruptedFile" {
-                        Write-Warning "Corrupted audio file in: $FolderPath - $details"
+                        Write-Host "WARNING: Corrupted audio file in: $FolderPath - $details" -ForegroundColor Red
                     }
                     "BadStructure" {
                         if (-not $Quiet) {
@@ -492,10 +529,10 @@ function Save-TagsFromGoodMusicFolders {
                         }
                     }
                     "NotFound" {
-                        Write-Warning "Folder not found: $FolderPath"
+                        Write-Host "WARNING: Folder not found: $FolderPath" -ForegroundColor Red
                     }
                     default {
-                        Write-Warning "Skipping folder ($reason): $FolderPath"
+                        Write-Host "WARNING: Skipping folder ($reason): $FolderPath" -ForegroundColor Red
                     }
                 }
                 
@@ -611,17 +648,41 @@ function Save-TagsFromGoodMusicFolders {
                         }
                     }
                     catch {
-                        Write-Warning "⚠️ Failed to tag: $($file.FullName) — $_"
+                        Write-Host "WARNING: ⚠️ Failed to tag: $($file.FullName) — $_" -ForegroundColor Red
+                        if (-not $allCorruptFiles.ContainsKey($FolderPath)) {
+                            $allCorruptFiles[$FolderPath] = @()
+                        }
+                        $allCorruptFiles[$FolderPath] += [PSCustomObject]@{
+                            FilePath = $file.FullName
+                            Error = $_.Exception.Message
+                            Reason = "TagLibError"
+                        }
                         if ($LogTo) { $badFolders[$FolderPath] += "FailedTagging" }
                     }
                 }
                 else {
-                    Write-Warning "❌ Bad filename format: $fileName"
+                    Write-Host "WARNING: ❌ Bad filename format: $fileName" -ForegroundColor Red
+                    if (-not $allCorruptFiles.ContainsKey($FolderPath)) {
+                        $allCorruptFiles[$FolderPath] = @()
+                    }
+                    $allCorruptFiles[$FolderPath] += [PSCustomObject]@{
+                        FilePath = $file.FullName
+                        Error = "Bad filename format: $fileName"
+                        Reason = "BadFilename"
+                    }
                     if ($LogTo) { $badFolders[$FolderPath] += "WrongTitleFormat" }
                 }
             }
             else {
-                Write-Warning "❌ No album folder found: $($file.FullName)"
+                Write-Host "WARNING: ❌ No album folder found: $($file.FullName)" -ForegroundColor Red
+                if (-not $allCorruptFiles.ContainsKey($FolderPath)) {
+                    $allCorruptFiles[$FolderPath] = @()
+                }
+                $allCorruptFiles[$FolderPath] += [PSCustomObject]@{
+                    FilePath = $file.FullName
+                    Error = "No album folder found in path structure"
+                    Reason = "NoAlbumFolder"
+                }
                 if ($LogTo) { $badFolders[$FolderPath] += "ShallowPath" }
             }
         }
@@ -655,8 +716,11 @@ function Save-TagsFromGoodMusicFolders {
             }
         }
         
-        # Output successfully processed folders
-        Write-Output $goodFolders
+        # Output successfully processed folders and corrupt files info
+        [PSCustomObject]@{
+            GoodFolders = $goodFolders
+            CorruptFiles = $allCorruptFiles
+        }
     }
 }
 
@@ -767,7 +831,7 @@ function Move-GoodFolders {
         }
 
         if ($WhatIfPreference) {
-            Write-Host "What if: Moving `"$FolderPath`" to `"$destinationPath`"" -ForegroundColor Yellow
+            Write-Host "What if: Moving `"$FolderPath`"`nto `"$destinationPath`"" -ForegroundColor Yellow
         } elseif ($PSCmdlet.ShouldProcess($destinationPath, "Move")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
             if (-not $Quiet) {
@@ -787,8 +851,8 @@ function Move-GoodFolders {
 
     end {
         if ($movedFoldersByArtist.Count -gt 0) {
-            Write-Host "\n📦 Move Summary:"
-            foreach ($artist in $movedFoldersByArtist.Keys) {
+            Write-Host "`n📦 Move Summary:"
+            foreach ($artist in ($movedFoldersByArtist.Keys | Sort-Object)) {
                 $albums = $movedFoldersByArtist[$artist] | Sort-Object -Unique
                 if ($albums.Count -eq 1 -and $albums[0] -eq $artist) {
                     Write-Host ("  - Artist: {0} (entire folder moved)" -f $artist)
@@ -866,7 +930,7 @@ function Merge-AlbumInArtistFolder {
         }
 
         if (-not $firstAudioFile) {
-            Write-Warning "No audio files found in: $FolderPath"
+            Write-Host "WARNING: No audio files found in: $FolderPath" -ForegroundColor Red
             return
         }
 
@@ -878,19 +942,19 @@ function Merge-AlbumInArtistFolder {
                 $albumArtist = $tagFile.Tag.Performers
             }
             if (-not $albumArtist -or $albumArtist.Count -eq 0) {
-                Write-Warning "No album artist found in: $($firstAudioFile.FullName)"
+                Write-Host "WARNING: No album artist found in: $($firstAudioFile.FullName)" -ForegroundColor Red
                 return
             }
             $albumArtist = $albumArtist[0]  # Take the first one
         }
         catch {
-            Write-Warning "Failed to read tags from: $($firstAudioFile.FullName) — $_"
+            Write-Host "WARNING: Failed to read tags from: $($firstAudioFile.FullName) — $_" -ForegroundColor Red
             return
         }
 
         if (-not (Test-Path $artistDest)) {
             if ($WhatIfPreference) {
-                Write-Host "What if: Creating directory `"$artistDest`"" -ForegroundColor Yellow
+                Write-Host "What if: Creating directory `"$artistDest`"`nand moving `"$FolderPath`" to `"$destinationPath`"" -ForegroundColor Yellow
             } elseif ($PSCmdlet.ShouldProcess($artistDest, "Create directory")) {
                 New-Item -ItemType Directory -Path $artistDest -Force -WhatIf:$false | Out-Null
             }
@@ -900,7 +964,7 @@ function Merge-AlbumInArtistFolder {
         $destinationPath = Join-Path $artistDest $folderName
 
         if ($WhatIfPreference) {
-            Write-Host "What if: Moving `"$FolderPath`" to `"$destinationPath`"" -ForegroundColor Yellow
+            Write-Host "What if: Moving `"$FolderPath`"`nto `"$destinationPath`"" -ForegroundColor Yellow
         } elseif ($PSCmdlet.ShouldProcess($destinationPath, "Move")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
             Write-Host "✅ Merged: $FolderPath to $destinationPath"
@@ -984,6 +1048,11 @@ function Merge-AlbumInArtistFolder {
     - Use Status='CheckThisGoodOne' to view folders needing manual attention
     - Use Status='All' to process everything including marked folders
     - This helps you focus on automatable folders while tracking problematic ones
+    
+    CORRUPT FILES TRACKING:
+    - When audio files can't be tagged, they're listed in CORRUPT_FILES.txt in the destination folder
+    - This file contains detailed error information for each problematic file
+    - The file is automatically moved with the folder for easy reference
 #>
 function Import-LoggedFolders {
     [CmdletBinding(SupportsShouldProcess)]
@@ -1036,7 +1105,7 @@ function Import-LoggedFolders {
                 try {
                     $_ | ConvertFrom-Json
                 } catch {
-                    Write-Warning "Skipping malformed JSON line: $_"
+                    Write-Host "WARNING: Skipping malformed JSON line: $_" -ForegroundColor Red
                     $null
                 }
             } | Where-Object { $_ -ne $null }
@@ -1051,8 +1120,18 @@ function Import-LoggedFolders {
                         Function = 'Find-BadMusicFolderStructure'
                         Type = if ($matches[1] -eq 'GoodFolder' -or $matches[1] -eq 'CheckThisGoodOne') { 'ArtistFolder' } else { 'AlbumFolder' }
                     }
+                } elseif ($line -match '^GoodFolder\s+(.+)$') {
+                    # Handle lines that might have extra spaces or formatting issues
+                    [PSCustomObject]@{
+                        Status = 'Good'
+                        Path = $matches[1]
+                        Function = 'Find-BadMusicFolderStructure'
+                        Type = 'ArtistFolder'
+                    }
                 } else {
-                    Write-Warning "Skipping malformed text line: $line"
+                    if (-not $Quiet -and $line -notmatch '^\s*$') {
+                        Write-Host "WARNING: Skipping malformed text line: '$line'" -ForegroundColor Red
+                    }
                     $null
                 }
             } | Where-Object { $_ -ne $null }
@@ -1090,7 +1169,7 @@ function Import-LoggedFolders {
         $folderPath = $entry.Path
 
         if (-not (Test-Path $folderPath)) {
-            Write-Warning "Folder not found, skipping: $folderPath"
+            Write-Host "WARNING: Folder not found, skipping: $folderPath" -ForegroundColor Red
             continue
         }
 
@@ -1100,14 +1179,70 @@ function Import-LoggedFolders {
 
         try {
             # Tag the folder (this will validate it's still good)
-            $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
+            $taggingResult = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
+            $taggedFolders = $taggingResult.GoodFolders
+            $corruptFiles = $taggingResult.CorruptFiles
+            
             if (-not $Quiet) {
                 Write-Host "DEBUG: taggedFolders result for $folderPath = '$taggedFolders'" -ForegroundColor Cyan
+                if ($corruptFiles.ContainsKey($folderPath)) {
+                    Write-Host "DEBUG: Found $($corruptFiles[$folderPath].Count) corrupt files in $folderPath" -ForegroundColor Yellow
+                }
             }
 
             if ($taggedFolders) {
                 # Move the successfully tagged folder
                 $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
+                
+                # Create corrupt files log in destination if any corrupt files were found
+                if ($corruptFiles.ContainsKey($folderPath) -and $corruptFiles[$folderPath].Count -gt 0 -and -not $WhatIfPreference) {
+                    # Get the destination path for this folder
+                    $destinationPath = Get-DestinationPath -SourcePath $folderPath -DestinationFolder $DestinationFolder
+                    
+                    if (Test-Path $destinationPath) {
+                        $corruptFilePath = Join-Path $destinationPath "CORRUPT_FILES.txt"
+                        $corruptContent = @"
+CORRUPT OR PROBLEMATIC FILES FOUND
+==================================
+Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+Source Folder: $folderPath
+Destination Folder: $destinationPath
+Total files with issues: $($corruptFiles[$folderPath].Count)
+
+DETAILS:
+"@
+                        foreach ($corruptFile in $corruptFiles[$folderPath]) {
+                            # Convert source path to destination path for the corrupt file
+                            $relativePath = $corruptFile.FilePath -replace [regex]::Escape($folderPath), ""
+                            $destFilePath = Join-Path $destinationPath $relativePath.TrimStart('\')
+                            
+                            $corruptContent += @"
+
+FILE: $($destFilePath)
+REASON: $($corruptFile.Reason)
+ERROR: $($corruptFile.Error)
+"@
+                        }
+                        
+                        $corruptContent += @"
+
+==================================
+These files could not be processed automatically.
+Please check and fix them manually before re-processing.
+"@
+                        
+                        try {
+                            $corruptContent | Out-File -FilePath $corruptFilePath -Encoding UTF8 -WhatIf:$false
+                            if (-not $Quiet) {
+                                Write-Host "📝 Created corrupt files log: $corruptFilePath" -ForegroundColor Yellow
+                            }
+                        }
+                        catch {
+                            Write-Host "WARNING: Failed to create corrupt files log: $_" -ForegroundColor Red
+                        }
+                    }
+                }
+                
                 $processedCount++
                 $processedEntries += $entry
                 
@@ -1199,12 +1334,12 @@ function Import-LoggedFolders {
                     }
                 }
                 catch {
-                    Write-Warning "Failed to append log entry for manual review: $_"
+                    Write-Host "WARNING: Failed to append log entry for manual review: $_" -ForegroundColor Red
                 }
             }
         }
         catch {
-            Write-Warning "Error processing folder $folderPath`: $_"
+            Write-Host "WARNING: Error processing folder $folderPath`: $_" -ForegroundColor Red
             if ($DetailedLog) {
                 Write-Host "📝 [DetailedLog] Exception details: $_" -ForegroundColor Red
             }
@@ -1241,7 +1376,7 @@ function Import-LoggedFolders {
             }
         }
         catch {
-            Write-Warning "Failed to update log file: $_"
+            Write-Host "WARNING: Failed to update log file: $_" -ForegroundColor Red
         }
     }
 
