@@ -1,22 +1,16 @@
 <#
 .SYNOPSIS
-    Checks music folder structures for compliance with                $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $folder }
-            if( $LogTo -and $Good) {
-                    Add        $badFolders = @{}
-
-        if ($LogTo) {
-            $logDir = Split-Path -Path $LogTo -Parent
-            if (-not (Test-Path -Path $logDir)) {
-                New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-            }
-            # Don't initialize with empty string to avoid malformed JSON
-        }Path $LogTo -Value ("GoodFolderStructure " + ($folder))
-                }ected naming conventions.
+    Checks music folder structures for compliance with expected naming conventions.
+    Automatically logs results to $env:TEMP\MusicFolderChecker\ if no log path is specified.
 
 .DESCRIPTION
     This function recursively scans a starting path for music folders and determines if they follow
     the expected structure: Artist\Year - Album\Track - Title.ext or with Disc folders.
     It returns folders that have bad structure or good structure based on the -Good switch.
+    
+    When no -LogTo path is provided, results are automatically saved to a timestamped JSON log file
+    in $env:TEMP\MusicFolderChecker\ (e.g., MusicFolderStructureScan_20250910_082317.log).
+    The log location is displayed at the end of execution.
 
 .PARAMETER StartingPath
     The root path to start scanning for music folders. This can be a directory path.
@@ -25,36 +19,44 @@
     Switch to return only folders with good structure instead of bad ones.
 
 .PARAMETER LogTo
-    Optional path to a log file where results will be written.
+    Optional path to a log file where results will be written. If not specified, logs are automatically
+    saved to $env:TEMP\MusicFolderChecker\MusicFolderStructureScan_YYYYMMDD_HHMMSS.log in JSON format.
 
 .PARAMETER WhatToLog
     Specifies what types of folders to log. Options are 'Good', 'Bad', or 'All'. Default is 'All'.
 
 .PARAMETER LogFormat
-    Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text'.
+    Specifies the format for log output. Options are 'Text' or 'JSON'. Default is 'Text' when -LogTo is specified,
+    'JSON' when using automatic logging.
 
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music"
-    Returns all folders with bad music structure under C:\Music.
+    Returns all folders with bad music structure under C:\Music and logs results to automatic temp location.
 
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music" -Good
-    Returns all folders with good music structure under C:\Music.
+    Returns all folders with good music structure under C:\Music and logs to automatic temp location.
 
 .EXAMPLE
     Get-ChildItem "C:\Music" -Directory | Find-BadMusicFolderStructure -LogTo "C:\Logs\structure.log"
-    Pipes directories to check and logs results.
+    Pipes directories to check and logs results to specified file.
 
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music" -LogTo "C:\Logs\good.log" -WhatToLog Good
-    Logs only folders with good structure to the log file.
+    Logs only folders with good structure to the specified log file.
 
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music" -LogTo "C:\Logs\structure.json" -LogFormat JSON
-    Logs results in JSON format for easy programmatic parsing.
+    Logs results in JSON format to the specified file.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "E:\Music" -WhatToLog Bad
+    Scans E:\Music for bad structures and automatically logs to $env:TEMP\MusicFolderChecker\MusicFolderStructureScan_YYYYMMDD_HHMMSS.log
 
 .NOTES
     Supported audio extensions: .mp3, .wav, .flac, .aac, .ogg, .wma
+    Automatic logs are saved in JSON format for easy programmatic parsing
+    Log location is always displayed at the end of execution
 #>
 function Find-BadMusicFolderStructure {
     [CmdletBinding()]
