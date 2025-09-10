@@ -32,6 +32,9 @@
 .PARAMETER Quiet
     Suppresses verbose output and WhatIf messages for logging operations during scanning.
 
+.PARAMETER Blacklist
+    Array of folder paths to exclude from scanning. Supports partial path matching to exclude entire directory trees.
+
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath "C:\Music"
     Returns all folders with bad music structure under C:\Music and logs results to automatic temp location.
@@ -60,6 +63,10 @@
     Find-BadMusicFolderStructure -StartingPath "E:\Music" -WhatToLog Bad -Quiet -WhatIf
     Scans E:\Music quietly, suppressing logging WhatIf messages but showing move WhatIf messages
 
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath "E:\allmymusic" -Blacklist "E:\allmymusic\CorrectedMusic", "E:\allmymusic\Archive"
+    Scans E:\allmymusic but skips the CorrectedMusic and Archive folders and all their subfolders.
+
 .NOTES
     Supported audio extensions: .mp3, .wav, .flac, .aac, .ogg, .wma
     Automatic logs are saved in JSON format for easy programmatic parsing
@@ -67,7 +74,7 @@
     -Quiet suppresses logging WhatIf messages when used with -WhatIf
 #>
 function Find-BadMusicFolderStructure {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias('FullName')]
@@ -85,7 +92,10 @@ function Find-BadMusicFolderStructure {
         [ValidateSet('Text', 'JSON')]
         [string]$LogFormat = 'Text',
 
-        [switch]$Quiet
+        [switch]$Quiet,
+
+        [Parameter()]
+        [string[]]$Blacklist
     )
 
     begin {
@@ -118,6 +128,28 @@ function Find-BadMusicFolderStructure {
         $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName })
 
         foreach ($folder in $folders) {
+            # Check if folder is in blacklist
+            if ($Blacklist) {
+                $isBlacklisted = $false
+                foreach ($blacklistedPath in $Blacklist) {
+                    # Normalize paths for comparison (handle trailing slashes, case sensitivity)
+                    $normalizedFolder = $folder.TrimEnd('\').ToLower()
+                    $normalizedBlacklist = $blacklistedPath.TrimEnd('\').ToLower()
+                    
+                    # Check if folder path starts with blacklisted path (handles subfolders)
+                    if ($normalizedFolder -eq $normalizedBlacklist -or $normalizedFolder.StartsWith($normalizedBlacklist + '\')) {
+                        $isBlacklisted = $true
+                        break
+                    }
+                }
+                if ($isBlacklisted) {
+                    if (-not $Quiet) {
+                        Write-Host "🚫 Skipping blacklisted folder: $folder"
+                    }
+                    continue
+                }
+            }
+
             if (-not $Quiet) {
                 Write-Host "🔍 Checking folder: $folder"
             }
@@ -232,6 +264,9 @@ function Find-BadMusicFolderStructure {
 .PARAMETER hideTags
     Suppresses detailed tag information display in WhatIf mode, showing only the file path.
 
+.PARAMETER Blacklist
+    Array of folder paths to exclude from scanning. Supports partial path matching to exclude entire directory trees.
+
 .EXAMPLE
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Artist\2020 - Album"
     Processes the specified folder and tags its music files.
@@ -252,6 +287,10 @@ function Find-BadMusicFolderStructure {
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music" -Quiet -WhatIf
     Shows what would be tagged without verbose output cluttering the results.
 
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath "E:\allmymusic" -Blacklist "E:\allmymusic\CorrectedMusic" -WhatIf
+    Processes folders in E:\allmymusic but skips the CorrectedMusic folder and all its subfolders.
+
 .NOTES
     Requires TagLib-Sharp.dll in the module's lib directory.
     Only processes folders with compliant structure.
@@ -267,11 +306,14 @@ function Save-TagsFromGoodMusicFolders {
 
         [Parameter()]
         [ValidateSet('Text', 'JSON')]
-        [string]$LogFormat = 'Text',
+        [string]$LogFormat = 'JSON',
 
         [switch]$Quiet,
 
-        [switch]$hideTags
+        [switch]$hideTags,
+
+        [Parameter()]
+        [string[]]$Blacklist
     )
 
     begin {
@@ -300,7 +342,7 @@ function Save-TagsFromGoodMusicFolders {
 
     process {
         # Safety: verify compliance before tagging
-        $isGoodMusic = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet
+        $isGoodMusic = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet -Blacklist:$Blacklist
         if (-not $isGoodMusic) {
             Write-Warning "Skipping non-compliant folder: $FolderPath"
             if ($LogTo) { $badFolders[$FolderPath] = @("NonCompliant") }
