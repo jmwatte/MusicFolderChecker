@@ -90,8 +90,8 @@ function Find-BadMusicFolderStructure {
 
     begin {
         $audioExtensions = @(".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma")
-        $patternMain = '(?i).*\\([^\\]+)\\\d{4} - (?!.*(?:CD|Disc)\d+)[^\\]+\\\d{2} - .+\.[a-z0-9]+$'
-        $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\Disc \d+|- CD\d+)\\\d{2} - .+\.[a-z0-9]+$'
+        $patternMain = '(?i).*\\([^\\]+)\\\d{4} - (?!.*(?:CD|Disc)\d+)[^\\]+\\(?:\d+-\d{2}|\d{2}) - .+\.[a-z0-9]+$'
+        $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\Disc \d+|- CD\d+|)\\(?:\d+-\d{2}|\d{2}) - .+\.[a-z0-9]+$'
         $results = @()
 
         # Set default log path if not provided
@@ -229,6 +229,9 @@ function Find-BadMusicFolderStructure {
 .PARAMETER Quiet
     Suppresses verbose output during tagging operations and WhatIf messages for logging.
 
+.PARAMETER hideTags
+    Suppresses detailed tag information display in WhatIf mode, showing only the file path.
+
 .EXAMPLE
     Save-TagsFromGoodMusicFolders -FolderPath "C:\Music\Artist\2020 - Album"
     Processes the specified folder and tags its music files.
@@ -266,7 +269,9 @@ function Save-TagsFromGoodMusicFolders {
         [ValidateSet('Text', 'JSON')]
         [string]$LogFormat = 'Text',
 
-        [switch]$Quiet
+        [switch]$Quiet,
+
+        [switch]$hideTags
     )
 
     begin {
@@ -349,14 +354,16 @@ function Save-TagsFromGoodMusicFolders {
                         if ($WhatIfPreference) {
                             if (-not $Quiet) {
                                 Write-Host "🔍 [WhatIf] Would tag: $($file.FullName)"
-                                Write-Host ("    👥 Album Artist : {0}" -f $albumArtist)
-                                Write-Host ("    🎤 Track Artist : {0}" -f $albumArtist)
-                                Write-Host ("    💿 Album        : {0}" -f $album)
-                                Write-Host ("    📅 Year         : {0}" -f $year)
-                                Write-Host ("    💽 Disc         : {0}" -f $discNumber)
-                                Write-Host ("    🔢 Track        : {0}" -f $trackNumber)
-                                Write-Host ("    🎵 Title        : {0}" -f $title)
-                                Write-Host ("    🎼 Genres       : {0}" -f (($existingGenres -join ', ') -replace '^\s*$', '<none>'))
+                                if (-not $hideTags) {
+                                    Write-Host ("    👥 Album Artist : {0}" -f $albumArtist)
+                                    Write-Host ("    🎤 Track Artist : {0}" -f $albumArtist)
+                                    Write-Host ("    💿 Album        : {0}" -f $album)
+                                    Write-Host ("    📅 Year         : {0}" -f $year)
+                                    Write-Host ("    💽 Disc         : {0}" -f $discNumber)
+                                    Write-Host ("    🔢 Track        : {0}" -f $trackNumber)
+                                    Write-Host ("    🎵 Title        : {0}" -f $title)
+                                    Write-Host ("    🎼 Genres       : {0}" -f (($existingGenres -join ', ') -replace '^\s*$', '<none>'))
+                                }
                             }
                         }
 
@@ -717,6 +724,9 @@ function Merge-AlbumInArtistFolder {
 .PARAMETER Quiet
     Suppresses verbose output during tagging operations and WhatIf messages for logging.
 
+.PARAMETER hideTags
+    Suppresses detailed tag information display in WhatIf mode, showing only the file path.
+
 .EXAMPLE
     Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -WhatIf
     Processes all good folders from the JSON log file and shows what would be done.
@@ -758,7 +768,9 @@ function Import-LoggedFolders {
         [ValidateSet('Auto', 'JSON', 'Text')]
         [string]$LogFormat = 'Auto',
 
-        [switch]$Quiet
+        [switch]$Quiet,
+
+        [switch]$hideTags
     )
 
     # Validate log file exists
@@ -848,7 +860,7 @@ function Import-LoggedFolders {
 
         try {
             # Tag the folder (this will validate it's still good)
-            $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet
+            $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
 
             if ($taggedFolders) {
                 # Move the successfully tagged folder
