@@ -1,3 +1,12 @@
+function Write-LogEntry {
+    param(
+        [string]$Path,
+        [string]$Value
+    )
+    # Use .NET method to bypass PowerShell WhatIf system
+    [System.IO.File]::AppendAllText($Path, $Value, [System.Text.Encoding]::UTF8)
+}
+
 <#
 .SYNOPSIS
     Checks music folder structures for compliance with expected naming conventions.
@@ -44,7 +53,7 @@
     Returns all folders with good music structure under C:\Music and logs to automatic temp location.
 
 .EXAMPLE
-    Get-ChildItem "C:\Music" -Directory | Find-BadMusicFolderStructure -LogTo "C:\Logs\structure.log"
+    Get-ChildItem "C:\Music" | Where-Object { $_.PSIsContainer } | Find-BadMusicFolderStructure -LogTo "C:\Logs\structure.log"
     Pipes directories to check and logs results to specified file.
 
 .EXAMPLE
@@ -118,14 +127,15 @@ function Find-BadMusicFolderStructure {
         if ($LogTo) {
             $logDir = Split-Path -Path $LogTo -Parent
             if (-not (Test-Path -Path $logDir)) {
-                New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+                New-Item -ItemType Directory -Path $logDir -Force -WhatIf:$false | Out-Null
             }
-            # Don't initialize with empty string to avoid malformed JSON
+            # Initialize a fresh log file
+            "" | Out-File -FilePath $LogTo -Encoding UTF8 -WhatIf:$false
         }
     }
 
     process {
-        $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName })
+        $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object -Unique | ForEach-Object { $_.FullName })
 
         foreach ($folder in $folders) {
             # Check if folder is in blacklist
@@ -175,17 +185,9 @@ function Find-BadMusicFolderStructure {
                             Function = 'Find-BadMusicFolderStructure'
                             Type = 'ArtistFolder'
                         } | ConvertTo-Json -Compress
-                        if ($Quiet) {
-                            Add-Content -Path $LogTo -Value $logEntry -WhatIf:$false
-                        } else {
-                            Add-Content -Path $LogTo -Value $logEntry
-                        }
+                        Write-LogEntry -Path $LogTo -Value "$logEntry`r`n"
                     } else {
-                        if ($Quiet) {
-                            Add-Content -Path $LogTo -Value ("GoodFolder " + ($artistFolderPath)) -WhatIf:$false
-                        } else {
-                            Add-Content -Path $LogTo -Value ("GoodFolder " + ($artistFolderPath))
-                        }
+                        Write-LogEntry -Path $LogTo -Value "GoodFolder $artistFolderPath`r`n"
                     }
                 }
             }
@@ -204,17 +206,9 @@ function Find-BadMusicFolderStructure {
                             Function = 'Find-BadMusicFolderStructure'
                             Type = $badType
                         } | ConvertTo-Json -Compress
-                        if ($Quiet) {
-                            Add-Content -Path $LogTo -Value $logEntry -WhatIf:$false
-                        } else {
-                            Add-Content -Path $LogTo -Value $logEntry
-                        }
+                        Write-LogEntry -Path $LogTo -Value "$logEntry`r`n"
                     } else {
-                        if ($Quiet) {
-                            Add-Content -Path $LogTo -Value ("BadFolder " + ($badFolder)) -WhatIf:$false
-                        } else {
-                            Add-Content -Path $LogTo -Value ("BadFolder " + ($badFolder))
-                        }
+                        Write-LogEntry -Path $LogTo -Value "BadFolder $badFolder`r`n"
                     }
                 }
             }
@@ -227,10 +221,10 @@ function Find-BadMusicFolderStructure {
         }
 
         if ($Good) {
-            $uniqueResults | Where-Object { $_.Status -eq 'Good' } | Select-Object StartingPath
+            $uniqueResults | Where-Object { $_.Status -eq 'Good' } | Select-Object -ExpandProperty StartingPath
         }
         else {
-            $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object StartingPath
+            $uniqueResults | Where-Object { $_.Status -eq 'Bad' } | Select-Object -ExpandProperty StartingPath
         }
         if ($LogTo) {
             if (-not $Quiet) {
@@ -333,10 +327,10 @@ function Save-TagsFromGoodMusicFolders {
         if ($LogTo) {
             $logDir = Split-Path -Path $LogTo -Parent
             if (-not (Test-Path -Path $logDir)) {
-                New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+                New-Item -ItemType Directory -Path $logDir -Force -WhatIf:$false | Out-Null
             }
             # Initialize a fresh log file
-            "" | Out-File -FilePath $LogTo -Encoding UTF8
+            "" | Out-File -FilePath $LogTo -Encoding UTF8 -WhatIf:$false
         }
     }
 
@@ -394,7 +388,7 @@ function Save-TagsFromGoodMusicFolders {
                         $existingGenres = $tagFile.Tag.Genres
 
                         if ($WhatIfPreference) {
-                            if (-not $Quiet) {
+                            if (-not $Quiet -and -not $hideTags) {
                                 Write-Host "🔍 [WhatIf] Would tag: $($file.FullName)"
                                 if (-not $hideTags) {
                                     Write-Host ("    👥 Album Artist : {0}" -f $albumArtist)
@@ -477,17 +471,9 @@ function Save-TagsFromGoodMusicFolders {
                         Reasons = $reasons
                         Type = 'TaggingError'
                     } | ConvertTo-Json -Compress
-                    if ($Quiet) {
-                        [System.IO.File]::AppendAllText($LogTo, "$logEntry`r`n", [System.Text.Encoding]::UTF8)
-                    } else {
-                        [System.IO.File]::AppendAllText($LogTo, "$logEntry`r`n", [System.Text.Encoding]::UTF8)
-                    }
+                    Write-LogEntry -Path $LogTo -Value "$logEntry`r`n"
                 } else {
-                    if ($Quiet) {
-                        [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
-                    } else {
-                        [System.IO.File]::AppendAllText($LogTo, "$reasons`: $folder`r`n", [System.Text.Encoding]::UTF8)
-                    }
+                    Write-LogEntry -Path $LogTo -Value "$reasons`: $folder`r`n"
                 }
             }
             if (-not $Quiet) {
@@ -544,14 +530,14 @@ function Move-GoodFolders {
 
     begin {
         if (-not (Test-Path $DestinationFolder)) {
-            New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
+            New-Item -ItemType Directory -Path $DestinationFolder -Force -WhatIf:$false | Out-Null
         }
         $movedFoldersByArtist = @{}
     }
 
     process {
         # Check if this is an artist folder containing album subfolders
-        $subfolders = Get-ChildItem -LiteralPath $FolderPath -Directory -ErrorAction SilentlyContinue
+        $subfolders = Get-ChildItem -LiteralPath $FolderPath -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer }
         $albumSubfolders = @()
         foreach ($subfolder in $subfolders) {
             if ($subfolder.Name -match '^\d{4} - .+$') {
@@ -592,7 +578,7 @@ function Move-GoodFolders {
 
         $artistDest = Join-Path $DestinationFolder $artist
         if (-not (Test-Path $artistDest)) {
-            New-Item -ItemType Directory -Path $artistDest -Force | Out-Null
+            New-Item -ItemType Directory -Path $artistDest -Force -WhatIf:$false | Out-Null
         }
 
         if ($album) {
@@ -657,7 +643,7 @@ function Move-GoodFolders {
     Moves the folder based on its album artist metadata.
 
 .EXAMPLE
-    Get-ChildItem "C:\Music" -Directory | Merge-AlbumInArtistFolder -DestinationFolder "C:\Organized" -WhatIf
+    Get-ChildItem "C:\Music" | Where-Object { $_.PSIsContainer } | Merge-AlbumInArtistFolder -DestinationFolder "C:\Organized" -WhatIf
     Previews moving all album folders to artist-organized structure.
 
 .NOTES
@@ -686,7 +672,7 @@ function Merge-AlbumInArtistFolder {
         $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
 
         if (-not (Test-Path $DestinationFolder)) {
-            New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
+            New-Item -ItemType Directory -Path $DestinationFolder -Force -WhatIf:$false | Out-Null
         }
     }
 
@@ -725,7 +711,7 @@ function Merge-AlbumInArtistFolder {
         $artistDest = Join-Path $DestinationFolder $albumArtist
         if (-not (Test-Path $artistDest)) {
             if ($PSCmdlet.ShouldProcess($artistDest, "Create directory")) {
-                New-Item -ItemType Directory -Path $artistDest -Force | Out-Null
+                New-Item -ItemType Directory -Path $artistDest -Force -WhatIf:$false | Out-Null
             }
         }
 
@@ -888,6 +874,7 @@ function Import-LoggedFolders {
 
     # Process each folder
     $processedCount = 0
+    $processedEntries = @()
     foreach ($entry in $logEntries) {
         $folderPath = $entry.Path
 
@@ -908,12 +895,46 @@ function Import-LoggedFolders {
                 # Move the successfully tagged folder
                 $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet
                 $processedCount++
+                $processedEntries += $entry
             } else {
                 Write-Warning "Failed to tag folder: $folderPath"
             }
         }
         catch {
             Write-Warning "Error processing folder $folderPath`: $_"
+        }
+    }
+
+    # Remove processed entries from log file
+    if ($processedEntries.Count -gt 0 -and -not $WhatIfPreference) {
+        try {
+            $updatedContent = $logContent
+            foreach ($processedEntry in $processedEntries) {
+                if ($LogFormat -eq 'JSON') {
+                    # For JSON, find and remove the line containing this entry
+                    $entryJson = $processedEntry | ConvertTo-Json -Compress
+                    $updatedContent = $updatedContent -replace [regex]::Escape("$entryJson`r`n"), ""
+                    $updatedContent = $updatedContent -replace [regex]::Escape("$entryJson`n"), ""
+                    $updatedContent = $updatedContent -replace [regex]::Escape($entryJson), ""
+                } else {
+                    # For text format, remove the line
+                    $entryLine = "GoodFolder $($processedEntry.Path)"
+                    $updatedContent = $updatedContent -replace [regex]::Escape("$entryLine`r`n"), ""
+                    $updatedContent = $updatedContent -replace [regex]::Escape("$entryLine`n"), ""
+                    $updatedContent = $updatedContent -replace [regex]::Escape($entryLine), ""
+                }
+            }
+            
+            # Write back the updated content
+            if ($updatedContent.Trim() -ne $logContent.Trim()) {
+                $updatedContent.Trim() | Set-Content -Path $LogFile -Encoding UTF8
+                if (-not $Quiet) {
+                    Write-Host "📝 Removed $($processedEntries.Count) processed entries from log file"
+                }
+            }
+        }
+        catch {
+            Write-Warning "Failed to update log file: $_"
         }
     }
 
