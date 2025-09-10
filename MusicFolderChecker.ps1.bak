@@ -7,29 +7,18 @@ function Find-BadMusicFolderStructure {
 
         [switch]$Good,
 
-        [string]$LogTo,
-
-        [string]$WhatToLog,
-
-        [string]$Blacklist
+        [string]$LogTo
     )
 
     begin {
         $audioExtensions = @(".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma")
-        $patternMain = '(?i)\\([^\\]+)\\\d{4} - [^\\]*(?:CD \d+)?[^\\]*\\\d{2} - .+\.[a-z0-9]+$'
-        $patternDisc = '(?i)\\([^\\]+)\\\d{4} - [^\\]+\\(?:CD|Disc) \d+\\\d{2} - .+\.[a-z0-9]+$'
+        $patternMain = '(?i)\\([^\\]+)\\\d{4} - [^\\]+\\\d{2} - .+\.[a-z0-9]+$'
+        $patternDisc = '(?i)\\([^\\]+)\\\d{4} - [^\\]+\\Disc \d+\\\d{2} - .+\.[a-z0-9]+$'
         $results = @()
-        $loggedGood = @{}
-        $loggedBad = @{}
-        if ($WhatToLog -eq 'Good') { $Good = $true }
     }
 
     process {
         $folders = Get-ChildItem -LiteralPath $StartingPath -Recurse -Directory | Sort-Object -Unique | ForEach-Object { $_.FullName }
-
-        if ($Blacklist) {
-            $folders = $folders | Where-Object { $_ -notlike "*$Blacklist*" }
-        }
 
         foreach ($folder in $folders) {
             Write-Host "🔍 Checking folder: $folder"
@@ -46,17 +35,15 @@ function Find-BadMusicFolderStructure {
                 $artistFolderName = $matches[1]
                 $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\'
                 $results += [PSCustomObject]@{ Status = 'Good'; StartingPath = $artistFolderPath }
-                if ($LogTo -and $Good -and -not $loggedGood.ContainsKey($artistFolderPath)) {
-                    $loggedGood[$artistFolderPath] = $true
-                    Add-Content -Path $LogTo -Value ("GoodFolder " + $artistFolderPath)
+            if( $LogTo -and $Good) {
+                    Add-Content -Path $LogTo -Value ("GoodFolderStructure " + ($artistFolderPath))
                 }
             }
             else {
                 $badFolder = $firstAudioFile.DirectoryName
                 $results += [PSCustomObject]@{ Status = 'Bad'; StartingPath = $badFolder }
-                if ($LogTo -and -not $loggedBad.ContainsKey($badFolder)) {
-                    $loggedBad[$badFolder] = $true
-                    Add-Content -Path $LogTo -Value ("BadFolder " + $badFolder)
+                if ($LogTo) {
+                    Add-Content -Path $LogTo -Value ("BadFolderStructure " + ($badFolder))
                 }
             }
         }

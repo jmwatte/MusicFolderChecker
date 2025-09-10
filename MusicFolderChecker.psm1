@@ -3,6 +3,14 @@ function Write-LogEntry {
         [string]$Path,
         [string]$Value
     )
+    # Ensure we start on a new line by checking if file ends with newline
+    if (Test-Path $Path) {
+        $fileInfo = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
+        if ($fileInfo -and -not $fileInfo.EndsWith("`n")) {
+            # File doesn't end with newline, add one before appending
+            [System.IO.File]::AppendAllText($Path, "`n", [System.Text.Encoding]::UTF8)
+        }
+    }
     # Use .NET method to bypass PowerShell WhatIf system
     [System.IO.File]::AppendAllText($Path, $Value, [System.Text.Encoding]::UTF8)
 }
@@ -112,7 +120,7 @@ function Find-BadMusicFolderStructure {
     begin {
         $audioExtensions = @(".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma")
         $patternMain = '(?i).*\\([^\\]+)\\\d{4} - (?!.*(?:CD|Disc)\d+)[^\\]+\\(?:\d+-\d{2}|\d{2}) - .+\.[a-z0-9]+$'
-        $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\Disc \d+|- CD\d+|)\\(?:\d+-\d{2}|\d{2}) - .+\.[a-z0-9]+$'
+        $patternDisc = '(?i).*\\([^\\]+)\\\d{4} - [^\\]+(?:\\\\(?:Disc|CD)\\s*\\d+|- (?:Disc|CD)\\d+|)\\\\(?:\\d+-\\d{2}|\\d{2}) - .+\\.[a-z0-9]+$'
         $results = @()
 
         # Set default log path if not provided
@@ -134,6 +142,8 @@ function Find-BadMusicFolderStructure {
             # Initialize a fresh log file
             "" | Out-File -FilePath $LogTo -Encoding UTF8 -WhatIf:$false
         }
+        $loggedGood = @{}
+        $loggedBad = @{}
     }
 
     process {
@@ -194,19 +204,52 @@ function Find-BadMusicFolderStructure {
                 continue
             }
 
-            # Find audio files
-            $firstAudioFile = $null
-            foreach ($extension in $audioExtensions) {
-                $firstAudioFile = Get-ChildItem -LiteralPath $folder -File -Filter "*$extension" -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($firstAudioFile) { break }
+            # Check if this is an artist folder containing album subfolders
+            $subfolders = Get-ChildItem -LiteralPath $folder -Directory -ErrorAction SilentlyContinue
+            $albumSubfolders = @()
+            foreach ($subfolder in $subfolders) {
+                if ($subfolder.Name -match '^\d{4} - .+$') {
+                    $albumSubfolders += $subfolder
+                }
             }
 
-            if (-not $firstAudioFile) {
-                $validationResult.Reason = "NoMusicFiles"
-                $validationResult.Details = "No supported audio files found ($($audioExtensions -join ', '))"
-                $validationResult.Status = "Bad"
-                $results += $validationResult
-                continue
+            if ($albumSubfolders) {
+                # This is an artist folder - check if any album subfolder contains music files
+                $hasMusicFiles = $false
+                foreach ($albumFolder in $albumSubfolders) {
+                    foreach ($extension in $audioExtensions) {
+                        $musicFiles = Get-ChildItem -LiteralPath $albumFolder.FullName -File -Filter "*$extension" -ErrorAction SilentlyContinue
+                        if ($musicFiles.Count -gt 0) {
+                            $hasMusicFiles = $true
+                            $firstAudioFile = $musicFiles | Select-Object -First 1
+                            break
+                        }
+                    }
+                    if ($hasMusicFiles) { break }
+                }
+
+                if (-not $hasMusicFiles) {
+                    $validationResult.Reason = "NoMusicFiles"
+                    $validationResult.Details = "No supported audio files found in album subfolders ($($audioExtensions -join ', '))"
+                    $validationResult.Status = "Bad"
+                    $results += $validationResult
+                    continue
+                }
+            } else {
+                # This is an album folder - look for music files directly
+                $firstAudioFile = $null
+                foreach ($extension in $audioExtensions) {
+                    $firstAudioFile = Get-ChildItem -LiteralPath $folder -File -Filter "*$extension" -ErrorAction SilentlyContinue | Select-Object -First 1
+                    if ($firstAudioFile) { break }
+                }
+
+                if (-not $firstAudioFile) {
+                    $validationResult.Reason = "NoMusicFiles"
+                    $validationResult.Details = "No supported audio files found ($($audioExtensions -join ', '))"
+                    $validationResult.Status = "Bad"
+                    $results += $validationResult
+                    continue
+                }
             }
 
             # Try to read the audio file to check for corruption
@@ -236,7 +279,8 @@ function Find-BadMusicFolderStructure {
                 $validationResult.Status = "Good"
                 $results += $validationResult
 
-                if ($LogTo -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All')) {
+                if ($LogTo -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All') -and -not $loggedGood.ContainsKey($artistFolderPath)) {
+                    $loggedGood[$artistFolderPath] = $true
                     if ($LogFormat -eq 'JSON') {
                         $logEntry = @{
                             Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -258,7 +302,8 @@ function Find-BadMusicFolderStructure {
                 $validationResult.Status = "Bad"
                 $results += $validationResult
 
-                if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All')) {
+                if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All') -and -not $loggedBad.ContainsKey($badFolder)) {
+                    $loggedBad[$badFolder] = $true
                     # Determine the type based on folder name
                     $folderName = Split-Path $badFolder -Leaf
                     $badType = if ($folderName -match '^\d{4} - .+$') { 'AlbumFolder' } else { 'ArtistFolder' }
@@ -721,7 +766,9 @@ function Move-GoodFolders {
             $destinationPath = $artistDest
         }
 
-        if ($PSCmdlet.ShouldProcess($destinationPath, "Move from $FolderPath")) {
+        if ($WhatIfPreference) {
+            Write-Host "What if: Moving `"$FolderPath`" to `"$destinationPath`"" -ForegroundColor Yellow
+        } elseif ($PSCmdlet.ShouldProcess($destinationPath, "Move")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
             if (-not $Quiet) {
                 Write-Host "✅ Moved: $FolderPath to $destinationPath"
@@ -841,10 +888,10 @@ function Merge-AlbumInArtistFolder {
             return
         }
 
-        # Create artist folder and move
-        $artistDest = Join-Path $DestinationFolder $albumArtist
         if (-not (Test-Path $artistDest)) {
-            if ($PSCmdlet.ShouldProcess($artistDest, "Create directory")) {
+            if ($WhatIfPreference) {
+                Write-Host "What if: Creating directory `"$artistDest`"" -ForegroundColor Yellow
+            } elseif ($PSCmdlet.ShouldProcess($artistDest, "Create directory")) {
                 New-Item -ItemType Directory -Path $artistDest -Force -WhatIf:$false | Out-Null
             }
         }
@@ -852,7 +899,9 @@ function Merge-AlbumInArtistFolder {
         $folderName = Split-Path $FolderPath -Leaf
         $destinationPath = Join-Path $artistDest $folderName
 
-        if ($PSCmdlet.ShouldProcess($destinationPath, "Move from $FolderPath")) {
+        if ($WhatIfPreference) {
+            Write-Host "What if: Moving `"$FolderPath`" to `"$destinationPath`"" -ForegroundColor Yellow
+        } elseif ($PSCmdlet.ShouldProcess($destinationPath, "Move")) {
             Move-Item -Path $FolderPath -Destination $destinationPath
             Write-Host "✅ Merged: $FolderPath to $destinationPath"
         }
@@ -868,11 +917,18 @@ function Merge-AlbumInArtistFolder {
     filters the entries by status, and processes the folders by tagging their music files
     and moving them to a destination folder. Much cleaner than complex pipeline commands.
 
+    SPECIAL FEATURE: Folders that cannot be processed (due to missing files, permission issues,
+    or other problems) are automatically marked as 'CheckThisGoodOne' in the log file. This
+    prevents them from being re-processed on subsequent runs, allowing you to focus on
+    folders that can be handled automatically while keeping track of problematic ones for
+    manual review.
+
 .PARAMETER LogFile
     Path to the log file to process. Supports both JSON and text formats.
 
 .PARAMETER Status
-    Filter entries by status. Options are 'Good', 'Bad', or 'All'. Default is 'Good'.
+    Filter entries by status. Options are 'Good', 'Bad', 'CheckThisGoodOne', or 'All'. Default is 'Good'.
+    'CheckThisGoodOne' entries are folders that were marked for manual review after processing failed.
 
 .PARAMETER DestinationFolder
     The destination directory where processed folders will be moved.
@@ -900,6 +956,18 @@ function Merge-AlbumInArtistFolder {
     Import-LoggedFolders -LogFile "C:\Logs\structure.json" -DestinationFolder "E:\CorrectedMusic" -Quiet -WhatIf
     Processes folders quietly, showing only essential moving information.
 
+.EXAMPLE
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -Status "CheckThisGoodOne" -WhatIf
+    Shows all folders that were marked for manual review after processing failed.
+
+.EXAMPLE
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -Status "All" -DestinationFolder "E:\CorrectedMusic" -MaxItems 5
+    Processes up to 5 folders of any status (Good, Bad, or CheckThisGoodOne).
+
+.EXAMPLE
+    Import-LoggedFolders -LogFile "C:\Logs\structure.json" -Status "Good" -DestinationFolder "E:\CorrectedMusic" -DetailedLog
+    Processes only Good folders with detailed logging. Problematic folders get marked as CheckThisGoodOne.
+
 .NOTES
     Automatically detects log format if set to 'Auto'.
     Supports -WhatIf and -Confirm parameters for safe operation.
@@ -909,6 +977,13 @@ function Merge-AlbumInArtistFolder {
     messages for the same folder. This is normal behavior - the function performs layered
     validation for safety by checking folder structure both before tagging AND before moving.
     This double-checking ensures data integrity and is not an error.
+
+    CHECKTHISGOODONE WORKFLOW:
+    - Folders that can't be processed are marked as 'CheckThisGoodOne' in the log
+    - These entries are skipped on subsequent runs (when Status='Good')
+    - Use Status='CheckThisGoodOne' to view folders needing manual attention
+    - Use Status='All' to process everything including marked folders
+    - This helps you focus on automatable folders while tracking problematic ones
 #>
 function Import-LoggedFolders {
     [CmdletBinding(SupportsShouldProcess)]
@@ -917,7 +992,7 @@ function Import-LoggedFolders {
         [string]$LogFile,
 
         [Parameter()]
-        [ValidateSet('Good', 'Bad', 'All')]
+        [ValidateSet('Good', 'Bad', 'CheckThisGoodOne', 'All')]
         [string]$Status = 'Good',
 
         [Parameter(Mandatory)]
@@ -969,12 +1044,12 @@ function Import-LoggedFolders {
             # Parse text format
             $logEntries = $logContent -split "`n" | Where-Object { $_ -match '\S' } | ForEach-Object {
                 $line = $_.Trim()
-                if ($line -match '^(GoodFolder|BadFolder)\s+(.+)$') {
+                if ($line -match '^(GoodFolder|BadFolder|CheckThisGoodOne)\s+(.+)$') {
                     [PSCustomObject]@{
-                        Status = if ($matches[1] -eq 'GoodFolder') { 'Good' } else { 'Bad' }
+                        Status = if ($matches[1] -eq 'GoodFolder') { 'Good' } elseif ($matches[1] -eq 'CheckThisGoodOne') { 'CheckThisGoodOne' } else { 'Bad' }
                         Path = $matches[2]
                         Function = 'Find-BadMusicFolderStructure'
-                        Type = if ($matches[1] -eq 'GoodFolder') { 'ArtistFolder' } else { 'AlbumFolder' }
+                        Type = if ($matches[1] -eq 'GoodFolder' -or $matches[1] -eq 'CheckThisGoodOne') { 'ArtistFolder' } else { 'AlbumFolder' }
                     }
                 } else {
                     Write-Warning "Skipping malformed text line: $line"
@@ -1026,6 +1101,9 @@ function Import-LoggedFolders {
         try {
             # Tag the folder (this will validate it's still good)
             $taggedFolders = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
+            if (-not $Quiet) {
+                Write-Host "DEBUG: taggedFolders result for $folderPath = '$taggedFolders'" -ForegroundColor Cyan
+            }
 
             if ($taggedFolders) {
                 # Move the successfully tagged folder
@@ -1039,8 +1117,89 @@ function Import-LoggedFolders {
             } else {
                 # Save-TagsFromGoodMusicFolders already provided specific error messages
                 # Only show generic message if DetailedLog is requested
+                if (-not $Quiet) {
+                    Write-Host "DEBUG: Entering CheckThisGoodOne marking block for $folderPath" -ForegroundColor Magenta
+                }
                 if ($DetailedLog) {
                     Write-Host "📝 [DetailedLog] No files processed in: $folderPath" -ForegroundColor Yellow
+                }
+                
+                # Mark this entry as needing manual review by appending "CheckThisGoodOne" entry
+                # and removing the original "GoodFolder" entry
+                # Note: We do this even during -WhatIf since it's just updating the log file metadata
+                try {
+                    if (-not $Quiet) {
+                        Write-Host "DEBUG: Starting log file update process" -ForegroundColor Magenta
+                    }
+                    
+                    # First, remove the original "GoodFolder" entry
+                    $updatedContent = $logContent
+                    if ($LogFormat -eq 'JSON') {
+                        # For JSON, find and remove the original entry
+                        if (-not $Quiet) {
+                            Write-Host "DEBUG: Removing original JSON entry for $folderPath" -ForegroundColor Cyan
+                        }
+                        $originalEntry = @{
+                            Timestamp = $entry.Timestamp
+                            Status = 'Good'
+                            Path = $folderPath
+                            Function = $entry.Function
+                            Type = $entry.Type
+                        } | ConvertTo-Json -Compress
+                        $updatedContent = $updatedContent -replace [regex]::Escape("$originalEntry`r`n"), ""
+                        $updatedContent = $updatedContent -replace [regex]::Escape("$originalEntry`n"), ""
+                        $updatedContent = $updatedContent -replace [regex]::Escape($originalEntry), ""
+                    } else {
+                        # For text format, remove the original "GoodFolder" line
+                        if (-not $Quiet) {
+                            Write-Host "DEBUG: Removing original text entry for $folderPath" -ForegroundColor Cyan
+                        }
+                        $originalLine = "GoodFolder $folderPath"
+                        $updatedContent = $updatedContent -replace [regex]::Escape("$originalLine`r`n"), ""
+                        $updatedContent = $updatedContent -replace [regex]::Escape("$originalLine`n"), ""
+                        $updatedContent = $updatedContent -replace [regex]::Escape($originalLine), ""
+                    }
+                    
+                    # Write back the updated content (removing original entry)
+                    if ($updatedContent.Trim() -ne $logContent.Trim()) {
+                        [System.IO.File]::WriteAllText($LogFile, $updatedContent.Trim(), [System.Text.Encoding]::UTF8)
+                        if (-not $Quiet) {
+                            Write-Host "DEBUG: Removed original entry for $folderPath" -ForegroundColor Green
+                        }
+                    }
+                    
+                    # Then append the new CheckThisGoodOne entry
+                    if ($LogFormat -eq 'JSON') {
+                        # For JSON format, create a new CheckThisGoodOne entry
+                        if (-not $Quiet) {
+                            Write-Host "DEBUG: Appending CheckThisGoodOne JSON entry for $folderPath" -ForegroundColor Cyan
+                        }
+                        $checkThisEntry = @{
+                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                            Status = 'CheckThisGoodOne'
+                            Path = $folderPath
+                            Function = 'Import-LoggedFolders'
+                            Type = 'ArtistFolder'
+                        } | ConvertTo-Json -Compress
+                        Write-LogEntry -Path $LogFile -Value "$checkThisEntry`r`n"
+                    } else {
+                        # For text format, append the CheckThisGoodOne entry
+                        if (-not $Quiet) {
+                            Write-Host "DEBUG: Appending CheckThisGoodOne text entry for $folderPath" -ForegroundColor Cyan
+                        }
+                        Write-LogEntry -Path $LogFile -Value "CheckThisGoodOne $folderPath`r`n"
+                    }
+                    
+                    if (-not $Quiet) {
+                        if ($WhatIfPreference) {
+                            Write-Host "📝 [WhatIf] Would mark folder for manual review: $folderPath" -ForegroundColor Cyan
+                        } else {
+                            Write-Host "📝 Marked folder for manual review: $folderPath"
+                        }
+                    }
+                }
+                catch {
+                    Write-Warning "Failed to append log entry for manual review: $_"
                 }
             }
         }
@@ -1074,7 +1233,8 @@ function Import-LoggedFolders {
             
             # Write back the updated content
             if ($updatedContent.Trim() -ne $logContent.Trim()) {
-                $updatedContent.Trim() | Set-Content -Path $LogFile -Encoding UTF8
+                # Use .NET method to bypass PowerShell's WhatIf mechanism for log file updates
+                [System.IO.File]::WriteAllText($LogFile, $updatedContent.Trim(), [System.Text.Encoding]::UTF8)
                 if (-not $Quiet) {
                     Write-Host "📝 Removed $($processedEntries.Count) processed entries from log file"
                 }
