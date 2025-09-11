@@ -221,7 +221,7 @@ function Find-BadMusicFolderStructure {
             }
 
             # Check if folder exists and is accessible
-            if (-not (Test-Path $folder)) {
+            if (-not (Test-Path -LiteralPath $folder)) {
                 $validationResult.Reason = "NotFound"
                 $validationResult.Details = "Folder does not exist"
                 $validationResult.Status = "Error"
@@ -1275,7 +1275,7 @@ function Import-LoggedFolders {
     foreach ($entry in $logEntries) {
         $folderPath = $entry.Path
 
-        if (-not (Test-Path $folderPath)) {
+        if (-not (Test-Path -LiteralPath $folderPath)) {
             Write-Host "WARNING: Folder not found, skipping: $folderPath" -ForegroundColor Red
             continue
         }
@@ -1346,7 +1346,7 @@ function Import-LoggedFolders {
                     # Get the destination path for this folder
                     $destinationPath = Get-DestinationPath -SourcePath $folderPath -DestinationFolder $DestinationFolder
                     
-                    if (Test-Path $destinationPath) {
+                    if (Test-Path -LiteralPath $destinationPath) {
                         $corruptFilePath = Join-Path $destinationPath "CORRUPT_FILES.txt"
                         $corruptContent = @"
 CORRUPT OR PROBLEMATIC FILES FOUND
