@@ -30,6 +30,9 @@ This cmdlet returns a table of verbs that are approved for use in PowerShell. Th
 
 You can also use it to check if a specific verb is approved:
 	Get-Verb -Name <verb>
+
+
+
 we will have at least 2 folders in the project structure:
  a src
  b tests
@@ -37,6 +40,62 @@ in a there will be 2 folders : public and private.
 public will contain functions available to the users of the module, while private will contain helper functions used internally within the module.
 the private folder will include ps1 files with 1 function per file. the name of the file will match the name of the function it contains.
 "Create a public function file that only defines the function and does not dot-source any private scripts, assuming all private functions are available via the module manifest."
+
+use this model for the psm1 file:
+this is just an example, adapt as needed.
+```## Load TagLibSharp (required for in-place tag edits on PowerShell 7)
+$moduleRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+# Probe common TagLib dll names (some packages name it taglib-sharp.dll)
+$possibleNames = @('TagLibSharp.dll','taglib-sharp.dll','TagLib.dll')
+$taglibPath = $null
+foreach ($n in $possibleNames) {
+    $p = Join-Path -Path $moduleRoot -ChildPath ("lib\{0}" -f $n)
+    if (Test-Path -LiteralPath $p) { $taglibPath = $p; break }
+}
+try {
+    $already = [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -match 'TagLib' }
+    if (-not $already) {
+        if (Test-Path -LiteralPath $taglibPath) {
+            Add-Type -Path $taglibPath -ErrorAction Stop
+        }
+        else {
+            throw "Missing required dependency TagLibSharp. Run `scripts\Install-TagLibSharp.ps1` or place TagLibSharp.dll into the module's lib\\ folder: $taglibPath"
+        }
+    }
+}
+catch {
+    throw "Failed to load TagLibSharp: $_"
+}
+
+Get-ChildItem -Path "$PSScriptRoot/src/Private/*.ps1" | ForEach-Object {
+    . $_.FullName
+}
+# Import Helpers
+Get-ChildItem -Path "$PSScriptRoot/Helpers/*.ps1" | ForEach-Object {
+    . $_.FullName
+}
+
+# Import public functions
+Get-ChildItem -Path "$PSScriptRoot/src/Public/*.ps1" | ForEach-Object {
+    . $_.FullName
+    Export-ModuleMember -Function $_.BaseName
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 when doing things like this 
 "pwsh.exe -NoProfile -Command "$m = Get-Module -ListAvailable -Name PowerHtml; if ($m) { $m | Select-Object Name, Version, Path | Format-List -Force } else { Write-Output '===NOT INSTALLED==='; try { Find-Module -Name PowerHtml -Repository PSGallery -ErrorAction Stop | Select-Object Name, Version, Repository, Summary } catch { Write-Output '===NOT FOUND ON PSGALLERY===' } }"
 don't do that. Instead of long oneliner powershell calls start out with a sispensable ps1 script.
