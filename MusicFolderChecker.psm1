@@ -1285,20 +1285,60 @@ function Import-LoggedFolders {
         }
 
         try {
-            # Tag the folder (this will validate it's still good)
-            $taggingResult = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
-            $taggedFolders = $taggingResult.GoodFolders
-            $corruptFiles = $taggingResult.CorruptFiles
+            # Check if this is an artist folder containing album subfolders
+            $subfolders = Get-ChildItem -LiteralPath $folderPath -Directory -ErrorAction SilentlyContinue
+            $albumSubfolders = @()
+            foreach ($subfolder in $subfolders) {
+                if ($subfolder.Name -match '^\d{4} - .+$') {
+                    $albumSubfolders += $subfolder.FullName
+                }
+            }
+
+            if ($albumSubfolders) {
+                # This is an artist folder - process each album subfolder individually
+                $allTaggedFolders = @()
+                $allCorruptFiles = @{}
+                
+                foreach ($albumFolder in $albumSubfolders) {
+                    if (-not $Quiet) {
+                        Write-Host "Processing album: $albumFolder"
+                    }
+                    
+                    $albumTaggingResult = Save-TagsFromGoodMusicFolders -FolderPath $albumFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
+                    $albumTaggedFolders = $albumTaggingResult.GoodFolders
+                    $albumCorruptFiles = $albumTaggingResult.CorruptFiles
+                    
+                    if ($albumTaggedFolders) {
+                        $allTaggedFolders += $albumTaggedFolders
+                    }
+                    
+                    # Merge corrupt files
+                    foreach ($key in $albumCorruptFiles.Keys) {
+                        if (-not $allCorruptFiles.ContainsKey($key)) {
+                            $allCorruptFiles[$key] = @()
+                        }
+                        $allCorruptFiles[$key] += $albumCorruptFiles[$key]
+                    }
+                }
+                
+                $taggedFolders = $allTaggedFolders
+                $corruptFiles = $allCorruptFiles
+            } else {
+                # This is a single album folder - process normally
+                $taggingResult = Save-TagsFromGoodMusicFolders -FolderPath $folderPath -WhatIf:$WhatIfPreference -Quiet:$Quiet -hideTags:$hideTags
+                $taggedFolders = $taggingResult.GoodFolders
+                $corruptFiles = $taggingResult.CorruptFiles
+            }
             
             if (-not $Quiet) {
-                Write-Host "DEBUG: taggedFolders result for $folderPath = '$taggedFolders'" -ForegroundColor Cyan
+                Write-Host "DEBUG: taggedFolders result for $folderPath = '$($taggedFolders -join ', ')'" -ForegroundColor Cyan
                 if ($corruptFiles.ContainsKey($folderPath)) {
                     Write-Host "DEBUG: Found $($corruptFiles[$folderPath].Count) corrupt files in $folderPath" -ForegroundColor Yellow
                 }
             }
 
             if ($taggedFolders) {
-                # Move the successfully tagged folder
+                # Move the successfully tagged folder(s)
                 $taggedFolders | Move-GoodFolders -DestinationFolder $DestinationFolder -WhatIf:$WhatIfPreference -Quiet:$Quiet -DuplicateAction:$DuplicateAction
                 
                 # Create corrupt files log in destination if any corrupt files were found
