@@ -1,4 +1,4 @@
-## Enforce pwsh (PowerShell 7+) runtime and load TagLibSharp
+import## Enforce pwsh (PowerShell 7+) runtime and load TagLibSharp
 $requiredMajor = 7
 if ($PSVersionTable.PSVersion.Major -lt $requiredMajor) {
     throw "MusicFolderChecker requires PowerShell $requiredMajor or later. Current version: $($PSVersionTable.PSVersion). Please use 'pwsh' (PowerShell 7+)."

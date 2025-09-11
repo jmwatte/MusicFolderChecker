@@ -37,6 +37,12 @@
     The function honors `ShouldProcess` for safe previewing and uses TagLib-Sharp
     loaded by the module loader. No private scripts are dot-sourced here; this file
     only defines the public function as required by the module structure.
+    
+    # NOTES ABOUT -Move
+    # When -Move is provided the function will perform the configured move after
+    # interactive prompts finish (or immediately for scripted calls). Interactive
+    # prompts validate Year and will re-prompt on invalid input to avoid accidental
+    # moves caused by mistyped values.
 #>
 
 function Update-MusicFolderMetadata {
@@ -65,11 +71,11 @@ function Update-MusicFolderMetadata {
     [Parameter()]
     [string]$DestinationPattern,
 
-        [Parameter()]
-        [switch]$Move,
+    [Parameter()]
+    [switch]$Move,
 
-        [Parameter()]
-        [string]$LogPath,
+    [Parameter()]
+    [string]$LogPath,
 
         
         [Parameter()]
@@ -131,14 +137,36 @@ function Update-MusicFolderMetadata {
                 if (-not $Quiet) { Write-Output "Current Album Artist: $currentAlbumArtist" }
                 if (-not $Quiet) { Write-Output "Current Album       : $currentAlbum" }
                 if (-not $Quiet) { Write-Output "Current Year        : $currentYear" }
+                try {
+                    $resp = Read-Host -Prompt "Enter Album Artist (blank to keep)"
+                    if ($resp -ne '') { $applyAlbumArtist = $resp }
+                    $resp = Read-Host -Prompt "Enter Album (blank to keep)"
+                    if ($resp -ne '') { $applyAlbum = $resp }
 
-                $resp = Read-Host -Prompt "Enter Album Artist (blank to keep)"
-                if ($resp -ne '') { $applyAlbumArtist = $resp }
-                $resp = Read-Host -Prompt "Enter Album (blank to keep)"
-                if ($resp -ne '') { $applyAlbum = $resp }
-                $resp = Read-Host -Prompt "Enter Year (blank to keep)"
-                if ($resp -ne '') {
-                    if ([int]::TryParse($resp, [ref]$null)) { $applyYear = [int]$resp } else { Write-Output "Invalid year entered, skipping year update." }
+                    # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
+                    while ($true) {
+                        $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                        if ($resp -eq '') {
+                            # User chose to keep existing year
+                            break
+                        }
+                        # Try parse integer year
+                        $parsed = $null
+                        if ([int]::TryParse($resp, [ref]$parsed)) {
+                            $applyYear = [int]$parsed
+                            break
+                        }
+                        else {
+                            Write-Output "Invalid year entered. Please enter a four-digit year (e.g. 2011), or press Enter to keep the current value."
+                            # loop continues and user will be prompted again
+                        }
+                    }
+                }
+                catch {
+                    # User cancelled interactive input (ctrl+c) or another error occurred.
+                    if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Warning'; Status='InteractiveCanceled'; Path=$folder; Details = @{ Error = $_.ToString() } } }
+                    Write-Output "Interactive input cancelled. Skipping folder: $folder"
+                    continue
                 }
             }
 
@@ -147,7 +175,11 @@ function Update-MusicFolderMetadata {
             if ($noChanges) {
                 if (-not $Quiet) { Write-Output "No changes for $folder" }
                 # If the user requested a move, proceed to move even when there are no tag changes.
-                if (-not $Move.IsPresent) { continue }
+                if (-not $Move.IsPresent) {
+                    # Log that we skipped because there were no changes and the user did not request a move
+                    if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='SkippedNoChanges'; Path=$folder; Details = @{ Reason='NoRequestedChanges'; AlbumArtist=$applyAlbumArtist; Album=$applyAlbum; Year=$applyYear } } }
+                    continue
+                }
             }
 
             # Folder-level validation: log missing metadata
@@ -165,16 +197,43 @@ function Update-MusicFolderMetadata {
 
             # Apply changes to all audio files in the folder
             $audioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() }
+            # Track whether any file actually received tag updates for this folder
+            $anyTagUpdated = $false
             foreach ($f in $audioFiles) {
+                # Open the file and inspect current tags to determine whether an update is actually required.
+                try {
+                    $t = Invoke-TagLibCreate -Path $f.FullName
+                }
+                catch {
+                    Write-Output "Failed to read tags for $($f.FullName): $_"
+                    continue
+                }
+
+                $curArtist = ($null -ne $t.Tag.AlbumArtists -and $t.Tag.AlbumArtists.Count -gt 0) ? $t.Tag.AlbumArtists[0] : ($null -ne $t.Tag.Performers -and $t.Tag.Performers.Count -gt 0 ? $t.Tag.Performers[0] : '')
+                $curAlbum = $t.Tag.Album
+                $curYear = $t.Tag.Year
+
+                $needUpdate = $false
+                if ($applyAlbumArtist -and $applyAlbumArtist -ne '' -and $applyAlbumArtist -ne $curArtist) { $needUpdate = $true }
+                if ($applyAlbum -and $applyAlbum -ne '' -and $applyAlbum -ne $curAlbum) { $needUpdate = $true }
+                if ($applyYear -and ([int]$applyYear -ne 0) -and $applyYear -ne $curYear) { $needUpdate = $true }
+
+                if (-not $needUpdate) {
+                    if (-not $Quiet) { Write-Output "No tag changes for $($f.FullName)" }
+                    continue
+                }
+
                         if ($PSCmdlet.ShouldProcess($f.FullName, 'Update music tags')) {
                     try {
-                        $t = Invoke-TagLibCreate -Path $f.FullName
+                        # Reuse $t opened above
                         if ($applyAlbumArtist -and $applyAlbumArtist -ne '') { $t.Tag.Performers = @($applyAlbumArtist); $t.Tag.AlbumArtists = @($applyAlbumArtist) }
                         if ($applyAlbum -and $applyAlbum -ne '') { $t.Tag.Album = $applyAlbum }
                         if ($applyYear) { $t.Tag.Year = [uint]$applyYear }
                         $t.Save()
-                                if (-not $Quiet) { Write-Output "Updated: $($f.FullName)" }
-                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='UpdatedTags'; Path=$folder; File=$f.FullName } }
+                        if (-not $Quiet) { Write-Output "Updated: $($f.FullName)" }
+                        if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='UpdatedTags'; Path=$folder; File=$f.FullName } }
+                            # Note that we updated at least one file's tags
+                            $anyTagUpdated = $true
                     }
                     catch {
                         Write-Output "Failed to update tags for $($f.FullName): $_" }
@@ -299,7 +358,9 @@ function Update-MusicFolderMetadata {
                             switch ($OnConflict) {
                                 'Skip' { if (-not $Quiet) { Write-Output "Destination file exists, skipping: $destFile" }; continue }
                                 'Overwrite' { Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue }
-                                'Merge' { /* for files, treat Merge same as Overwrite */ Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue }
+                                'Merge' { # for files, treat Merge same as Overwrite
+                                    Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue
+                                }
                             }
                         }
 
