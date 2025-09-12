@@ -95,7 +95,17 @@ function Update-MusicFolderMetadata {
             elseif (-not $AlbumArtist -and -not $Album -and -not $Year) { $doInteractive = $true }
 
             if ($doInteractive) {
-                if (-not $Quiet) { Write-Output "\nFolder: $folder" }
+                # Normalize WhatIf detection: accept explicit -WhatIf or $WhatIfPreference being 'Inquire'/'Continue' etc.
+                $isWhatIf = $false
+                try {
+                    if ($PSBoundParameters.ContainsKey('WhatIf')) { $isWhatIf = $true }
+                    elseif ($WhatIfPreference -ne $null -and $WhatIfPreference -ne '0' -and $WhatIfPreference -ne 'None') { $isWhatIf = $true }
+                }
+                catch { $isWhatIf = $false }
+
+                if (-not $Quiet) { Write-Output "`nFolder: $folder" }
+                # Provide the full path to the first audio file found so user can infer metadata from path
+                if ($firstAudio -and -not $Quiet) { Write-Output "Representative audio file: $($firstAudio.FullName)" }
                 if (-not $Quiet) { Write-Output "Current Album Artist: $currentAlbumArtist" }
                 if (-not $Quiet) { Write-Output "Current Album       : $currentAlbum" }
                 if (-not $Quiet) { Write-Output "Current Year        : $currentYear" }
@@ -159,6 +169,20 @@ function Update-MusicFolderMetadata {
 
             # Apply changes to all audio files in the folder
             $audioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() }
+            # Precompute non-audio files and audio root so planned moves always include non-audio files
+            $otherFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
+            $audioDirs = $audioFiles | ForEach-Object { $_.DirectoryName } | Sort-Object -Unique
+            if ($audioDirs.Count -eq 1) { $audioRoot = $audioDirs[0] } else {
+                $parts = $audioDirs | ForEach-Object { $_ -split '[\\/]+' }
+                $minLen = ($parts | ForEach-Object { $_.Length } | Measure-Object -Minimum).Minimum
+                $common = @()
+                for ($i = 0; $i -lt $minLen; $i++) {
+                    $val = $parts[0][$i]
+                    if ($parts | Where-Object { $_[$i] -ne $val }) { break }
+                    $common += $val
+                }
+                if ($common.Count -gt 0) { $audioRoot = ($common -join '\\') } else { $audioRoot = $folder }
+            }
             # ...existing tag update code...
             foreach ($f in $audioFiles) {
                 # Open the file and inspect current tags to determine whether an update is actually required.
@@ -298,7 +322,8 @@ function Update-MusicFolderMetadata {
 
                     # Collect planned moves so we can show a concise summary in -WhatIf mode
                     $plannedMoves = @()
-                    $isWhatIf = $PSBoundParameters.ContainsKey('WhatIf')
+                    # Ensure $isWhatIf is defined (from earlier interactive section or default false)
+                    if (-not ($isWhatIf -is [System.Boolean])) { $isWhatIf = $false }
                     foreach ($f in $audioFiles) {
                         # Read/update tags for each file (we already opened and updated files above in the loop; reopen to get current tag values)
                         try {
@@ -336,18 +361,29 @@ function Update-MusicFolderMetadata {
 
                         # Ensure artist/album (and disc) dirs exist when moving (create once per needed dir)
                         if (-not (Test-Path -LiteralPath $artistDir)) {
-                            if (-not $isWhatIf) { if ($PSCmdlet.ShouldProcess($artistDir, 'Create Directory')) { New-Item -ItemType Directory -Path $artistDir -Force | Out-Null } }
-                            else { # WhatIf: don't call ShouldProcess to avoid engine output; record planned directory creation in structured log
+                            if (-not $isWhatIf) {
+                                if ($PSCmdlet.ShouldProcess($artistDir, 'Create Directory')) { [System.IO.Directory]::CreateDirectory($artistDir) | Out-Null }
+                            }
+                            else {
+                                # WhatIf: don't call ShouldProcess to avoid engine output; record planned directory creation in structured log
                                 if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$artistDir; DryRun = $true } }
                             }
                         }
                         if (-not (Test-Path -LiteralPath $albumDir)) {
-                            if (-not $isWhatIf) { if ($PSCmdlet.ShouldProcess($albumDir, 'Create Directory')) { New-Item -ItemType Directory -Path $albumDir -Force | Out-Null } }
-                            else { if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$albumDir; DryRun = $true } } }
+                            if (-not $isWhatIf) {
+                                if ($PSCmdlet.ShouldProcess($albumDir, 'Create Directory')) { [System.IO.Directory]::CreateDirectory($albumDir) | Out-Null }
+                            }
+                            else {
+                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$albumDir; DryRun = $true } }
+                            }
                         }
                         if ($targetDir -ne $albumDir -and -not (Test-Path -LiteralPath $targetDir)) {
-                            if (-not $isWhatIf) { if ($PSCmdlet.ShouldProcess($targetDir, 'Create Directory')) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null } }
-                            else { if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$targetDir; DryRun = $true } } }
+                            if (-not $isWhatIf) {
+                                if ($PSCmdlet.ShouldProcess($targetDir, 'Create Directory')) { [System.IO.Directory]::CreateDirectory($targetDir) | Out-Null }
+                            }
+                            else {
+                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$targetDir; DryRun = $true } }
+                            }
                         }
 
                         # Log planned move action (avoid calling ShouldProcess when -WhatIf to prevent engine output)
@@ -386,13 +422,11 @@ function Update-MusicFolderMetadata {
                     # Move non-audio files (artwork, cue, logs, etc.) into the album root folder so
                     # relative references (e.g. .cue) and cover files remain valid.
                     try {
-                        # Collect non-audio files recursively so artwork, cues, and logs in nested folders
-                        # are also moved into the album root.
-                        $otherFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
+                        # otherFiles and audioRoot are precomputed earlier; use them here
                         if ($otherFiles.Count -gt 0) {
                             foreach ($of in $otherFiles) {
                                 # Preserve source-relative directory structure under the album directory.
-                                $folderRoot = $folder.TrimEnd('\','/')
+                                $folderRoot = $audioRoot.TrimEnd('\','/')
                                 $sourceDir = $of.DirectoryName
                                 $rel = ''
                                 try {
@@ -406,7 +440,7 @@ function Update-MusicFolderMetadata {
                                 # Ensure destination directory exists (or record it in WhatIf)
                                 if (-not (Test-Path -LiteralPath $destDirForOther)) {
                                     if (-not $isWhatIf) {
-                                        if ($PSCmdlet.ShouldProcess($destDirForOther, 'Create Directory')) { New-Item -ItemType Directory -Path $destDirForOther -Force | Out-Null }
+                                        if ($PSCmdlet.ShouldProcess($destDirForOther, 'Create Directory')) { [System.IO.Directory]::CreateDirectory($destDirForOther) | Out-Null }
                                     }
                                     else {
                                         if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$destDirForOther; DryRun = $true } }
@@ -445,7 +479,7 @@ function Update-MusicFolderMetadata {
                     catch { }
                     # If running with -WhatIf, print a concise summary of planned moves for this folder
                     try {
-                        if ($PSBoundParameters.ContainsKey('WhatIf')) {
+                        if ($isWhatIf) {
                             if ($plannedMoves.Count -gt 0) {
                                 if (-not $Quiet) { Write-Output "`nWhatIf planned moves for: $folder ($($plannedMoves.Count))" }
                                 foreach ($p in $plannedMoves) {
