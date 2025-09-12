@@ -82,6 +82,7 @@ Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedM
 Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic' | 
     Update-MusicFolderMetadata -Interactive -DestinationFolder 'E:\_CorrectedMusic' -Move -WhatIf
 ```
+*Note: Use '\' to postpone complex folders (short and unlikely to conflict with album names)*
 
 #### Metadata Collection:
 ```powershell
@@ -100,7 +101,7 @@ Update-MusicFolderMetadata -InputMetadataJson 'C:\Temp\collected_metadata.json' 
 ✅ **Pipeline Input:** Successfully accepts objects with Path property  
 ✅ **Parameter Binding:** Path alias works correctly  
 ✅ **Metadata Loading:** JSON metadata loads and applies automatically  
-✅ **Skip Functionality:** Interactive prompts accept 'skip' input  
+✅ **Skip Functionality:** Interactive prompts accept '\' input  
 ✅ **Blacklist Processing:** Supports comma-separated strings and arrays  
 ✅ **Subtree Skipping:** Entire folder hierarchies are excluded when parent is blacklisted  
 ✅ **JSON Export/Import:** Metadata collection and automated processing work seamlessly  

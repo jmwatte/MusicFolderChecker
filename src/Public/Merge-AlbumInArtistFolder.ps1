@@ -17,11 +17,7 @@ function Merge-AlbumInArtistFolder {
     )
 
     begin {
-        $dllPath = Join-Path $PSScriptRoot "lib\taglib-sharp.dll"
-        if (-not (Test-Path $dllPath)) {
-            throw "TagLib-Sharp.dll not found at $dllPath. Please ensure the DLL is placed in the module's lib directory."
-        }
-        Add-Type -Path $dllPath
+        # TagLib is already loaded at module level
         [TagLib.Id3v2.Tag]::DefaultVersion = 4
         [TagLib.Id3v2.Tag]::ForceDefaultVersion = $true
 

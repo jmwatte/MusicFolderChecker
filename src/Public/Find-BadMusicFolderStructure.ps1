@@ -20,7 +20,7 @@ function Find-BadMusicFolderStructure {
 
         [Parameter()]
         [ValidateSet('Text', 'JSON')]
-        [string]$LogFormat = 'Text',
+        [string]$LogFormat = 'JSON',
 
         [switch]$Quiet,
 
@@ -181,12 +181,9 @@ function Find-BadMusicFolderStructure {
 
             # Try to read the audio file to check for corruption
             try {
-                $dllPath = Join-Path $PSScriptRoot "lib\taglib-sharp.dll"
-                if (Test-Path $dllPath) {
-                    Add-Type -Path $dllPath -ErrorAction SilentlyContinue
-                    [TagLib.File]::Create($firstAudioFile.FullName) | Out-Null
-                    # File is readable
-                }
+                # TagLib is already loaded at module level, just validate the file
+                [TagLib.File]::Create($firstAudioFile.FullName) | Out-Null
+                # File is readable
             }
             catch {
                 $validationResult.Reason = "CorruptedFile"

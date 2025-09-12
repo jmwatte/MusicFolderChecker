@@ -3,7 +3,27 @@
     Interactive and scripted metadata updater for album folders.
 
 EXAMPLE
-    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -AlbumArtist 'Various Artists' -Year 2020 -WhatIf
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Alb                    i                    # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
+                    while ($true) {
+                        if ($SkipMode) {
+                            $resp = Read-Host -Prompt "Enter Year (blank to keep, 'maybe' to postpone this folder)"
+                            if ($resp -eq 'maybe') {
+                                $skippedFolders += $folder
+                                if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
+                                continue
+                            }
+                        } else {
+                            $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                        }) {
+                        $resp = Read-Host -Prompt "Enter Album (blank to keep, 'maybe' to postpone this folder)"
+                        if ($resp -eq 'maybe') {
+                            $skippedFolders += $folder
+                            if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
+                            continue
+                        }
+                    } else {
+                        $resp = Read-Host -Prompt "Enter Album (blank to keep)"
+                    }Artist 'Various Artists' -Year 2020 -WhatIf
 
 #>
 
@@ -149,8 +169,8 @@ function Update-MusicFolderMetadata {
                 if (-not $Quiet) { Write-Output "Current Year        : $currentYear" }
                 try {
                     if ($SkipMode) {
-                        $resp = Read-Host -Prompt "Enter Album Artist (blank to keep, 'skip' to postpone this folder)"
-                        if ($resp -eq 'skip') {
+                        $resp = Read-Host -Prompt "Enter Album Artist (blank to keep, '\' to postpone this folder)"
+                        if ($resp -eq '\') {
                             $skippedFolders += $folder
                             if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
                             continue
@@ -161,8 +181,8 @@ function Update-MusicFolderMetadata {
                     if ($resp -ne '') { $applyAlbumArtist = $resp }
                     
                     if ($SkipMode) {
-                        $resp = Read-Host -Prompt "Enter Album (blank to keep, 'skip' to postpone this folder)"
-                        if ($resp -eq 'skip') {
+                        $resp = Read-Host -Prompt "Enter Album (blank to keep, '\' to postpone this folder)"
+                        if ($resp -eq '\') {
                             $skippedFolders += $folder
                             if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
                             continue
@@ -175,8 +195,8 @@ function Update-MusicFolderMetadata {
                     # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
                     while ($true) {
                         if ($SkipMode) {
-                            $resp = Read-Host -Prompt "Enter Year (blank to keep, 'skip' to postpone this folder)"
-                            if ($resp -eq 'skip') {
+                            $resp = Read-Host -Prompt "Enter Year (blank to keep, '\' to postpone this folder)"
+                            if ($resp -eq '\') {
                                 $skippedFolders += $folder
                                 if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
                                 continue
