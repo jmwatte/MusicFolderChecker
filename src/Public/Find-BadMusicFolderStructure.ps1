@@ -25,7 +25,7 @@ function Find-BadMusicFolderStructure {
         [switch]$Quiet,
 
         [Parameter()]
-        [string[]]$Blacklist,
+        [string[]]$Blacklist,  # Comma-separated list of paths to exclude from scanning
 
         [switch]$Simple  # New parameter for backward compatibility
     )
@@ -73,14 +73,28 @@ function Find-BadMusicFolderStructure {
 
             # Check if folder is in blacklist
             if ($Blacklist) {
+                # Handle both array and comma-separated string formats
+                $blacklistArray = @()
+                foreach ($item in $Blacklist) {
+                    if ($item -match ',') {
+                        # Comma-separated string
+                        $blacklistArray += $item -split ',' | ForEach-Object { $_.Trim() }
+                    } else {
+                        # Array element
+                        $blacklistArray += $item
+                    }
+                }
+                # Remove duplicates
+                $blacklistArray = $blacklistArray | Select-Object -Unique
+                
                 $isBlacklisted = $false
-                foreach ($blacklistedPath in $Blacklist) {
+                foreach ($blacklistedPath in $blacklistArray) {
                     # Normalize paths for comparison (handle trailing slashes, case sensitivity)
                     $normalizedFolder = $folder.TrimEnd('\').ToLower()
                     $normalizedBlacklist = $blacklistedPath.TrimEnd('\').ToLower()
 
-                    # Check if folder path starts with blacklisted path (handles subfolders)
-                    if ($normalizedFolder -eq $normalizedBlacklist -or $normalizedFolder.StartsWith($normalizedBlacklist + '\\')) {
+                    # Check if folder path starts with blacklisted path (skips entire subtree)
+                    if ($normalizedFolder.StartsWith($normalizedBlacklist)) {
                         $isBlacklisted = $true
                         break
                     }

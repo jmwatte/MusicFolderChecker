@@ -11,6 +11,7 @@ function Update-MusicFolderMetadata {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
+        [Alias('Path')]
         [string[]]$FolderPath,
 
         [Parameter()]
@@ -41,12 +42,40 @@ function Update-MusicFolderMetadata {
         [string]$LogPath,
 
         [Parameter()]
+        [string]$MetadataJson,
+
+        [Parameter()]
+        [switch]$SkipMode,
+
+        [Parameter()]
+        [string]$OutputMetadataJson,
+
+        [Parameter()]
         [ValidateSet('Skip','Overwrite','Merge')]
         [string]$OnConflict = 'Skip'
     )
 
     begin {
         $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
+        
+        # Load metadata from JSON if provided
+        $loadedMetadata = @{}
+        if ($MetadataJson -and (Test-Path $MetadataJson)) {
+            try {
+                $jsonContent = Get-Content $MetadataJson -Raw | ConvertFrom-Json
+                foreach ($item in $jsonContent) {
+                    $loadedMetadata[$item.FolderPath] = $item
+                }
+                if (-not $Quiet) { Write-Output "Loaded metadata for $($loadedMetadata.Count) folders from $MetadataJson" }
+            }
+            catch {
+                Write-Output "Warning: Failed to load metadata from $MetadataJson`: $_"
+            }
+        }
+        
+        # Collection for output metadata
+        $collectedMetadata = @()
+        $skippedFolders = @()
     }
 
     process {
@@ -90,9 +119,18 @@ function Update-MusicFolderMetadata {
             $applyAlbum = $Album
             $applyYear = $Year
 
+            # Use loaded metadata if available
+            if ($loadedMetadata.ContainsKey($folder)) {
+                $metadata = $loadedMetadata[$folder]
+                if (-not $applyAlbumArtist -and $metadata.AlbumArtist) { $applyAlbumArtist = $metadata.AlbumArtist }
+                if (-not $applyAlbum -and $metadata.Album) { $applyAlbum = $metadata.Album }
+                if (-not $applyYear -and $metadata.Year) { $applyYear = $metadata.Year }
+                if (-not $Quiet) { Write-Output "Using pre-loaded metadata for $folder" }
+            }
+
             $doInteractive = $false
             if ($Interactive.IsPresent) { $doInteractive = $true }
-            elseif (-not $AlbumArtist -and -not $Album -and -not $Year) { $doInteractive = $true }
+            elseif (-not $AlbumArtist -and -not $Album -and -not $Year -and -not $loadedMetadata.ContainsKey($folder)) { $doInteractive = $true }
 
             if ($doInteractive) {
                 # Normalize WhatIf detection: accept explicit -WhatIf or $WhatIfPreference being 'Inquire'/'Continue' etc.
@@ -110,14 +148,42 @@ function Update-MusicFolderMetadata {
                 if (-not $Quiet) { Write-Output "Current Album       : $currentAlbum" }
                 if (-not $Quiet) { Write-Output "Current Year        : $currentYear" }
                 try {
-                    $resp = Read-Host -Prompt "Enter Album Artist (blank to keep)"
+                    if ($SkipMode) {
+                        $resp = Read-Host -Prompt "Enter Album Artist (blank to keep, 'skip' to postpone this folder)"
+                        if ($resp -eq 'skip') {
+                            $skippedFolders += $folder
+                            if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
+                            continue
+                        }
+                    } else {
+                        $resp = Read-Host -Prompt "Enter Album Artist (blank to keep)"
+                    }
                     if ($resp -ne '') { $applyAlbumArtist = $resp }
-                    $resp = Read-Host -Prompt "Enter Album (blank to keep)"
+                    
+                    if ($SkipMode) {
+                        $resp = Read-Host -Prompt "Enter Album (blank to keep, 'skip' to postpone this folder)"
+                        if ($resp -eq 'skip') {
+                            $skippedFolders += $folder
+                            if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
+                            continue
+                        }
+                    } else {
+                        $resp = Read-Host -Prompt "Enter Album (blank to keep)"
+                    }
                     if ($resp -ne '') { $applyAlbum = $resp }
 
                     # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
                     while ($true) {
-                        $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                        if ($SkipMode) {
+                            $resp = Read-Host -Prompt "Enter Year (blank to keep, 'skip' to postpone this folder)"
+                            if ($resp -eq 'skip') {
+                                $skippedFolders += $folder
+                                if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
+                                continue
+                            }
+                        } else {
+                            $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                        }
                         if ($resp -eq '') {
                             # User chose to keep existing year
                             break
@@ -221,6 +287,18 @@ function Update-MusicFolderMetadata {
                     catch {
                         Write-Output "Failed to update tags for $($f.FullName): $_" }
                 }
+            }
+
+            # Collect metadata for output if requested
+            if ($OutputMetadataJson -and ($applyAlbumArtist -or $applyAlbum -or $applyYear)) {
+                $metadataEntry = @{
+                    FolderPath = $folder
+                    AlbumArtist = $applyAlbumArtist
+                    Album = $applyAlbum
+                    Year = $applyYear
+                    Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                }
+                $collectedMetadata += $metadataEntry
             }
 
             # Optional move: after tag updates, move files to a structured destination when requested
@@ -516,6 +594,27 @@ function Update-MusicFolderMetadata {
                     $errText = $_.ToString()
                     Write-Output ('Failed during move operation for folder ' + $folder + ': ' + $errText)
                 }
+            }
+        }
+    }
+
+    end {
+        # Output collected metadata if requested
+        if ($OutputMetadataJson -and $collectedMetadata.Count -gt 0) {
+            try {
+                $collectedMetadata | ConvertTo-Json -Depth 3 | Out-File -FilePath $OutputMetadataJson -Encoding UTF8
+                if (-not $Quiet) { Write-Output "Exported metadata for $($collectedMetadata.Count) folders to $OutputMetadataJson" }
+            }
+            catch {
+                Write-Output "Warning: Failed to export metadata to $OutputMetadataJson`: $_"
+            }
+        }
+
+        # Report skipped folders
+        if ($skippedFolders.Count -gt 0 -and -not $Quiet) {
+            Write-Output "`nSkipped folders ($($skippedFolders.Count)):"
+            foreach ($skipped in $skippedFolders) {
+                Write-Output "  $skipped"
             }
         }
     }
