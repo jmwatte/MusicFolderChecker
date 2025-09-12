@@ -27,7 +27,13 @@ function Get-MfcLogSummary {
     $lines = Get-Content -LiteralPath $LogPath -ErrorAction Stop | Where-Object { $_ -match '\S' }
     $entries = @()
     foreach ($l in $lines) {
-        try { $o = $l | ConvertFrom-Json -ErrorAction Stop; $entries += $o } catch { }
+        try {
+            $o = $l | ConvertFrom-Json -ErrorAction Stop
+            $entries += $o
+        }
+        catch {
+            # ignore lines that are not valid JSON
+        }
     }
 
     if ($FilterIssueType) { $entries = $entries | Where-Object { $_.IssueType -eq $FilterIssueType } }

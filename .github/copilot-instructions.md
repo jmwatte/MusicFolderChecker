@@ -64,44 +64,66 @@ try {
     }
 }
 catch {
-    throw "Failed to load TagLibSharp: $_"
-}
+    ## Copilot instructions — MusicFolderChecker (PowerShell)
 
-Get-ChildItem -Path "$PSScriptRoot/src/Private/*.ps1" | ForEach-Object {
-    . $_.FullName
-}
-# Import Helpers
-Get-ChildItem -Path "$PSScriptRoot/Helpers/*.ps1" | ForEach-Object {
-    . $_.FullName
-}
+    Short, focused guidance to help an AI contributor be immediately productive in this repository.
 
-# Import public functions
-Get-ChildItem -Path "$PSScriptRoot/src/Public/*.ps1" | ForEach-Object {
-    . $_.FullName
-    Export-ModuleMember -Function $_.BaseName
-}
+    ### Big picture
+    - This is a PowerShell module that inspects and optionally updates album-level metadata and can move music files into a structured destination. Key directories:
+      - `src/Public/` — public function files (one function per file). These files only define the function and are exported via the module loader.
+      - `src/Private/` — private helper functions (one PS1 per function). Private files must not execute top-level code or declare param blocks.
+      - `lib/` — binary dependencies (TagLib-Sharp DLL expected here).
+      - `tests/` — Pester tests.
 
+    ### Key files & patterns
+    - `MusicFolderChecker.psm1` — module loader: loads TagLibSharp from `lib\TagLibSharp.dll`, dot-sources `src/Private/*.ps1` and `src/Public/*.ps1`, then calls `Export-ModuleMember` for public functions.
+    - `MusicFolderChecker.psd1` — module manifest; exported function names and PowerShellVersion live here.
+    - `src/Public/Update-MusicFolderMetadata.ps1` — main example: interactive prompts (`Read-Host`), tag writes using TagLib, `ShouldProcess`/`-WhatIf`, JSONL structured logging via `Write-StructuredLog`, and move logic.
 
+    ### Project conventions (follow exactly)
+    - PowerShell is the default language. On macOS/Linux assume `pwsh` (PowerShell 7.x); on Windows support PowerShell 5.1 compatibility where needed.
+    - Do NOT use `Write-Host`. Use `Write-Output` for pipeline results and `Write-Verbose` for debug. User-facing notices may be `Write-Output` as well.
+    - Always use full cmdlet names (no aliases). Example: `Get-ChildItem -Path` not `gci`.
+    - Public functions: use `[CmdletBinding()]`, provide comment-based help (`<# ... #>`), and accept pipeline input where appropriate.
+    - Private functions: one function per file, filename == function name, no top-level execution.
+    - Use approved verbs from `Get-Verb` for function names.
 
+    ### Dependency & integration notes
+    - TagLib-Sharp is required for tag edits. The loader probes common DLL names in `lib\TagLibSharp.dll` (or `TagLib.dll`). If missing, scripts reference `scripts/Install-TagLibSharp.ps1` as the intended installer.
+    - Structured logs: the module uses JSONL via `Write-StructuredLog` and provides `Get-MfcLogSummary` to summarize logs.
 
+    ### Developer workflows & commands
+    - Import the module for local development:
+    ```powershell
+    Import-Module .\MusicFolderChecker.psm1 -Force
+    ```
+    - Test a single folder interactively (WhatIf for safe preview):
+    ```powershell
+    Update-MusicFolderMetadata -FolderPath 'D:\Album' -DestinationFolder D:\_test\ -Move -WhatIf
+    ```
+    - Create/inspect logs (JSONL): pass `-LogPath .\mfc.log` to functions and summarize with `Get-MfcLogSummary -Path .\mfc.log`.
+    - Run Pester tests:
+    ```powershell
+    # from repo root
+    Invoke-Pester -Script .\tests -OutputFormat NUnitXml -OutputFile .\test-results.xml
+    ```
+    Notes: tests mock `Read-Host` and TagLib interactions where needed; follow existing tests for the mocking pattern.
 
+    ### Testing & mocking guidance
+    - When writing tests for interactive functions, mock `Read-Host` and TagLib helper (`Invoke-TagLibCreate`) to avoid disk I/O.
+    - Prefer unit tests for private helpers in `src/Private` and integration tests for public commands in `src/Public`.
 
+    ### Safety & UX patterns to follow
+    - All destructive filesystem operations must use `ShouldProcess` so `-WhatIf` previews work.
+    - Interactive prompts should validate input (e.g., Year) and re-prompt; if cancelled, log `InteractiveCanceled` to the structured log.
+    - Move behavior: `-Move` is authoritative — moving occurs after prompts finish. If the user left prompts blank and did not ask `-Move`, the code logs `SkippedNoChanges`.
 
+    ### When you modify code
+    - Update `MusicFolderChecker.psd1` to export any new public functions.
+    - Keep the loader pattern: do not introduce public files that execute code at import.
+    - Add or update Pester tests and run them locally before opening PRs.
 
+    ### PowerShell error-handling style note
+    - Avoid using single-line inline `try { ... } catch { ... }` expressions inside larger parenthetical or ternary-like expressions. PowerShell's parser can misinterpret these in complex expressions and attempt to call `Try` as a command, causing runtime errors like "'Try' is not recognized". Prefer multi-line `try { ... } catch { ... }` blocks for robust, unambiguous error handling.
 
-
-
-
-
-
-
-
-when doing things like this 
-"pwsh.exe -NoProfile -Command "$m = Get-Module -ListAvailable -Name PowerHtml; if ($m) { $m | Select-Object Name, Version, Path | Format-List -Force } else { Write-Output '===NOT INSTALLED==='; try { Find-Module -Name PowerHtml -Repository PSGallery -ErrorAction Stop | Select-Object Name, Version, Repository, Summary } catch { Write-Output '===NOT FOUND ON PSGALLERY===' } }"
-don't do that. Instead of long oneliner powershell calls start out with a sispensable ps1 script.
-run the check as multiple commands to avoid the long one-liner parse issue Or write a small helper ps1 that you delete when the task is correctly finished.
-Ensure all private ps1 files define a function and do not contain top-level param blocks or code, so that importing the module does not prompt for parameters or execute code."
-Prefer Splatting over long pwsh commands.Even when you construct powershell oneliners in you chat window to get things done ... prefer splatting or create a small helper ps1.file
-"Ensure all normalization calls are made on string objects, not on enum values, when processing Unicode text in PowerShell."
-Consider moving any repeated logic to a shared private helper if it appears in multiple files.
-always used approved verbs in the naming of functions
+    If anything here is unclear or you want the guide expanded with concrete examples (test mocks, log schema, or the psm1 loader), tell me which area to expand and I will iterate.

@@ -2,47 +2,9 @@
 .SYNOPSIS
     Interactive and scripted metadata updater for album folders.
 
-.DESCRIPTION
-    `Update-MusicFolderMetadata` lets you inspect and update common album-level tags
-    (Album Artist, Album, Year) for folders containing music files. It supports both
-    interactive editing (prompt per-folder) and scripted non-interactive updates via
-    parameters. Uses TagLib-Sharp to write tags; requires the module's `lib\taglib-sharp.dll`.
-
-.PARAMETER FolderPath
-    One or more folder paths to process. Accepts pipeline input.
-
-.PARAMETER AlbumArtist
-    Optional album artist value to set for all processed folders (non-interactive).
-
-.PARAMETER Album
-    Optional album value to set for all processed folders (non-interactive).
-
-.PARAMETER Year
-    Optional year value to set for all processed folders (non-interactive).
-
-.PARAMETER Interactive
-    Switch to enable interactive prompting per folder. Default behavior is interactive
-    when AlbumArtist/Album/Year are not provided.
-
-.PARAMETER Quiet
-    Suppress informational output.
-
-.EXAMPLE
-    Get-ChildItem -Directory C:\Music | Update-MusicFolderMetadata
-
-.EXAMPLE
+EXAMPLE
     Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -AlbumArtist 'Various Artists' -Year 2020 -WhatIf
 
-.NOTES
-    The function honors `ShouldProcess` for safe previewing and uses TagLib-Sharp
-    loaded by the module loader. No private scripts are dot-sourced here; this file
-    only defines the public function as required by the module structure.
-    
-    # NOTES ABOUT -Move
-    # When -Move is provided the function will perform the configured move after
-    # interactive prompts finish (or immediately for scripted calls). Interactive
-    # prompts validate Year and will re-prompt on invalid input to avoid accidental
-    # moves caused by mistyped values.
 #>
 
 function Update-MusicFolderMetadata {
@@ -63,21 +25,21 @@ function Update-MusicFolderMetadata {
         [Parameter()]
         [switch]$Interactive,
 
-        [switch]$Quiet
-        ,
+        [Parameter()]
+        [switch]$Quiet,
+
         [Parameter()]
         [string]$DestinationFolder,
 
-    [Parameter()]
-    [string]$DestinationPattern,
+        [Parameter()]
+        [string]$DestinationPattern,
 
-    [Parameter()]
-    [switch]$Move,
+        [Parameter()]
+        [switch]$Move,
 
-    [Parameter()]
-    [string]$LogPath,
+        [Parameter()]
+        [string]$LogPath,
 
-        
         [Parameter()]
         [ValidateSet('Skip','Overwrite','Merge')]
         [string]$OnConflict = 'Skip'
@@ -197,8 +159,7 @@ function Update-MusicFolderMetadata {
 
             # Apply changes to all audio files in the folder
             $audioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() }
-            # Track whether any file actually received tag updates for this folder
-            $anyTagUpdated = $false
+            # ...existing tag update code...
             foreach ($f in $audioFiles) {
                 # Open the file and inspect current tags to determine whether an update is actually required.
                 try {
@@ -232,8 +193,6 @@ function Update-MusicFolderMetadata {
                         $t.Save()
                         if (-not $Quiet) { Write-Output "Updated: $($f.FullName)" }
                         if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='UpdatedTags'; Path=$folder; File=$f.FullName } }
-                            # Note that we updated at least one file's tags
-                            $anyTagUpdated = $true
                     }
                     catch {
                         Write-Output "Failed to update tags for $($f.FullName): $_" }
@@ -281,6 +240,62 @@ function Update-MusicFolderMetadata {
                     if ($discNumbers.Count -gt 1) { $useDiscFolders = $true }
                     elseif ($discNumbers.Count -eq 1 -and $discNumbers[0] -gt 1) { $useDiscFolders = $true }
 
+                    # Decide album/artist directory once for the entire album (album-level placement)
+                    $albumValSample = $applyAlbum
+                    if (-not $albumValSample -or $albumValSample -eq '') {
+                        # fallback to first audio file's album if none provided
+                        try {
+                            $albumValSample = (Invoke-TagLibCreate -Path $audioFiles[0].FullName).Tag.Album
+                        }
+                        catch {
+                            $albumValSample = 'Unknown Album'
+                        }
+                    }
+                    $artistValSample = $applyAlbumArtist
+                    if (-not $artistValSample -or $artistValSample -eq '') {
+                        try {
+                            $artistValSample = (Invoke-TagLibCreate -Path $audioFiles[0].FullName).Tag.AlbumArtists[0]
+                        }
+                        catch {
+                            $artistValSample = 'Unknown Artist'
+                        }
+                    }
+
+                    $artistSafeSample = & $sanitize $artistValSample
+                    $albumSafeSample = & $sanitize $albumValSample
+                    # compute year sample with proper try/catch (avoid inline Try/ Catch expression)
+                    $yearSampleRaw = ''
+                    if ($applyYear) { $yearSampleRaw = $applyYear }
+                    else {
+                        try {
+                            $yearSampleRaw = (Invoke-TagLibCreate -Path $audioFiles[0].FullName).Tag.Year
+                        }
+                        catch {
+                            $yearSampleRaw = ''
+                        }
+                    }
+                    $yearSafeSample = & $sanitize $yearSampleRaw
+
+                    $albumFolderName = if ($yearSafeSample) { "$yearSafeSample - $albumSafeSample" } else { $albumSafeSample }
+                    $artistDir = Join-Path $DestinationFolder $artistSafeSample
+
+                    # Pick a single album directory candidate (numbered sibling only if base exists at destination).
+                    $albumBaseName = $albumFolderName
+                    $idx = 1
+                    $albumDir = $null
+                    while ($true) {
+                        if ($idx -eq 1) { $candidateName = $albumBaseName } else { $candidateName = "$albumBaseName ($idx)" }
+                        $candidatePath = Join-Path $artistDir $candidateName
+                        if (-not (Test-Path -LiteralPath $candidatePath)) {
+                            $albumDir = $candidatePath
+                            break
+                        }
+                        else {
+                            $idx++
+                            continue
+                        }
+                    }
+
                     foreach ($f in $audioFiles) {
                         # Read/update tags for each file (we already opened and updated files above in the loop; reopen to get current tag values)
                         try {
@@ -300,43 +315,12 @@ function Update-MusicFolderMetadata {
                         $trackVal = & $parseInt $trackRaw
                         $titleVal = $fileTag.Tag.Title
 
-                        $artistSafe = & $sanitize $artistVal
-                        $albumSafe = & $sanitize $albumVal
-                        $yearSafe = & $sanitize $yearVal
+                        # per-file sanitized values not needed for album-level placement; compute only title/track
                         $titleSafe = & $sanitize $titleVal
 
                         $trackSafe = if ($trackVal) { '{0:D2}' -f $trackVal } else { '00' }
 
                         # Build destination directories
-                        $albumFolderName = if ($yearSafe) { "$yearSafe - $albumSafe" } else { $albumSafe }
-                        $artistDir = Join-Path $DestinationFolder $artistSafe
-
-                        # Determine album directory candidate. If an existing album folder
-                        # contains files of a different extension than the current file,
-                        # prefer a numbered sibling folder like 'Album (2)' so different
-                        # formats can coexist.
-                        # New policy: if the base album folder already exists, always place this
-                        # incoming folder into the next numbered sibling (Album (2), Album (3), ...)
-                        # regardless of existing contents. This ensures we don't try to merge or
-                        # infer similarity — the user can inspect duplicates later.
-                        $albumBaseName = $albumFolderName
-                        $idx = 1
-                        $albumDir = $null
-                        while ($true) {
-                            if ($idx -eq 1) { $candidateName = $albumBaseName } else { $candidateName = "$albumBaseName ($idx)" }
-                            $candidatePath = Join-Path $artistDir $candidateName
-                            if (-not (Test-Path -LiteralPath $candidatePath)) {
-                                # Found a non-existing candidate; use it
-                                $albumDir = $candidatePath
-                                break
-                            }
-                            else {
-                                # If idx==1 and base exists, we should try the next number (always create numbered duplicates)
-                                $idx++
-                                continue
-                            }
-                        }
-
                         $targetDir = $albumDir
                         if ($useDiscFolders -and $discVal) {
                             $discSafe = & $sanitize $discVal
@@ -347,8 +331,10 @@ function Update-MusicFolderMetadata {
                         $fileName = "${trackSafe} - ${titleSafe}${ext}"
                         $destFile = Join-Path $targetDir $fileName
 
-                        # Ensure target dir exists when moving
-                        if (-not (Test-Path -LiteralPath $targetDir)) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null }
+                        # Ensure artist/album (and disc) dirs exist when moving (create once per needed dir)
+                        if (-not (Test-Path -LiteralPath $artistDir)) { if ($PSCmdlet.ShouldProcess($artistDir, 'Create Directory')) { New-Item -ItemType Directory -Path $artistDir -Force | Out-Null } }
+                        if (-not (Test-Path -LiteralPath $albumDir)) { if ($PSCmdlet.ShouldProcess($albumDir, 'Create Directory')) { New-Item -ItemType Directory -Path $albumDir -Force | Out-Null } }
+                        if ($targetDir -ne $albumDir -and -not (Test-Path -LiteralPath $targetDir)) { if ($PSCmdlet.ShouldProcess($targetDir, 'Create Directory')) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null } }
 
                         # Log planned move action
                         if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillMove'; Path=$folder; File=$f.FullName; Destination=$destFile; DryRun = ($PSCmdlet.ShouldProcess($f.FullName) -eq $false) } }
@@ -376,6 +362,33 @@ function Update-MusicFolderMetadata {
                             }
                         }
                     }
+                    # Move non-audio files (artwork, cue, logs, etc.) into the album root folder so
+                    # relative references (e.g. .cue) and cover files remain valid.
+                    try {
+                        $otherFiles = Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
+                        if ($otherFiles.Count -gt 0) {
+                            foreach ($of in $otherFiles) {
+                                $destFile = Join-Path $albumDir $of.Name
+                                if (Test-Path -LiteralPath $destFile) {
+                                    switch ($OnConflict) {
+                                        'Skip' { if (-not $Quiet) { Write-Output "Destination file exists, skipping: $destFile" }; continue }
+                                        'Overwrite' { Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue }
+                                        'Merge' { Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue }
+                                    }
+                                }
+                                if ($PSCmdlet.ShouldProcess($of.FullName, "Move file to $destFile")) {
+                                    try {
+                                        Move-Item -LiteralPath $of.FullName -Destination $destFile -Force
+                                        if (-not $Quiet) { Write-Output "Moved: $($of.FullName) -> $destFile" }
+                                    }
+                                    catch {
+                                        Write-Output "Failed to move file $($of.FullName): $_"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
 
                     # Remove source folder if empty
                     try {
