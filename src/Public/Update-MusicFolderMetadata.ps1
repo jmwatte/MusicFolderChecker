@@ -296,6 +296,9 @@ function Update-MusicFolderMetadata {
                         }
                     }
 
+                    # Collect planned moves so we can show a concise summary in -WhatIf mode
+                    $plannedMoves = @()
+                    $isWhatIf = $PSBoundParameters.ContainsKey('WhatIf')
                     foreach ($f in $audioFiles) {
                         # Read/update tags for each file (we already opened and updated files above in the loop; reopen to get current tag values)
                         try {
@@ -332,12 +335,25 @@ function Update-MusicFolderMetadata {
                         $destFile = Join-Path $targetDir $fileName
 
                         # Ensure artist/album (and disc) dirs exist when moving (create once per needed dir)
-                        if (-not (Test-Path -LiteralPath $artistDir)) { if ($PSCmdlet.ShouldProcess($artistDir, 'Create Directory')) { New-Item -ItemType Directory -Path $artistDir -Force | Out-Null } }
-                        if (-not (Test-Path -LiteralPath $albumDir)) { if ($PSCmdlet.ShouldProcess($albumDir, 'Create Directory')) { New-Item -ItemType Directory -Path $albumDir -Force | Out-Null } }
-                        if ($targetDir -ne $albumDir -and -not (Test-Path -LiteralPath $targetDir)) { if ($PSCmdlet.ShouldProcess($targetDir, 'Create Directory')) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null } }
+                        if (-not (Test-Path -LiteralPath $artistDir)) {
+                            if (-not $isWhatIf) { if ($PSCmdlet.ShouldProcess($artistDir, 'Create Directory')) { New-Item -ItemType Directory -Path $artistDir -Force | Out-Null } }
+                            else { # WhatIf: don't call ShouldProcess to avoid engine output; record planned directory creation in structured log
+                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$artistDir; DryRun = $true } }
+                            }
+                        }
+                        if (-not (Test-Path -LiteralPath $albumDir)) {
+                            if (-not $isWhatIf) { if ($PSCmdlet.ShouldProcess($albumDir, 'Create Directory')) { New-Item -ItemType Directory -Path $albumDir -Force | Out-Null } }
+                            else { if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$albumDir; DryRun = $true } } }
+                        }
+                        if ($targetDir -ne $albumDir -and -not (Test-Path -LiteralPath $targetDir)) {
+                            if (-not $isWhatIf) { if ($PSCmdlet.ShouldProcess($targetDir, 'Create Directory')) { New-Item -ItemType Directory -Path $targetDir -Force | Out-Null } }
+                            else { if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$targetDir; DryRun = $true } } }
+                        }
 
-                        # Log planned move action
-                        if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillMove'; Path=$folder; File=$f.FullName; Destination=$destFile; DryRun = ($PSCmdlet.ShouldProcess($f.FullName) -eq $false) } }
+                        # Log planned move action (avoid calling ShouldProcess when -WhatIf to prevent engine output)
+                        if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillMove'; Path=$folder; File=$f.FullName; Destination=$destFile; DryRun = $isWhatIf } }
+                        # Record the planned move for a summary when running with -WhatIf
+                        $plannedMoves += [pscustomobject]@{ Source = $f.FullName; Destination = $destFile; Type = 'Audio' }
 
                         # Handle conflicts per OnConflict
                         if (Test-Path -LiteralPath $destFile) {
@@ -350,25 +366,57 @@ function Update-MusicFolderMetadata {
                             }
                         }
 
-                        if ($PSCmdlet.ShouldProcess($f.FullName, "Move file to $destFile")) {
-                            try {
-                                Move-Item -LiteralPath $f.FullName -Destination $destFile -Force
-                                if (-not $Quiet) { Write-Output "Moved: $($f.FullName) -> $destFile" }
-                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='Moved'; Path=$folder; File=$f.FullName; Destination=$destFile } }
-                            }
-                            catch {
-                                Write-Output "Failed to move file $($f.FullName) to ${destFile}: $($_)"
-                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Error'; Status='MoveFailed'; Path=$folder; File=$f.FullName; Destination=$destFile; Details = @{ Error = $_.ToString() } } }
+                        if ($isWhatIf) {
+                            # In WhatIf mode we skip calling ShouldProcess/Move-Item to avoid engine WhatIf messages; actions are summarized later.
+                        }
+                        else {
+                            if ($PSCmdlet.ShouldProcess($f.FullName, "Move file to $destFile")) {
+                                try {
+                                    Move-Item -LiteralPath $f.FullName -Destination $destFile -Force
+                                    if (-not $Quiet) { Write-Output "Moved: $($f.FullName) -> $destFile" }
+                                    if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='Moved'; Path=$folder; File=$f.FullName; Destination=$destFile } }
+                                }
+                                catch {
+                                    Write-Output "Failed to move file $($f.FullName) to ${destFile}: $($_)"
+                                    if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Error'; Status='MoveFailed'; Path=$folder; File=$f.FullName; Destination=$destFile; Details = @{ Error = $_.ToString() } } }
+                                }
                             }
                         }
                     }
                     # Move non-audio files (artwork, cue, logs, etc.) into the album root folder so
                     # relative references (e.g. .cue) and cover files remain valid.
                     try {
-                        $otherFiles = Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
+                        # Collect non-audio files recursively so artwork, cues, and logs in nested folders
+                        # are also moved into the album root.
+                        $otherFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
                         if ($otherFiles.Count -gt 0) {
                             foreach ($of in $otherFiles) {
-                                $destFile = Join-Path $albumDir $of.Name
+                                # Preserve source-relative directory structure under the album directory.
+                                $folderRoot = $folder.TrimEnd('\','/')
+                                $sourceDir = $of.DirectoryName
+                                $rel = ''
+                                try {
+                                    if ($sourceDir.Length -gt $folderRoot.Length) {
+                                        $rel = $sourceDir.Substring($folderRoot.Length) -replace '^[\\/]+',''
+                                    }
+                                }
+                                catch { $rel = '' }
+
+                                $destDirForOther = if ($rel) { Join-Path $albumDir $rel } else { $albumDir }
+                                # Ensure destination directory exists (or record it in WhatIf)
+                                if (-not (Test-Path -LiteralPath $destDirForOther)) {
+                                    if (-not $isWhatIf) {
+                                        if ($PSCmdlet.ShouldProcess($destDirForOther, 'Create Directory')) { New-Item -ItemType Directory -Path $destDirForOther -Force | Out-Null }
+                                    }
+                                    else {
+                                        if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Info'; Status='WillCreateDirectory'; Path=$destDirForOther; DryRun = $true } }
+                                    }
+                                }
+
+                                $destFile = Join-Path $destDirForOther $of.Name
+                                # Record planned move for non-audio files as well
+                                $plannedMoves += [pscustomobject]@{ Source = $of.FullName; Destination = $destFile; Type = 'Other' }
+
                                 if (Test-Path -LiteralPath $destFile) {
                                     switch ($OnConflict) {
                                         'Skip' { if (-not $Quiet) { Write-Output "Destination file exists, skipping: $destFile" }; continue }
@@ -376,20 +424,37 @@ function Update-MusicFolderMetadata {
                                         'Merge' { Remove-Item -LiteralPath $destFile -Force -ErrorAction SilentlyContinue }
                                     }
                                 }
-                                if ($PSCmdlet.ShouldProcess($of.FullName, "Move file to $destFile")) {
-                                    try {
-                                        Move-Item -LiteralPath $of.FullName -Destination $destFile -Force
-                                        if (-not $Quiet) { Write-Output "Moved: $($of.FullName) -> $destFile" }
-                                    }
-                                    catch {
-                                        Write-Output "Failed to move file $($of.FullName): $_"
+
+                                if ($isWhatIf) {
+                                    # skip actual move in WhatIf mode; summary will show planned moves
+                                }
+                                else {
+                                    if ($PSCmdlet.ShouldProcess($of.FullName, "Move file to $destFile")) {
+                                        try {
+                                            Move-Item -LiteralPath $of.FullName -Destination $destFile -Force
+                                            if (-not $Quiet) { Write-Output "Moved: $($of.FullName) -> $destFile" }
+                                        }
+                                        catch {
+                                            Write-Output "Failed to move file $($of.FullName): $_"
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                     catch { }
-
+                    # If running with -WhatIf, print a concise summary of planned moves for this folder
+                    try {
+                        if ($PSBoundParameters.ContainsKey('WhatIf')) {
+                            if ($plannedMoves.Count -gt 0) {
+                                if (-not $Quiet) { Write-Output "`nWhatIf planned moves for: $folder ($($plannedMoves.Count))" }
+                                foreach ($p in $plannedMoves) {
+                                    if (-not $Quiet) { Write-Output "  $($p.Source) -> $($p.Destination)" }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
                     # Remove source folder if empty
                     try {
                         if ((Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue).Count -eq 0) { Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue }
