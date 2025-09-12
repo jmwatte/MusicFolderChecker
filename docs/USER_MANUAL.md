@@ -60,6 +60,51 @@ Log schema highlights
 - `IssueType`: e.g., `MissingYear`, `MissingAlbumArtist`, `InvalidTrackNumber`
 - `Path`, `File`, `Destination`, `Details` (object with specifics)
 
+Problem 4: Complex Folder Structures
+-----------------------------------
+**Issue:** Some folders may have unusual structures requiring manual review
+
+**Solution:** Skip mode allows deferring complex cases for later manual handling
+
+### 📋 Workflow Recommendations
+
+#### Discovery Phase:
+```powershell
+# Find folders with structural issues
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic','E:\_test' | 
+    Where-Object { $_.IsValid -eq $false } | 
+    Select-Object -First 20
+```
+
+#### Interactive Preview:
+```powershell
+# Interactive processing with skip option
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic' | 
+    Update-MusicFolderMetadata -Interactive -DestinationFolder 'E:\_CorrectedMusic' -Move -WhatIf
+```
+
+#### Metadata Collection:
+```powershell
+# Collect metadata for automation
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic' | 
+    Update-MusicFolderMetadata -Interactive -OutputMetadataJson 'C:\Temp\collected_metadata.json' -SkipMode
+```
+
+#### Automated Processing:
+```powershell
+# Process using collected metadata
+Update-MusicFolderMetadata -InputMetadataJson 'C:\Temp\collected_metadata.json' -DestinationFolder 'E:\_CorrectedMusic' -Move -LogPath 'C:\Temp\automation_run.jsonl'
+```
+
+### 🔍 Testing Results
+✅ **Pipeline Input:** Successfully accepts objects with Path property  
+✅ **Parameter Binding:** Path alias works correctly  
+✅ **Metadata Loading:** JSON metadata loads and applies automatically  
+✅ **Skip Functionality:** Interactive prompts accept 'skip' input  
+✅ **Blacklist Processing:** Supports comma-separated strings and arrays  
+✅ **Subtree Skipping:** Entire folder hierarchies are excluded when parent is blacklisted  
+✅ **JSON Export/Import:** Metadata collection and automated processing work seamlessly  
+
 Utilities
 ---------
 `Get-MfcLogSummary -LogPath <path>` summarizes the JSONL log and provides counts by issue type and level.
