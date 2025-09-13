@@ -100,7 +100,9 @@ function Find-BadMusicFolderStructure {
         [Parameter()]
         [string[]]$FoldersToSkip,  # Comma-separated list of paths to exclude from scanning
 
-        [switch]$Simple  # New parameter for backward compatibility
+        [switch]$Simple,  # New parameter for backward compatibility
+
+        [switch]$AnalyzeStructure  # Enhanced analysis with structure type detection
     )
 
     begin {
@@ -324,6 +326,32 @@ function Find-BadMusicFolderStructure {
     }
 
     end {
+        # If AnalyzeStructure is requested, enhance results with structure analysis
+        if ($AnalyzeStructure) {
+            $enhancedResults = @()
+            foreach ($result in $results) {
+                if ($result.Status -ne "Skipped" -and $result.Status -ne "Error") {
+                    try {
+                        $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path
+                        $enhancedResult = $result | Select-Object *,
+                            @{Name="StructureType"; Expression={$structureAnalysis.StructureType}},
+                            @{Name="Confidence"; Expression={$structureAnalysis.Confidence}},
+                            @{Name="StructureDetails"; Expression={$structureAnalysis.Details -join "; "}},
+                            @{Name="Recommendations"; Expression={$structureAnalysis.Recommendations -join "; "}},
+                            @{Name="Metadata"; Expression={$structureAnalysis.Metadata}}
+                        $enhancedResults += $enhancedResult
+                    }
+                    catch {
+                        # If analysis fails, return original result
+                        $enhancedResults += $result
+                    }
+                } else {
+                    $enhancedResults += $result
+                }
+            }
+            $results = $enhancedResults
+        }
+
         if ($Simple) {
             # Backward compatibility: return boolean result
             $uniqueResults = $results | Group-Object -Property Path | ForEach-Object {
