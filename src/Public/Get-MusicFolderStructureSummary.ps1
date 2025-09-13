@@ -6,9 +6,13 @@ function Get-MusicFolderStructureSummary {
     .DESCRIPTION
         Takes the output from Find-BadMusicFolderStructure -AnalyzeStructure and provides
         a comprehensive summary of folder types, confidence levels, and recommendations.
+        Can read results from pipeline, parameter, or log file.
 
     .PARAMETER AnalysisResults
         The results from Find-BadMusicFolderStructure with -AnalyzeStructure parameter.
+
+    .PARAMETER LogPath
+        Path to a JSON log file containing structure analysis results.
 
     .PARAMETER OutputFormat
         Format for the output. Valid values: 'Table', 'List', 'JSON'.
@@ -17,17 +21,28 @@ function Get-MusicFolderStructureSummary {
         $results = Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure
         Get-MusicFolderStructureSummary -AnalysisResults $results
 
+    .PARAMETER ExcludePatterns
+        Array of patterns to exclude from the summary. Supports wildcards and partial matches.
+
     .EXAMPLE
         $results = Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure
-        Get-MusicFolderStructureSummary -AnalysisResults $results -OutputFormat JSON
+        Get-MusicFolderStructureSummary -AnalysisResults $results -ExcludePatterns '*temp*','*backup*'
+
+    .EXAMPLE
+        Get-MusicFolderStructureSummary -LogPath 'C:\temp\analysis.log' -OutputFormat List
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory, ValueFromPipeline, ParameterSetName='Pipeline')]
         [PSCustomObject[]]$AnalysisResults,
 
+        [Parameter(Mandatory, ParameterSetName='LogFile')]
+        [string]$LogPath,
+
         [ValidateSet('Table', 'List', 'JSON')]
-        [string]$OutputFormat = 'Table'
+        [string]$OutputFormat = 'Table',
+
+        [string[]]$ExcludePatterns
     )
 
     begin {
@@ -35,7 +50,67 @@ function Get-MusicFolderStructureSummary {
     }
 
     process {
-        $collectedResults += $AnalysisResults
+        if ($PSCmdlet.ParameterSetName -eq 'LogFile') {
+            # Read results from log file
+            if (-not (Test-Path $LogPath)) {
+                throw "Log file not found: $LogPath"
+            }
+
+            try {
+                $logContent = Get-Content $LogPath -Raw
+                $logLines = $logContent -split "`r`n" | Where-Object { $_ -and $_.Trim() }
+
+                foreach ($line in $logLines) {
+                    try {
+                        $logEntry = $line | ConvertFrom-Json
+
+                        # Convert log entry back to analysis result format
+                        $result = [PSCustomObject]@{
+                            Path = $logEntry.Path
+                            IsValid = $logEntry.Status -eq 'Good'
+                            Reason = $logEntry.Reason
+                            Details = $logEntry.Details
+                            Status = $logEntry.Status
+                        }
+
+                        # Add structure analysis fields if present in log
+                        if ($logEntry.StructureType) {
+                            $result | Add-Member -MemberType NoteProperty -Name 'StructureType' -Value $logEntry.StructureType -Force
+                            $result | Add-Member -MemberType NoteProperty -Name 'Confidence' -Value $logEntry.Confidence -Force
+                            $result | Add-Member -MemberType NoteProperty -Name 'StructureDetails' -Value $logEntry.StructureDetails -Force
+                            $result | Add-Member -MemberType NoteProperty -Name 'Recommendations' -Value $logEntry.Recommendations -Force
+                            $result | Add-Member -MemberType NoteProperty -Name 'Metadata' -Value $logEntry.Metadata -Force
+                        }
+
+                        $collectedResults += $result
+                    }
+                    catch {
+                        Write-Warning "Failed to parse log entry: $line"
+                    }
+                }
+            }
+            catch {
+                throw "Failed to read log file: $_"
+            }
+        }
+        else {
+            # Process pipeline input
+            $filteredResults = $AnalysisResults
+            if ($ExcludePatterns) {
+                $filteredResults = $AnalysisResults | Where-Object {
+                    $folderName = Split-Path $_.Path -Leaf
+                    $shouldInclude = $true
+                    foreach ($pattern in $ExcludePatterns) {
+                        if ($folderName -like $pattern -or $_.Path -like $pattern) {
+                            $shouldInclude = $false
+                            break
+                        }
+                    }
+                    $shouldInclude
+                }
+            }
+            $collectedResults += $filteredResults
+        }
     }
 
     end {

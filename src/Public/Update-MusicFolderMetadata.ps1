@@ -52,6 +52,9 @@
 .PARAMETER OnConflict
     How to handle file conflicts during moves. Valid values: 'Skip', 'Overwrite', 'Merge'. Default is 'Skip'.
 
+.PARAMETER PreserveTrackArtists
+    For compilation albums (Various Artists), preserve individual track artists instead of overwriting them with the album artist. Default is true for compilations.
+
 .INPUTS
     System.String
     You can pipe folder paths to Update-MusicFolderMetadata.
@@ -78,6 +81,10 @@
 .EXAMPLE
     Get-Content 'C:\Temp\log.jsonl' | ConvertFrom-Json | Select-Object -ExpandProperty Path | Update-MusicFolderMetadata -Interactive -SkipMode
     Processes folders from JSONL log entries with interactive skip capability
+
+.EXAMPLE
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Compilations\Various Artists - 2020 Hits' -AlbumArtist 'Various Artists' -PreserveTrackArtists
+    Updates compilation album metadata while preserving individual track artists
 
 .NOTES
     Author: MusicFolderChecker Module
@@ -125,10 +132,8 @@ function Update-MusicFolderMetadata {
         [Parameter()]
         [string]$MetadataJson,
 
-        [Parameter()]
-        [switch]$SkipMode,
-
-        [Parameter()]
+    [Parameter()]
+    [switch]$PreserveTrackArtists,        [Parameter()]
         [string]$OutputMetadataJson,
 
         [Parameter()]
@@ -358,7 +363,21 @@ function Update-MusicFolderMetadata {
                         if ($PSCmdlet.ShouldProcess((Split-Path $f.FullName -Leaf), 'Update music tags')) {
                     try {
                         # Reuse $t opened above
-                        if ($applyAlbumArtist -and $applyAlbumArtist -ne '') { $t.Tag.Performers = @($applyAlbumArtist); $t.Tag.AlbumArtists = @($applyAlbumArtist) }
+                        if ($applyAlbumArtist -and $applyAlbumArtist -ne '') {
+                            # For compilations (Various Artists), preserve individual track artists unless explicitly told not to
+                            if ($applyAlbumArtist -eq 'Various Artists' -or $applyAlbumArtist -eq 'V.A.' -or $applyAlbumArtist -eq 'VA') {
+                                $t.Tag.AlbumArtists = @($applyAlbumArtist)
+                                # Preserve original track artist unless PreserveTrackArtists is false
+                                if (-not $PreserveTrackArtists) {
+                                    $t.Tag.Performers = @($applyAlbumArtist)
+                                }
+                                # If PreserveTrackArtists is true, don't overwrite Performers
+                            } else {
+                                # For regular albums, set both album artist and track artist
+                                $t.Tag.Performers = @($applyAlbumArtist)
+                                $t.Tag.AlbumArtists = @($applyAlbumArtist)
+                            }
+                        }
                         if ($applyAlbum -and $applyAlbum -ne '') { $t.Tag.Album = $applyAlbum }
                         if ($applyYear) { $t.Tag.Year = [uint]$applyYear }
                         $t.Save()

@@ -76,6 +76,81 @@ Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Good
 - `-LogTo`: Save results to file (auto-generated if not specified)
 - `-LogFormat`: 'JSON' or 'Text'
 - `-Quiet`: Suppress console output
+- `-AnalyzeStructure`: Enable enhanced semantic structure analysis with confidence scoring
+
+### Enhanced Structure Analysis
+
+**New Feature:** The `-AnalyzeStructure` parameter provides intelligent semantic analysis beyond simple pattern matching.
+
+**Structure Types Detected:**
+- **ArtistFolder**: `Artist/Album1, Artist/Album2` (no audio at artist level)
+- **SimpleAlbum**: `Album/audiofiles` only
+- **MixedAlbum**: ⚠️ `Album/audiofiles + Album/SubAlbum1` (AMBIGUOUS - needs review)
+- **MultiDiscAlbum**: `Album/Disc1, Album/Disc2`
+- **CompilationFolder**: `Various Artists/Artist1-Album`
+- **AmbiguousStructure**: Can't determine - needs user review
+- **NonMusicFolder**: No audio files found
+
+**Usage:**
+```powershell
+# Enhanced analysis with structure detection
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure
+
+# Combined with exclusions
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure -FoldersToSkip 'E:\Music\temp','E:\Music\backup'
+```
+
+**Analysis Results Include:**
+- `StructureType`: Classified folder type
+- `Confidence`: 0.0-1.0 confidence score
+- `StructureDetails`: Analysis reasoning
+- `Recommendations`: Suggested processing actions
+- `Metadata`: Detailed folder statistics
+
+### Get-MusicFolderStructureSummary
+
+Provides comprehensive summaries of structure analysis results with beautiful reporting.
+
+**Usage:**
+```powershell
+# Get analysis results and create summary
+$results = Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure
+Get-MusicFolderStructureSummary -AnalysisResults $results
+
+# Filter from summary (post-analysis exclusion)
+Get-MusicFolderStructureSummary -AnalysisResults $results -ExcludePatterns '*temp*','*backup*'
+
+# Different output formats
+Get-MusicFolderStructureSummary -AnalysisResults $results -OutputFormat JSON
+```
+
+**Parameters:**
+- `-AnalysisResults`: Results from Find-BadMusicFolderStructure -AnalyzeStructure (mandatory, accepts pipeline)
+- `-OutputFormat`: 'Table', 'List', or 'JSON'
+- `-ExcludePatterns`: Wildcard patterns to exclude from summary
+
+**Sample Output:**
+```
+🎵 Music Folder Structure Analysis Summary
+========================================
+
+📊 Overall Statistics:
+  Total folders analyzed: 150
+  High confidence (>80%): 120
+  Needs manual review: 5
+
+📁 Structure Breakdown:
+  ArtistFolder: 45 folders (avg confidence: 0.85)
+    Examples: Radiohead, Nirvana, Tool
+  MixedAlbum: 5 folders (avg confidence: 0.3)
+    Examples: Compilations, Live Shows
+  SimpleAlbum: 95 folders (avg confidence: 0.82)
+    Examples: 1997 - OK Computer, 1991 - Nevermind
+
+⚠️ Cases Needing Review:
+  Compilations - MixedAlbum (0.3)
+  Live Shows - MixedAlbum (0.3)
+```
 
 ### Save-TagsFromGoodMusicFolders
 Extracts metadata from folder names and applies it to audio file tags.
@@ -219,6 +294,18 @@ Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\_Correc
     Select-Object -First 20
 ```
 
+#### Enhanced Structure Analysis:
+```powershell
+# Analyze folder structures with confidence scoring
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure -FoldersToSkip 'E:\_CorrectedMusic' |
+    Get-MusicFolderStructureSummary -Output Table
+
+# Get detailed analysis for ambiguous structures
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -AnalyzeStructure |
+    Where-Object { $_.StructureType -eq 'AmbiguousStructure' } |
+    Get-MusicFolderStructureSummary -Output List -ExcludePatterns '*Compilation*'
+```
+
 #### Interactive Preview:
 ```powershell
 # Interactive processing with skip option
@@ -248,6 +335,11 @@ Update-MusicFolderMetadata -InputMetadataJson 'C:\Temp\collected_metadata.json' 
 ✅ **FoldersToSkip Processing:** Supports comma-separated strings and arrays
 ✅ **Subtree Skipping:** Entire folder hierarchies are excluded when parent is in folders to skip
 ✅ **JSON Export/Import:** Metadata collection and automated processing work seamlessly
+✅ **Enhanced Structure Analysis:** -AnalyzeStructure parameter provides semantic classification with confidence scoring
+✅ **Structure Type Detection:** Correctly identifies ArtistFolder, SimpleAlbum, MixedAlbum, MultiDiscAlbum, CompilationFolder, AmbiguousStructure, NonMusicFolder
+✅ **Confidence Scoring:** Provides reliable certainty metrics (0.0-1.0) for all classifications
+✅ **Report Filtering:** -ExcludePatterns works at report-time for Get-MusicFolderStructureSummary
+✅ **Multiple Output Formats:** Table, List, and JSON formats work correctly for structure summaries
 
 ### Processing order and moving behavior
 

@@ -130,8 +130,6 @@ function Find-BadMusicFolderStructure {
             # Initialize a fresh log file
             "" | Out-File -FilePath $LogTo -Encoding UTF8 -WhatIf:$false
         }
-        $loggedGood = @{}
-        $loggedBad = @{}
     }
 
     process {
@@ -270,57 +268,17 @@ function Find-BadMusicFolderStructure {
 
             $fullPath = $firstAudioFile.FullName
             if ($fullPath -match $patternMain -or $fullPath -match $patternDisc) {
-                $artistFolderName = $matches[1]
-                $artistFolderPath = ($fullPath -split '\\')[0..(($fullPath -split '\\').IndexOf($artistFolderName))] -join '\\'
                 $validationResult.IsValid = $true
                 $validationResult.Reason = "Valid"
                 $validationResult.Details = "Matches expected folder structure"
                 $validationResult.Status = "Good"
                 $results += $validationResult
-
-                if ($LogTo -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All') -and -not $loggedGood.ContainsKey($artistFolderPath)) {
-                    $loggedGood[$artistFolderPath] = $true
-                    if ($LogFormat -eq 'JSON') {
-                        $logEntry = @{
-                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-                            Status = 'Good'
-                            Path = $artistFolderPath
-                            Function = 'Find-BadMusicFolderStructure'
-                            Type = 'ArtistFolder'
-                        } | ConvertTo-Json -Compress
-                        Write-LogEntry -Path $LogTo -Value "$logEntry`r`n"
-                    } else {
-                        Write-LogEntry -Path $LogTo -Value "GoodFolder $artistFolderPath`r`n"
-                    }
-                }
             }
             else {
-                $badFolder = $firstAudioFile.DirectoryName
                 $validationResult.Reason = "BadStructure"
                 $validationResult.Details = "Audio files found but folder structure doesn't match expected pattern"
                 $validationResult.Status = "Bad"
                 $results += $validationResult
-
-                if ($LogTo -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All') -and -not $loggedBad.ContainsKey($badFolder)) {
-                    $loggedBad[$badFolder] = $true
-                    # Determine the type based on folder name
-                    $folderName = Split-Path $badFolder -Leaf
-                    $badType = if ($folderName -match '^\d{4} - .+$') { 'AlbumFolder' } else { 'ArtistFolder' }
-                    if ($LogFormat -eq 'JSON') {
-                        $logEntry = @{
-                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-                            Status = 'Bad'
-                            Path = $badFolder
-                            Function = 'Find-BadMusicFolderStructure'
-                            Type = $badType
-                            Reason = $validationResult.Reason
-                            Details = $validationResult.Details
-                        } | ConvertTo-Json -Compress
-                        Write-LogEntry -Path $LogTo -Value "$logEntry`r`n"
-                    } else {
-                        Write-LogEntry -Path $LogTo -Value "BadFolder $badFolder ($($validationResult.Reason))`r`n"
-                    }
-                }
             }
         }
     }
@@ -350,6 +308,74 @@ function Find-BadMusicFolderStructure {
                 }
             }
             $results = $enhancedResults
+        }
+
+        # Log results after all processing is complete (including structure analysis)
+        if ($LogTo) {
+            $loggedGood = @{}
+            $loggedBad = @{}
+
+            foreach ($result in $results) {
+                if ($result.Status -eq "Good" -and ($WhatToLog -eq 'Good' -or $WhatToLog -eq 'All') -and -not $loggedGood.ContainsKey($result.Path)) {
+                    $loggedGood[$result.Path] = $true
+                    if ($LogFormat -eq 'JSON') {
+                        $logEntry = @{
+                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                            Status = $result.Status
+                            Path = $result.Path
+                            Function = 'Find-BadMusicFolderStructure'
+                            Type = 'ArtistFolder'
+                            Reason = $result.Reason
+                            Details = $result.Details
+                        }
+
+                        # Add structure analysis fields if available
+                        if ($result.StructureType) {
+                            $logEntry.StructureType = $result.StructureType
+                            $logEntry.Confidence = $result.Confidence
+                            $logEntry.StructureDetails = $result.StructureDetails
+                            $logEntry.Recommendations = $result.Recommendations
+                            $logEntry.Metadata = $result.Metadata
+                        }
+
+                        $logEntryJson = $logEntry | ConvertTo-Json -Compress
+                        Write-LogEntry -Path $LogTo -Value "$logEntryJson`r`n"
+                    } else {
+                        Write-LogEntry -Path $LogTo -Value "GoodFolder $($result.Path)`r`n"
+                    }
+                }
+                elseif ($result.Status -eq "Bad" -and ($WhatToLog -eq 'Bad' -or $WhatToLog -eq 'All') -and -not $loggedBad.ContainsKey($result.Path)) {
+                    $loggedBad[$result.Path] = $true
+                    $folderName = Split-Path $result.Path -Leaf
+                    $badType = if ($folderName -match '^\d{4} - .+$') { 'AlbumFolder' } else { 'ArtistFolder' }
+
+                    if ($LogFormat -eq 'JSON') {
+                        $logEntry = @{
+                            Timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                            Status = $result.Status
+                            Path = $result.Path
+                            Function = 'Find-BadMusicFolderStructure'
+                            Type = $badType
+                            Reason = $result.Reason
+                            Details = $result.Details
+                        }
+
+                        # Add structure analysis fields if available
+                        if ($result.StructureType) {
+                            $logEntry.StructureType = $result.StructureType
+                            $logEntry.Confidence = $result.Confidence
+                            $logEntry.StructureDetails = $result.StructureDetails
+                            $logEntry.Recommendations = $result.Recommendations
+                            $logEntry.Metadata = $result.Metadata
+                        }
+
+                        $logEntryJson = $logEntry | ConvertTo-Json -Compress
+                        Write-LogEntry -Path $LogTo -Value "$logEntryJson`r`n"
+                    } else {
+                        Write-LogEntry -Path $LogTo -Value "BadFolder $($result.Path) ($($result.Reason))`r`n"
+                    }
+                }
+            }
         }
 
         if ($Simple) {
