@@ -1,0 +1,20 @@
+# Test script to demonstrate SkipMode functionality
+# This shows how the '\' skip feature works in interactive mode
+
+Write-Output "=== SkipMode Feature Demo ==="
+Write-Output ""
+Write-Output "The SkipMode parameter adds the ability to postpone folders during interactive processing."
+Write-Output ""
+Write-Output "When you use -Interactive -SkipMode together, you'll see prompts like:"
+Write-Output "  'Enter Album Artist (blank to keep, '\' to postpone this folder)'"
+Write-Output ""
+Write-Output "Usage examples:"
+Write-Output "  Update-MusicFolderMetadata -FolderPath 'C:\Music\ComplexAlbum' -Interactive -SkipMode"
+Write-Output "  Find-BadMusicFolderStructure -StartingPath 'E:\Music' | Update-MusicFolderMetadata -Interactive -SkipMode -WhatIf"
+Write-Output ""
+Write-Output "Benefits:"
+Write-Output "  - Handle complex folders that need research later"
+Write-Output "  - Process folders in batches without losing track of skipped ones"
+Write-Output "  - Get a summary of all skipped folders at the end"
+Write-Output ""
+Write-Output "The feature is now fully implemented and ready to use!"

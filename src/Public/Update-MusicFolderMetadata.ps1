@@ -44,7 +44,7 @@
     Path to JSON file containing pre-defined metadata for folders.
 
 .PARAMETER SkipMode
-    Switch parameter. When specified with -Interactive, adds '\' option to postpone folders.
+    When used with -Interactive, allows entering '\' during prompts to postpone/skip complex folders for later processing. Skipped folders are collected and reported at the end.
 
 .PARAMETER OutputMetadataJson
     Path to save collected metadata as JSON for future automated processing.
@@ -113,6 +113,9 @@ function Update-MusicFolderMetadata {
 
         [Parameter()]
         [switch]$Interactive,
+
+        [Parameter()]
+        [switch]$SkipMode,
 
         [Parameter()]
         [switch]$Quiet,
