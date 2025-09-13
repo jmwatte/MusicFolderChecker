@@ -1,6 +1,56 @@
 <#
 .SYNOPSIS
-    Saves metadata tags to music files in folders with good structure.
+    Extracts metadata from folder names and updates audio file tags accordingly.
+
+.DESCRIPTION
+    Save-TagsFromGoodMusicFolders reads properly structured music folder names and applies
+    the extracted metadata (artist, album, year, track numbers) to the embedded audio file tags.
+    It validates folder structure before processing and logs any issues encountered.
+
+.PARAMETER FolderPath
+    Path to the music folder to process. Accepts pipeline input.
+
+.PARAMETER LogTo
+    Optional path to save processing results. If not specified, automatically creates a timestamped log.
+
+.PARAMETER LogFormat
+    Format for the log file. Valid values: 'Text', 'JSON'. Default is 'JSON'.
+
+.PARAMETER Quiet
+    Switch parameter. When specified, suppresses detailed console output.
+
+.PARAMETER hideTags
+    Switch parameter. When specified, suppresses detailed tag information display.
+
+.PARAMETER FoldersToSkip
+    Array of paths to exclude from processing. Supports comma-separated strings and arrays.
+
+.INPUTS
+    System.String
+    You can pipe folder paths to Save-TagsFromGoodMusicFolders.
+
+.OUTPUTS
+    PSCustomObject
+    Returns an object with GoodFolders and CorruptFiles properties.
+
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath 'E:\Music\Artist\2020 - Album'
+    Processes the folder and updates all audio file tags with extracted metadata
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Good | Save-TagsFromGoodMusicFolders -Quiet
+    Finds good folders and tags their audio files without console output
+
+.EXAMPLE
+    Save-TagsFromGoodMusicFolders -FolderPath 'E:\Music\Artist\2020 - Album' -LogTo 'C:\Temp\tagging.log' -WhatIf
+    Shows what tags would be applied without actually modifying files
+
+.NOTES
+    Author: MusicFolderChecker Module
+    Requires TagLib-Sharp.dll for audio file processing
+    Validates folder structure before processing
+    Preserves existing genre tags when updating other metadata
+    Logs corrupt or problematic files for manual review
 #>
 function Save-TagsFromGoodMusicFolders {
     [CmdletBinding(SupportsShouldProcess)]
@@ -19,7 +69,7 @@ function Save-TagsFromGoodMusicFolders {
         [switch]$hideTags,
 
         [Parameter()]
-        [string[]]$Blacklist
+        [string[]]$FoldersToSkip
     )
 
     begin {
@@ -45,7 +95,7 @@ function Save-TagsFromGoodMusicFolders {
 
     process {
         # Safety: verify compliance before tagging
-        $validationResults = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet -Blacklist:$Blacklist -Simple:$false
+        $validationResults = Find-BadMusicFolderStructure -StartingPath $FolderPath -Good -Quiet:$Quiet -FoldersToSkip:$FoldersToSkip -Simple:$false
         
         # Handle both old and new result formats for backward compatibility
         if ($validationResults -is [array] -and $validationResults.Count -gt 0 -and $validationResults[0].PSObject.Properties.Name -contains 'IsValid') {
@@ -76,9 +126,9 @@ function Save-TagsFromGoodMusicFolders {
                             Write-Host "ℹ️  Folder structure doesn't match expected pattern: $FolderPath"
                         }
                     }
-                    "Blacklisted" {
+                    "Skipped" {
                         if (-not $Quiet) {
-                            Write-Host "🚫 Skipping blacklisted folder: $FolderPath"
+                            Write-Host "🚫 Skipping folder (in folders to skip): $FolderPath"
                         }
                     }
                     "NotFound" {

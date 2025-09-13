@@ -1,6 +1,44 @@
 <#
 .SYNOPSIS
-    Merges album folders into artist subfolders based on metadata.
+    Merges album folders into artist subfolders based on embedded metadata.
+
+.DESCRIPTION
+    Merge-AlbumInArtistFolder reads the album artist from audio file metadata and moves the folder
+    into the appropriate artist subfolder structure. This helps organize music libraries by artist.
+
+.PARAMETER FolderPath
+    Path to the album folder to merge. Accepts pipeline input.
+
+.PARAMETER DestinationFolder
+    Root destination directory where artist subfolders will be created.
+
+.PARAMETER DuplicateAction
+    How to handle duplicate folders. Valid values: 'Overwrite', 'Skip', 'Rename'. Default is 'Rename'.
+
+.INPUTS
+    System.String
+    You can pipe folder paths to Merge-AlbumInArtistFolder.
+
+.OUTPUTS
+    None. This function provides console output and moves folders.
+
+.EXAMPLE
+    Merge-AlbumInArtistFolder -FolderPath 'E:\Temp\Album1' -DestinationFolder 'E:\Music'
+    Reads album artist from files in Album1 and moves it to E:\Music\ArtistName\Album1
+
+.EXAMPLE
+    Get-ChildItem 'E:\Unsorted' -Directory | Merge-AlbumInArtistFolder -DestinationFolder 'E:\Music' -WhatIf
+    Shows what would happen when merging all subfolders from E:\Unsorted
+
+.EXAMPLE
+    Merge-AlbumInArtistFolder -FolderPath 'E:\Temp\Album1' -DestinationFolder 'E:\Music' -DuplicateAction 'Skip'
+    Merges the album but skips if the destination already exists
+
+.NOTES
+    Author: MusicFolderChecker Module
+    Requires TagLib-Sharp.dll for reading audio metadata
+    Creates artist directories automatically if they don't exist
+    Uses the first album artist found in the audio files
 #>
 function Merge-AlbumInArtistFolder {
     [CmdletBinding(SupportsShouldProcess)]

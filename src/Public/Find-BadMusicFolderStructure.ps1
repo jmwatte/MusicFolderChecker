@@ -1,7 +1,80 @@
 <#
 .SYNOPSIS
-    Checks music folder structures for compliance with expected naming conventions.
-    Automatically logs results to $env:TEMP\MusicFolderChecker\ if no log path is specified.
+    Scans music folder structures and validates them against expected naming conventions.
+    Identifies folders with good structure, bad structure, or structural issues.
+    Automatically logs results to a timestamped file in $env:TEMP\MusicFolderChecker\ if no log path is specified.
+
+.DESCRIPTION
+    Find-BadMusicFolderStructure recursively scans a starting directory and validates music folder structures.
+    It checks for proper artist/album/year organization and identifies folders that need restructuring.
+
+    Expected folder structure:
+    - ArtistName\YYYY - AlbumName\NN - TrackName.ext
+    - ArtistName\YYYY - AlbumName\Disc X\NN - TrackName.ext (for multi-disc albums)
+
+    The function can skip specific paths to exclude entire directory trees from scanning.
+    FoldersToSkip supports both comma-separated strings and PowerShell arrays.
+
+.PARAMETER StartingPath
+    The root directory path to begin scanning. This parameter is mandatory and accepts pipeline input.
+
+.PARAMETER Good
+    Switch parameter. When specified, returns only folders with good structure.
+
+.PARAMETER LogTo
+    Optional path to save scan results. If not specified, automatically creates a timestamped log file
+    in $env:TEMP\MusicFolderChecker\. Supports both JSON and text formats.
+
+.PARAMETER WhatToLog
+    Specifies which types of folders to log. Valid values: 'Good', 'Bad', 'All'. Default is 'All'.
+
+.PARAMETER LogFormat
+    Format for the log file. Valid values: 'Text', 'JSON'. Default is 'JSON'.
+
+.PARAMETER Quiet
+    Switch parameter. When specified, suppresses console output during scanning.
+
+.PARAMETER FoldersToSkip
+    Array of paths to exclude from scanning. Supports both comma-separated strings and PowerShell arrays.
+    When a folder path starts with any skipped path, the entire subtree is skipped.
+
+.PARAMETER Simple
+    Switch parameter for backward compatibility. Returns boolean results instead of detailed objects.
+
+.INPUTS
+    System.String
+    You can pipe folder paths to Find-BadMusicFolderStructure.
+
+.OUTPUTS
+    PSCustomObject or System.Boolean
+    Returns detailed validation objects with Path, IsValid, Reason, Details, and Status properties.
+    With -Simple switch, returns boolean values.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music'
+    Scans the E:\Music directory and returns detailed validation results for all folders.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Good -Quiet
+    Scans for good folders only, suppressing console output.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\Music\Various Artists','E:\Music\_Archive'
+    Scans E:\Music but excludes the specified artist folders and their subfolders.
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music' -LogTo 'C:\Temp\scan_results.json' -LogFormat JSON
+    Scans and saves detailed JSON results to the specified file.
+
+.EXAMPLE
+    Get-ChildItem 'E:\Music' -Directory | Find-BadMusicFolderStructure -Simple
+    Uses pipeline input and returns simple boolean results for backward compatibility.
+
+.NOTES
+    Author: MusicFolderChecker Module
+    Requires TagLib-Sharp.dll for audio file validation
+    Automatically creates log directory if it doesn't exist
+    FoldersToSkip comparison is case-insensitive and handles trailing slashes
 #>
 function Find-BadMusicFolderStructure {
     [CmdletBinding(SupportsShouldProcess)]
@@ -25,7 +98,7 @@ function Find-BadMusicFolderStructure {
         [switch]$Quiet,
 
         [Parameter()]
-        [string[]]$Blacklist,  # Comma-separated list of paths to exclude from scanning
+        [string[]]$FoldersToSkip,  # Comma-separated list of paths to exclude from scanning
 
         [switch]$Simple  # New parameter for backward compatibility
     )
@@ -71,37 +144,37 @@ function Find-BadMusicFolderStructure {
                 Status = "Unknown"
             }
 
-            # Check if folder is in blacklist
-            if ($Blacklist) {
+            # Check if folder is in folders to skip
+            if ($FoldersToSkip) {
                 # Handle both array and comma-separated string formats
-                $blacklistArray = @()
-                foreach ($item in $Blacklist) {
+                $foldersToSkipArray = @()
+                foreach ($item in $FoldersToSkip) {
                     if ($item -match ',') {
                         # Comma-separated string
-                        $blacklistArray += $item -split ',' | ForEach-Object { $_.Trim() }
+                        $foldersToSkipArray += $item -split ',' | ForEach-Object { $_.Trim() }
                     } else {
                         # Array element
-                        $blacklistArray += $item
+                        $foldersToSkipArray += $item
                     }
                 }
                 # Remove duplicates
-                $blacklistArray = $blacklistArray | Select-Object -Unique
+                $foldersToSkipArray = $foldersToSkipArray | Select-Object -Unique
                 
-                $isBlacklisted = $false
-                foreach ($blacklistedPath in $blacklistArray) {
+                $isSkipped = $false
+                foreach ($skippedPath in $foldersToSkipArray) {
                     # Normalize paths for comparison (handle trailing slashes, case sensitivity)
                     $normalizedFolder = $folder.TrimEnd('\').ToLower()
-                    $normalizedBlacklist = $blacklistedPath.TrimEnd('\').ToLower()
+                    $normalizedSkipped = $skippedPath.TrimEnd('\').ToLower()
 
-                    # Check if folder path starts with blacklisted path (skips entire subtree)
-                    if ($normalizedFolder.StartsWith($normalizedBlacklist)) {
-                        $isBlacklisted = $true
+                    # Check if folder path starts with skipped path (skips entire subtree)
+                    if ($normalizedFolder.StartsWith($normalizedSkipped)) {
+                        $isSkipped = $true
                         break
                     }
                 }
-                if ($isBlacklisted) {
-                    $validationResult.Reason = "Blacklisted"
-                    $validationResult.Details = "Folder is in blacklist"
+                if ($isSkipped) {
+                    $validationResult.Reason = "Skipped"
+                    $validationResult.Details = "Folder is in folders to skip"
                     $validationResult.Status = "Skipped"
                     $results += $validationResult
                     continue

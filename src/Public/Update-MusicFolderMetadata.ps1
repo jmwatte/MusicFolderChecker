@@ -1,30 +1,91 @@
 <#
 .SYNOPSIS
-    Interactive and scripted metadata updater for album folders.
+    Interactive and scripted metadata updater for music album folders with optional file relocation.
 
-EXAMPLE
-    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Alb                    i                    # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
-                    while ($true) {
-                        if ($SkipMode) {
-                            $resp = Read-Host -Prompt "Enter Year (blank to keep, 'maybe' to postpone this folder)"
-                            if ($resp -eq 'maybe') {
-                                $skippedFolders += $folder
-                                if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
-                                continue
-                            }
-                        } else {
-                            $resp = Read-Host -Prompt "Enter Year (blank to keep)"
-                        }) {
-                        $resp = Read-Host -Prompt "Enter Album (blank to keep, 'maybe' to postpone this folder)"
-                        if ($resp -eq 'maybe') {
-                            $skippedFolders += $folder
-                            if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
-                            continue
-                        }
-                    } else {
-                        $resp = Read-Host -Prompt "Enter Album (blank to keep)"
-                    }Artist 'Various Artists' -Year 2020 -WhatIf
+.DESCRIPTION
+    Update-MusicFolderMetadata is the main function for processing music folders. It can work in interactive
+    mode (prompting for metadata) or scripted mode (using provided parameters). The function can update
+    embedded audio file tags and optionally move folders to a destination with proper organization.
 
+    In interactive mode with SkipMode, users can enter '\' to postpone processing complex folders.
+    The function supports loading/saving metadata from/to JSON files for automation workflows.
+
+.PARAMETER FolderPath
+    Path(s) to music folder(s) to process. Accepts pipeline input and has 'Path' alias. Mandatory parameter.
+
+.PARAMETER AlbumArtist
+    Album artist name to apply to all audio files in the folder(s).
+
+.PARAMETER Album
+    Album name to apply to all audio files in the folder(s).
+
+.PARAMETER Year
+    Release year to apply to all audio files in the folder(s).
+
+.PARAMETER Interactive
+    Switch parameter. When specified, prompts user for metadata values not provided as parameters.
+
+.PARAMETER Quiet
+    Switch parameter. When specified, suppresses detailed console output.
+
+.PARAMETER DestinationFolder
+    Destination directory for moving processed folders. Required when using -Move.
+
+.PARAMETER DestinationPattern
+    Custom pattern for destination folder organization (not yet implemented).
+
+.PARAMETER Move
+    Switch parameter. When specified, moves folders to DestinationFolder after processing.
+
+.PARAMETER LogPath
+    Path to save structured JSONL log entries for audit and troubleshooting.
+
+.PARAMETER MetadataJson
+    Path to JSON file containing pre-defined metadata for folders.
+
+.PARAMETER SkipMode
+    Switch parameter. When specified with -Interactive, adds '\' option to postpone folders.
+
+.PARAMETER OutputMetadataJson
+    Path to save collected metadata as JSON for future automated processing.
+
+.PARAMETER OnConflict
+    How to handle file conflicts during moves. Valid values: 'Skip', 'Overwrite', 'Merge'. Default is 'Skip'.
+
+.INPUTS
+    System.String
+    You can pipe folder paths to Update-MusicFolderMetadata.
+
+.OUTPUTS
+    None directly, but writes to console, log files, and optionally moves files.
+
+.EXAMPLE
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive
+    Processes the folder interactively, prompting for any missing metadata
+
+.EXAMPLE
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -AlbumArtist 'Artist Name' -Album 'Album Title' -Year 2020 -Move -DestinationFolder 'E:\Processed'
+    Updates metadata and moves the folder to organized destination
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music' | Update-MusicFolderMetadata -Interactive -SkipMode -WhatIf
+    Finds folders and processes them interactively with skip option in preview mode
+
+.EXAMPLE
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -MetadataJson 'C:\Temp\metadata.json' -OutputMetadataJson 'C:\Temp\updated_metadata.json'
+    Loads metadata from file, processes folder, and saves updated metadata
+
+.EXAMPLE
+    Get-Content 'C:\Temp\log.jsonl' | ConvertFrom-Json | Select-Object -ExpandProperty Path | Update-MusicFolderMetadata -Interactive -SkipMode
+    Processes folders from JSONL log entries with interactive skip capability
+
+.NOTES
+    Author: MusicFolderChecker Module
+    Requires TagLib-Sharp.dll for audio file processing
+    Supports WhatIf for safe preview of all operations
+    Interactive mode with SkipMode uses '\' to postpone complex folders
+    Automatically creates destination directories as needed
+    Preserves existing metadata when only partial updates are requested
 #>
 
 function Update-MusicFolderMetadata {

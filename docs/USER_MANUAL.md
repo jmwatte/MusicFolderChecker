@@ -3,9 +3,9 @@ MusicFolderChecker - User Manual
 
 Overview
 --------
-MusicFolderChecker is a PowerShell module to validate, fix, and relocate music album folders using embedded tag data. It supports interactive and scripted workflows, automatic folder normalization, and structured JSON logging for dry-runs and audit.
+MusicFolderChecker is a comprehensive PowerShell module for validating, fixing, and organizing music album folders using embedded tag data. It supports interactive workflows, automated batch processing, structured logging, and seamless integration with music library management tools.
 
-Quick start
+Quick Start
 -----------
 Import the module in PowerShell 7 (pwsh):
 
@@ -14,19 +14,162 @@ Import-Module C:\Users\<you>\Documents\PowerShell\Modules\MusicFolderChecker\Mus
 Get-Command -Module MusicFolderChecker
 ```
 
-Main function
--------------
-`Update-MusicFolderMetadata` — inspects/updates album-level tags and optionally moves files to a destination folder with a consistent structure.
+Core Functions
+--------------
 
-Basic usage:
+### Update-MusicFolderMetadata
+**Main function** for processing music folders with metadata updates and optional relocation.
 
+**Key Features:**
+- Interactive or scripted metadata correction
+- Skip mode with '\' keyword for postponing complex folders
+- JSON metadata import/export for automation
+- Automatic folder structure validation
+- Optional file relocation with conflict handling
+
+**Basic Usage:**
 ```powershell
-# Interactive: prompts per folder
-Get-ChildItem -Directory C:\Music\ToFix | Update-MusicFolderMetadata -Interactive -DestinationFolder D:\CorrectedMusic -Move -LogPath C:\Temp\mfc_run.jsonl -WhatIf
+# Interactive processing
+Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive
 
-# Non-interactive: set album-level values and move
-Update-MusicFolderMetadata -FolderPath 'E:\Temp\Album1' -AlbumArtist 'Various' -Album 'New Album' -Year 2020 -Move -DestinationFolder D:\Music -LogPath C:\Temp\mfc_run.jsonl
+# Scripted processing with move
+Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -AlbumArtist 'Artist Name' -Album 'Album Title' -Year 2020 -Move -DestinationFolder 'E:\Processed'
 ```
+
+**Parameters:**
+- `-FolderPath`: Music folder(s) to process (mandatory, accepts pipeline)
+- `-AlbumArtist`, `-Album`, `-Year`: Metadata values to apply
+- `-Interactive`: Prompt for missing metadata values
+- `-SkipMode`: Enable '\' option to postpone folders in interactive mode
+- `-Move`: Move folders to destination after processing
+- `-DestinationFolder`: Target directory for moved folders
+- `-LogPath`: JSONL log file for audit trail
+- `-MetadataJson`: Load metadata from JSON file
+- `-OutputMetadataJson`: Save collected metadata to JSON
+- `-OnConflict`: Handle move conflicts ('Skip', 'Overwrite', 'Merge')
+
+### Find-BadMusicFolderStructure
+Scans folder structures and validates against expected naming conventions.
+
+**Expected Structure:**
+```
+ArtistName\YYYY - AlbumName\NN - TrackName.ext
+ArtistName\YYYY - AlbumName\Disc X\NN - TrackName.ext
+```
+
+**Usage:**
+```powershell
+# Basic scan
+Find-BadMusicFolderStructure -StartingPath 'E:\Music'
+
+# Scan with folders to skip
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\Music\Various Artists','E:\Music\_Archive'
+
+# Find only good folders
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Good
+```
+
+**Parameters:**
+- `-StartingPath`: Root directory to scan (mandatory)
+- `-Good`: Return only well-structured folders
+- `-FoldersToSkip`: Paths to exclude (supports arrays and comma-separated strings)
+- `-LogTo`: Save results to file (auto-generated if not specified)
+- `-LogFormat`: 'JSON' or 'Text'
+- `-Quiet`: Suppress console output
+
+### Save-TagsFromGoodMusicFolders
+Extracts metadata from folder names and applies it to audio file tags.
+
+**Usage:**
+```powershell
+# Process single folder
+Save-TagsFromGoodMusicFolders -FolderPath 'E:\Music\Artist\2020 - Album'
+
+# Process multiple folders
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Good | Save-TagsFromGoodMusicFolders
+```
+
+**Parameters:**
+- `-FolderPath`: Folder to process (accepts pipeline)
+- `-LogTo`: Save processing results
+- `-FoldersToSkip`: Paths to exclude
+- `-Quiet`: Suppress output
+- `-hideTags`: Hide detailed tag information
+
+### Move-GoodFolders
+Moves validated folders to destination with proper artist/album organization.
+
+**Usage:**
+```powershell
+# Move single folder
+Move-GoodFolders -FolderPath 'E:\Temp\GoodAlbum' -DestinationFolder 'E:\Music'
+
+# Move from scan results
+Find-BadMusicFolderStructure -StartingPath 'E:\Temp' -Good | Move-GoodFolders -DestinationFolder 'E:\Music'
+```
+
+**Parameters:**
+- `-FolderPath`: Folder to move (accepts pipeline)
+- `-DestinationFolder`: Target directory
+- `-DuplicateAction`: Handle conflicts ('Rename', 'Skip', 'Overwrite')
+- `-Quiet`: Suppress output
+
+### Import-LoggedFolders
+Processes folders listed in log files with tagging and optional relocation.
+
+**Usage:**
+```powershell
+# Process from JSON log
+Import-LoggedFolders -LogFile 'C:\Temp\scan_results.json' -DestinationFolder 'E:\Processed'
+
+# Process specific status
+Import-LoggedFolders -LogFile 'C:\Temp\scan_results.json' -Status 'CheckThisGoodOne' -MaxItems 5
+```
+
+**Parameters:**
+- `-LogFile`: Log file to process (mandatory)
+- `-Status`: Filter by status ('Good', 'Bad', 'CheckThisGoodOne', 'All')
+- `-DestinationFolder`: Target for moved folders
+- `-MaxItems`: Limit number of folders to process
+- `-DuplicateAction`: Handle conflicts
+
+### Merge-AlbumInArtistFolder
+Organizes album folders into artist subfolders based on metadata.
+
+**Usage:**
+```powershell
+# Merge single album
+Merge-AlbumInArtistFolder -FolderPath 'E:\Temp\Album1' -DestinationFolder 'E:\Music'
+
+# Merge multiple albums
+Get-ChildItem 'E:\Unsorted' -Directory | Merge-AlbumInArtistFolder -DestinationFolder 'E:\Music'
+```
+
+**Parameters:**
+- `-FolderPath`: Album folder to merge (accepts pipeline)
+- `-DestinationFolder`: Root destination directory
+- `-DuplicateAction`: Handle conflicts
+
+### Get-MfcLogSummary
+Analyzes JSONL log files and provides statistical summaries.
+
+**Usage:**
+```powershell
+# Basic summary
+Get-MfcLogSummary -LogPath 'C:\Temp\mfc_run.jsonl'
+
+# Filter by issue type
+Get-MfcLogSummary -LogPath 'C:\Temp\mfc_run.jsonl' -FilterIssueType 'MissingYear'
+
+# Export as JSON
+Get-MfcLogSummary -LogPath 'C:\Temp\mfc_run.jsonl' -Output JSON
+```
+
+**Parameters:**
+- `-LogPath`: Log file to analyze (mandatory)
+- `-FilterIssueType`: Filter by specific issue type
+- `-FilterLevel`: Filter by log level ('Info', 'Warning', 'Error')
+- `-Output`: Format ('Table', 'JSON', 'CSV')
 
 Folder naming pattern
 ---------------------
@@ -71,15 +214,15 @@ Problem 4: Complex Folder Structures
 #### Discovery Phase:
 ```powershell
 # Find folders with structural issues
-Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic','E:\_test' | 
-    Where-Object { $_.IsValid -eq $false } | 
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\_CorrectedMusic','E:\_test' |
+    Where-Object { $_.IsValid -eq $false } |
     Select-Object -First 20
 ```
 
 #### Interactive Preview:
 ```powershell
 # Interactive processing with skip option
-Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic' | 
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\_CorrectedMusic' |
     Update-MusicFolderMetadata -Interactive -DestinationFolder 'E:\_CorrectedMusic' -Move -WhatIf
 ```
 *Note: Use '\' to postpone complex folders (short and unlikely to conflict with album names)*
@@ -87,7 +230,7 @@ Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedM
 #### Metadata Collection:
 ```powershell
 # Collect metadata for automation
-Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Blacklist 'E:\_CorrectedMusic' | 
+Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\_CorrectedMusic' |
     Update-MusicFolderMetadata -Interactive -OutputMetadataJson 'C:\Temp\collected_metadata.json' -SkipMode
 ```
 
@@ -98,13 +241,59 @@ Update-MusicFolderMetadata -InputMetadataJson 'C:\Temp\collected_metadata.json' 
 ```
 
 ### 🔍 Testing Results
-✅ **Pipeline Input:** Successfully accepts objects with Path property  
-✅ **Parameter Binding:** Path alias works correctly  
-✅ **Metadata Loading:** JSON metadata loads and applies automatically  
-✅ **Skip Functionality:** Interactive prompts accept '\' input  
-✅ **Blacklist Processing:** Supports comma-separated strings and arrays  
-✅ **Subtree Skipping:** Entire folder hierarchies are excluded when parent is blacklisted  
-✅ **JSON Export/Import:** Metadata collection and automated processing work seamlessly  
+✅ **Pipeline Input:** Successfully accepts objects with Path property
+✅ **Parameter Binding:** Path alias works correctly
+✅ **Metadata Loading:** JSON metadata loads and applies automatically
+✅ **Skip Functionality:** Interactive prompts accept '\' input
+✅ **FoldersToSkip Processing:** Supports comma-separated strings and arrays
+✅ **Subtree Skipping:** Entire folder hierarchies are excluded when parent is in folders to skip
+✅ **JSON Export/Import:** Metadata collection and automated processing work seamlessly
+
+### Processing order and moving behavior
+
+When you run `Update-MusicFolderMetadata` and request a move, the module will move the files and folders it has identified for that album. That means:
+
+- If you run the command against a parent folder that contains subfolders with audio, moving the parent will also move those subfolders and their contents to the destination. After the move, the original subpaths will no longer be available at their original locations.
+- If you only update tags and do not move (no `-Move`), the files remain in place and you can later run processing on their subfolders.
+
+Best practice: process deepest folders first
+
+- Run `Find-BadMusicFolderStructure` once and save a JSONL log. Then process folders sorted by path depth (deepest first). This ensures you correct and move children (e.g., Disc 1, Extras) before their parent album folders are moved.
+
+Example: process deepest-first (interactive preview)
+
+```powershell
+Get-Content 'E:\scan_results.json' | ConvertFrom-Json |
+  Sort-Object @{ Expression = { ($_ .Path -split '\\').Count } } -Descending |
+  ForEach-Object { $_.Path | Update-MusicFolderMetadata -Interactive -SkipMode -WhatIf }
+```
+
+When to use `-WhatIf` and `-SkipMode`
+
+- Use `-WhatIf` for a full dry-run so you can verify intended destination paths and detect collisions.
+- Use `-SkipMode` and enter `\` to postpone complex cases; they remain in the log and can be revisited.
+
+Batching and metadata export/import
+
+- You can collect corrected metadata during interactive passes with `-OutputMetadataJson` and later apply it non-interactively using `-MetadataJson` and `-Move`. This avoids re-opening the same folders interactively multiple times.
+
+Example: collect metadata then apply it
+
+```powershell
+# Collect metadata interactively (safe preview)
+Get-Content 'E:\scan_results.json' | ConvertFrom-Json | Select-Object -First 20 | ForEach-Object { $_.Path } |
+  Update-MusicFolderMetadata -Interactive -SkipMode -OutputMetadataJson 'E:\collected.json' -WhatIf
+
+# Later, apply the collected metadata and move
+Update-MusicFolderMetadata -MetadataJson 'E:\collected.json' -Move -DestinationFolder 'E:\_Processed'
+```
+
+Notes and caveats
+
+- Multi-disc and nested structures: treat disc subfolders and deeply nested albums first.
+- Moving a parent folder is usually atomic: it removes the original folder and moves everything beneath it. If you rely on processing children later, process children first.
+- If a folder contains a single music file and several subfolders with other music, decide whether the parent is really the album (move whole parent) or the children are separate albums (process children first or skip parent until children are done).
+- Always preview with `-WhatIf` before committing large batches.
 
 Utilities
 ---------

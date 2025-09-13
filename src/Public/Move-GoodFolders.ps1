@@ -1,6 +1,49 @@
 <#
 .SYNOPSIS
-    Moves music folders to a specified destination.
+    Moves validated music folders to a destination with proper artist/album organization.
+
+.DESCRIPTION
+    Move-GoodFolders moves music folders that have been validated for proper structure.
+    It automatically organizes them into Artist\Album format at the destination.
+    The function validates each folder before moving and provides detailed feedback.
+
+.PARAMETER FolderPath
+    Path to the music folder to move. Accepts pipeline input.
+
+.PARAMETER DestinationFolder
+    Root destination directory where organized folders will be placed.
+
+.PARAMETER Quiet
+    Switch parameter. When specified, suppresses detailed console output.
+
+.PARAMETER DuplicateAction
+    How to handle duplicate folders at destination. Valid values: 'Overwrite', 'Skip', 'Rename'. Default is 'Rename'.
+
+.INPUTS
+    System.String
+    You can pipe folder paths to Move-GoodFolders.
+
+.OUTPUTS
+    None. This function provides console output and moves folders.
+
+.EXAMPLE
+    Move-GoodFolders -FolderPath 'E:\Temp\GoodAlbum' -DestinationFolder 'E:\Music'
+    Validates and moves the album to proper artist/album structure
+
+.EXAMPLE
+    Find-BadMusicFolderStructure -StartingPath 'E:\Temp' -Good | Move-GoodFolders -DestinationFolder 'E:\Music'
+    Finds good folders and moves them to the destination
+
+.EXAMPLE
+    Move-GoodFolders -FolderPath 'E:\Temp\Album1' -DestinationFolder 'E:\Music' -DuplicateAction 'Skip' -WhatIf
+    Shows what would happen without actually moving, skipping duplicates
+
+.NOTES
+    Author: MusicFolderChecker Module
+    Automatically validates folder structure before moving
+    Creates artist directories as needed
+    Provides detailed move summary at completion
+    Supports both artist folders and individual album folders
 #>
 function Move-GoodFolders {
     [CmdletBinding(SupportsShouldProcess)]
