@@ -1,5 +1,18 @@
 # Process-AnalysisLog.ps1
 # Script to process saved music folder analysis logs interactively
+#
+# USAGE EXAMPLES:
+#   .\Process-AnalysisLog.ps1 -LogPath 'C:\Logs\analysis.jsonl' -BatchSize 10
+#   .\Process-AnalysisLog.ps1 -LogPath 'C:\Logs\analysis.jsonl' -SkipInteractive -WhatIf
+#   .\Process-AnalysisLog.ps1 -LogPath 'C:\Logs\analysis.jsonl' -SkipMode -WhatIf
+#
+# PARAMETERS:
+#   -LogPath: Path to the JSONL analysis log file (required)
+#   -BatchSize: Number of folders to process per batch (default: 5)
+#   -DestinationFolder: Where to move processed folders (default: 'E:\_Processed')
+#   -WhatIf: Preview mode - shows what would be done without making changes
+#   -SkipInteractive: Skip interactive prompts, process all folders automatically
+#   -SkipMode: Enable skip/postpone functionality in interactive mode (type '\' to skip)
 
 param(
     [Parameter(Mandatory)]
@@ -11,7 +24,9 @@ param(
     
     [switch]$WhatIf,
     
-    [switch]$SkipInteractive
+    [switch]$SkipInteractive,
+    
+    [switch]$SkipMode
 )
 
 Write-Host "Reading analysis log: $LogPath" -ForegroundColor Cyan
@@ -46,23 +61,28 @@ for ($i = 0; $i -lt $analysisResults.Count; $i += $BatchSize) {
     foreach ($result in $batch) {
         Write-Host "`nProcessing: $(Split-Path $result.Path -Leaf)" -ForegroundColor Magenta
         
+        if ($SkipMode) {
+            Write-Host "  SkipMode enabled: Type '\' during prompts to postpone complex folders" -ForegroundColor Cyan
+        }
+        
         if ($SkipInteractive) {
             # Non-interactive mode
-            $params = @{
-                DestinationFolder = $DestinationFolder
-                Move = $true
-                WhatIf = $WhatIf
-            }
-            $result.Path | Update-MusicFolderMetadata @params
+            $params = @{}
+            if ($DestinationFolder) { $params.DestinationFolder = $DestinationFolder }
+            if ($WhatIf) { $params.WhatIf = $WhatIf }
+            # Add Move switch properly
+            $result.Path | Update-MusicFolderMetadata @params -Move
         } else {
             # Interactive mode
-            $params = @{
-                Interactive = $true
-                DestinationFolder = $DestinationFolder
-                Move = $true
-                WhatIf = $WhatIf
+            $params = @{}
+            if ($DestinationFolder) { $params.DestinationFolder = $DestinationFolder }
+            if ($WhatIf) { $params.WhatIf = $WhatIf }
+            # Add SkipMode if specified
+            if ($SkipMode) {
+                $params.SkipMode = $true
             }
-            $result.Path | Update-MusicFolderMetadata @params
+            # Add Move switch and Interactive switch properly
+            $result.Path | Update-MusicFolderMetadata @params -Move -Interactive
         }
     }
     
