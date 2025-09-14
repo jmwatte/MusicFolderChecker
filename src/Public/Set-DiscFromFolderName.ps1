@@ -25,7 +25,7 @@ function Set-DiscFromFolderName {
     $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape')
 
     # Find all disc folders (supporting both "disc" and "cd" prefixes)
-    $discFolders = Get-ChildItem -Path $FolderPath -Directory | Where-Object {
+    $discFolders = Get-ChildItem -LiteralPath $FolderPath -Directory | Where-Object {
         $_.Name -match '^(?:disc|cd)\s*(\d+)'
     } | Sort-Object { [int]($_.Name -replace '^(?:disc|cd)\s*(\d+).*', '$1') }
 
@@ -38,13 +38,17 @@ function Set-DiscFromFolderName {
 
     foreach ($discFolder in $discFolders) {
         $discNumber = [int]($discFolder.Name -replace '^(?:disc|cd)\s*(\d+).*', '$1')
+        Write-Verbose "Processing disc folder: $($discFolder.Name) (disc $discNumber of $totalDiscs)"
 
         # Find audio files in this disc folder
-        $audioFiles = Get-ChildItem -Path $discFolder.FullName -File -Recurse | Where-Object {
+        $audioFiles = Get-ChildItem -LiteralPath $discFolder.FullName -File -Recurse | Where-Object {
             $musicExtensions -contains $_.Extension.ToLower()
         }
 
+        Write-Verbose "Found $($audioFiles.Count) audio files in $($discFolder.Name)"
+
         foreach ($file in $audioFiles) {
+            Write-Verbose "Processing file: $($file.Name)"
             try {
                 $tagFile = Invoke-TagLibCreate -Path $file.FullName
             }

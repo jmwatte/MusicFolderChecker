@@ -690,6 +690,12 @@ function Update-MusicFolderMetadata {
                                 }
                                 catch { $rel = '' }
 
+                                # Rename disc folders for consistency with audio files
+                                if ($rel -match '^(?:disc|cd)\s*(\d+)') {
+                                    $discNum = [int]$matches[1]
+                                    $rel = "Disc $discNum"
+                                }
+
                                 $destDirForOther = if ($rel) { Join-Path $albumDir $rel } else { $albumDir }
                                 # Ensure destination directory exists (or record it in WhatIf)
                                 if (-not (Test-Path -LiteralPath $destDirForOther)) {
