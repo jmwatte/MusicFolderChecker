@@ -236,56 +236,59 @@ function Update-MusicFolderMetadata {
                 if (-not $Quiet) { Write-Output "Current Album Artist: $currentAlbumArtist" }
                 if (-not $Quiet) { Write-Output "Current Album       : $currentAlbum" }
                 if (-not $Quiet) { Write-Output "Current Year        : $currentYear" }
+                
+                # Flag to track if folder should be skipped
+                $skipThisFolder = $false
+                
                 try {
                     if ($SkipMode) {
                         $resp = Read-Host -Prompt "Enter Album Artist (blank to keep, '\' to postpone this folder)"
                         if ($resp -eq '\') {
-                            $skippedFolders += $folder
-                            if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
-                            continue
+                            $skipThisFolder = $true
                         }
                     } else {
                         $resp = Read-Host -Prompt "Enter Album Artist (blank to keep)"
                     }
-                    if ($resp -ne '') { $applyAlbumArtist = $resp }
+                    if ($resp -ne '' -and -not $skipThisFolder) { $applyAlbumArtist = $resp }
                     
-                    if ($SkipMode) {
-                        $resp = Read-Host -Prompt "Enter Album (blank to keep, '\' to postpone this folder)"
-                        if ($resp -eq '\') {
-                            $skippedFolders += $folder
-                            if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
-                            continue
-                        }
-                    } else {
-                        $resp = Read-Host -Prompt "Enter Album (blank to keep)"
-                    }
-                    if ($resp -ne '') { $applyAlbum = $resp }
-
-                    # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
-                    while ($true) {
+                    if (-not $skipThisFolder) {
                         if ($SkipMode) {
-                            $resp = Read-Host -Prompt "Enter Year (blank to keep, '\' to postpone this folder)"
+                            $resp = Read-Host -Prompt "Enter Album (blank to keep, '\' to postpone this folder)"
                             if ($resp -eq '\') {
-                                $skippedFolders += $folder
-                                if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
-                                continue
+                                $skipThisFolder = $true
                             }
                         } else {
-                            $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                            $resp = Read-Host -Prompt "Enter Album (blank to keep)"
                         }
-                        if ($resp -eq '') {
-                            # User chose to keep existing year
-                            break
-                        }
-                        # Try parse integer year
-                        $parsed = $null
-                        if ([int]::TryParse($resp, [ref]$parsed)) {
-                            $applyYear = [int]$parsed
-                            break
-                        }
-                        else {
-                            Write-Output "Invalid year entered. Please enter a four-digit year (e.g. 2011), or press Enter to keep the current value."
-                            # loop continues and user will be prompted again
+                        if ($resp -ne '' -and -not $skipThisFolder) { $applyAlbum = $resp }
+                    }
+
+                    # Repeatedly prompt for Year until the user provides a blank (keep) or a valid integer.
+                    if (-not $skipThisFolder) {
+                        while ($true) {
+                            if ($SkipMode) {
+                                $resp = Read-Host -Prompt "Enter Year (blank to keep, '\' to postpone this folder)"
+                                if ($resp -eq '\') {
+                                    $skipThisFolder = $true
+                                    break
+                                }
+                            } else {
+                                $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                            }
+                            if ($resp -eq '') {
+                                # User chose to keep existing year
+                                break
+                            }
+                            # Try parse integer year
+                            $parsed = $null
+                            if ([int]::TryParse($resp, [ref]$parsed)) {
+                                $applyYear = [int]$parsed
+                                break
+                            }
+                            else {
+                                Write-Output "Invalid year entered. Please enter a four-digit year (e.g. 2011), or press Enter to keep the current value."
+                                # loop continues and user will be prompted again
+                            }
                         }
                     }
                 }
@@ -293,6 +296,13 @@ function Update-MusicFolderMetadata {
                     # User cancelled interactive input (ctrl+c) or another error occurred.
                     if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Warning'; Status='InteractiveCanceled'; Path=$folder; Details = @{ Error = $_.ToString() } } }
                     Write-Output "Interactive input cancelled. Skipping folder: $folder"
+                    continue
+                }
+                
+                # Handle folder skipping
+                if ($skipThisFolder) {
+                    $skippedFolders += $folder
+                    if (-not $Quiet) { Write-Output "Skipped folder: $folder" }
                     continue
                 }
             }
@@ -439,6 +449,19 @@ function Update-MusicFolderMetadata {
                         return $null
                     }
 
+                    # Also parse disc from album name if present
+                    $discFromAlbum = $null
+                    if ($albumValSample -match '(?i)disc\s*(\d+)') {
+                        $discFromAlbum = [int]$matches[1]
+                    }
+                    elseif ($albumValSample -match '(?i)cd\s*(\d+)') {
+                        $discFromAlbum = [int]$matches[1]
+                    }
+                    elseif ($albumValSample -match '(?i)part\s*(\d+)') {
+                        $discFromAlbum = [int]$matches[1]
+                    }
+                    if ($discFromAlbum) { $discNumbers += $discFromAlbum }
+
                     foreach ($af in $audioFiles) {
                         try {
                             $tmp = Invoke-TagLibCreate -Path $af.FullName
@@ -457,25 +480,14 @@ function Update-MusicFolderMetadata {
                     $albumValSample = $applyAlbum
                     if (-not $albumValSample -or $albumValSample -eq '') {
                         # fallback to first audio file's album if none provided
-                        try {
-                            $albumValSample = (Invoke-TagLibCreate -Path $audioFiles[0].FullName).Tag.Album
-                        }
-                        catch {
-                            $albumValSample = 'Unknown Album'
-                        }
+                        $albumValSample = $currentAlbum
                     }
                     $artistValSample = $applyAlbumArtist
-                    if (-not $artistValSample -or $artistValSample -eq '') {
-                        try {
-                            $artistValSample = (Invoke-TagLibCreate -Path $audioFiles[0].FullName).Tag.AlbumArtists[0]
-                        }
-                        catch {
-                            $artistValSample = 'Unknown Artist'
-                        }
+                    if (-not $artistValSample) {
+                        $artistValSample = $currentAlbumArtist
                     }
 
                     $artistSafeSample = & $sanitize $artistValSample
-                    $albumSafeSample = & $sanitize $albumValSample
                     # compute year sample with proper try/catch (avoid inline Try/ Catch expression)
                     $yearSampleRaw = ''
                     if ($applyYear) { $yearSampleRaw = $applyYear }
@@ -489,24 +501,27 @@ function Update-MusicFolderMetadata {
                     }
                     $yearSafeSample = & $sanitize $yearSampleRaw
 
-                    $albumFolderName = if ($yearSafeSample) { "$yearSafeSample - $albumSafeSample" } else { $albumSafeSample }
+                    # Normalize album name by removing disc information for folder naming
+                    $normalizedAlbumSample = $albumValSample -replace '(?i)\s*(?:disc|cd|part)\s*\d+.*$', '' -replace '(?i)\s*(?:disc|cd|part).*$', ''
+                    $normalizedAlbumSafe = & $sanitize $normalizedAlbumSample
+
+                    $albumFolderName = if ($yearSafeSample) { "$yearSafeSample - $normalizedAlbumSafe" } else { $normalizedAlbumSafe }
                     $artistDir = Join-Path $DestinationFolder $artistSafeSample
 
-                    # Pick a single album directory candidate (numbered sibling only if base exists at destination).
-                    $albumBaseName = $albumFolderName
-                    $idx = 1
-                    $albumDir = $null
-                    while ($true) {
-                        if ($idx -eq 1) { $candidateName = $albumBaseName } else { $candidateName = "$albumBaseName ($idx)" }
-                        $candidatePath = Join-Path $artistDir $candidateName
-                        if (-not (Test-Path -LiteralPath $candidatePath)) {
-                            $albumDir = $candidatePath
-                            break
-                        }
-                        else {
+                    # For multi-disc albums, always use the same base album folder
+                    # Disc subfolders will be created within this album folder
+                    $albumDir = Join-Path $artistDir $albumFolderName
+
+                    # Only create numbered album folders if there's a conflict with non-disc content
+                    # (i.e., if the album folder exists and contains files that aren't in disc subfolders)
+                    if ((Test-Path -LiteralPath $albumDir) -and -not $useDiscFolders) {
+                        $idx = 2
+                        $candidateDir = $albumDir
+                        while (Test-Path -LiteralPath $candidateDir) {
+                            $candidateDir = Join-Path $artistDir "$albumFolderName ($idx)"
                             $idx++
-                            continue
                         }
+                        $albumDir = $candidateDir
                     }
 
                     # Collect planned moves so we can show a concise summary in -WhatIf mode
@@ -677,10 +692,18 @@ function Update-MusicFolderMetadata {
                                     $sourceFile = Split-Path $p.Source -Leaf
                                     $destFile = Split-Path $p.Destination -Leaf
                                     $destFolder = Split-Path $p.Destination -Parent
-                                    # Truncate destination folder if too long
-                                    if ($destFolder.Length -gt 50) {
-                                        $destFolder = "..." + $destFolder.Substring($destFolder.Length - 47)
+                                    
+                                    # Improve destination folder display for readability
+                                    if ($destFolder.Length -gt 60) {
+                                        # Show last 3 folder levels with ellipsis
+                                        $parts = $destFolder -split '[\\/]'
+                                        if ($parts.Count -gt 3) {
+                                            $destFolder = "..." + ($parts[-3..-1] -join '\')
+                                        } else {
+                                            $destFolder = "..." + $destFolder.Substring($destFolder.Length - 47)
+                                        }
                                     }
+                                    
                                     if (-not $Quiet) { Write-Output "  $sourceFile -> $destFolder\$destFile" }
                                 }
                             }
