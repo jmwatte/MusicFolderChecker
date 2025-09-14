@@ -22,12 +22,12 @@ function Set-DiscFromFolderName {
         [string]$FolderPath
     )
 
-    $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
+    $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape')
 
-    # Find all disc folders
+    # Find all disc folders (supporting both "disc" and "cd" prefixes)
     $discFolders = Get-ChildItem -Path $FolderPath -Directory | Where-Object {
-        $_.Name -match '^disc\s*(\d+)$'
-    } | Sort-Object { [int]($_.Name -replace '^disc\s*', '') }
+        $_.Name -match '^(?:disc|cd)\s*(\d+)$'
+    } | Sort-Object { [int]($_.Name -replace '^(?:disc|cd)\s*', '') }
 
     if ($discFolders.Count -eq 0) {
         Write-Output "No disc folders found in $FolderPath"
@@ -37,7 +37,7 @@ function Set-DiscFromFolderName {
     $totalDiscs = $discFolders.Count
 
     foreach ($discFolder in $discFolders) {
-        $discNumber = [int]($discFolder.Name -replace '^disc\s*', '')
+        $discNumber = [int]($discFolder.Name -replace '^(?:disc|cd)\s*', '')
 
         # Find audio files in this disc folder
         $audioFiles = Get-ChildItem -Path $discFolder.FullName -File -Recurse | Where-Object {

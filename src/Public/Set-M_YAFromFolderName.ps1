@@ -47,7 +47,7 @@ function Set-M_YAFromFolderName {
     )
 
     begin {
-        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
+        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape')
         $processedFiles = @()
         $failedFiles = @()
     }

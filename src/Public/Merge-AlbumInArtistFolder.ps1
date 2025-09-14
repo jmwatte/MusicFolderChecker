@@ -59,7 +59,7 @@ function Merge-AlbumInArtistFolder {
         [TagLib.Id3v2.Tag]::DefaultVersion = 4
         [TagLib.Id3v2.Tag]::ForceDefaultVersion = $true
 
-        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
+        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape')
 
         if (-not (Test-Path $DestinationFolder)) {
             New-Item -ItemType Directory -Path $DestinationFolder -Force -WhatIf:$false | Out-Null
