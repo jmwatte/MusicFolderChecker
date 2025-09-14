@@ -132,14 +132,17 @@ function Update-MusicFolderMetadata {
         [Parameter()]
         [string]$LogPath,
 
-        [Parameter()]
-        [string]$MetadataJson,
+    [Parameter()]
+    [string]$MetadataJson,
 
     [Parameter()]
-    [switch]$PreserveTrackArtists,        [Parameter()]
-        [string]$OutputMetadataJson,
-
-        [Parameter()]
+    [switch]$PreserveTrackArtists,
+    
+    [Parameter()]
+    [switch]$PreserveFilenames,
+    
+    [Parameter()]
+    [string]$OutputMetadataJson,        [Parameter()]
         [ValidateSet('Skip','Overwrite','Merge')]
         [string]$OnConflict = 'Skip'
     )
@@ -292,6 +295,46 @@ function Update-MusicFolderMetadata {
                         }
                     }
                 }
+
+                # Get sample audio files for filename preview
+                $sampleAudioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() } | Select-Object -First 3
+                if ($sampleAudioFiles) {
+                    Write-Output "`nFilename preview (original vs. default renaming):"
+                    foreach ($f in $sampleAudioFiles) {
+                        try {
+                            $tag = Invoke-TagLibCreate -Path $f.FullName
+                            $track = $tag.Tag.Track
+                            $title = $tag.Tag.Title
+                            $trackSafe = if ($track) { '{0:D2}' -f [int]$track } else { '00' }
+                            $titleSafe = [regex]::Replace($title, '[\\/:*?"<>|]', '')
+                            $defaultName = "${trackSafe} - ${titleSafe}$($f.Extension)"
+                            Write-Output "  Original: $($f.Name)"
+                            Write-Output "  Default:  $defaultName"
+                            Write-Output ""
+                        } catch {
+                            Write-Output "  $($f.Name) - (could not read tags)"
+                            Write-Output ""
+                        }
+                    }
+                }
+
+                # Prompt for filename preservation if moving
+                if (-not $skipThisFolder -and $Move.IsPresent) {
+                    if ($SkipMode) {
+                        $resp = Read-Host -Prompt "Preserve original filenames during move? (Y/N, default N, '\' to postpone this folder)"
+                        if ($resp -eq '\') {
+                            $skipThisFolder = $true
+                        } elseif ($resp -eq 'Y' -or $resp -eq 'y') {
+                            $PreserveFilenames = $true
+                        }
+                    } else {
+                        $resp = Read-Host -Prompt "Preserve original filenames during move? (Y/N, default N)"
+                        if ($resp -eq 'Y' -or $resp -eq 'y') {
+                            $PreserveFilenames = $true
+                        }
+                    }
+                }
+
                 catch {
                     # User cancelled interactive input (ctrl+c) or another error occurred.
                     if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Update-MusicFolderMetadata'; Level='Warning'; Status='InteractiveCanceled'; Path=$folder; Details = @{ Error = $_.ToString() } } }
@@ -558,7 +601,11 @@ function Update-MusicFolderMetadata {
                         }
 
                         $ext = $f.Extension
-                        $fileName = "${trackSafe} - ${titleSafe}${ext}"
+                        if ($PreserveFilenames) {
+                            $fileName = $f.Name
+                        } else {
+                            $fileName = "${trackSafe} - ${titleSafe}${ext}"
+                        }
                         $destFile = Join-Path $targetDir $fileName
 
                         # Ensure artist/album (and disc) dirs exist when moving (create once per needed dir)
