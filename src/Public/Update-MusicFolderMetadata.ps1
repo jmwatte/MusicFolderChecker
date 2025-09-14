@@ -145,7 +145,7 @@ function Update-MusicFolderMetadata {
     )
 
     begin {
-        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape')
+        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape', '.mpc')
         
         # Load metadata from JSON if provided
         $loadedMetadata = @{}

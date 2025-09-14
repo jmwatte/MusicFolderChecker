@@ -77,7 +77,7 @@ function Save-TagsFromGoodMusicFolders {
         [TagLib.Id3v2.Tag]::DefaultVersion = 4
         [TagLib.Id3v2.Tag]::ForceDefaultVersion = $true
 
-        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape')
+        $musicExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.ape', '.mpc')
 
         $badFolders = @{}
         $goodFolders = @()
