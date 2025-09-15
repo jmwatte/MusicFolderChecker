@@ -1,0 +1,159 @@
+ Update-MusicFolderMetadata -move -interactive -DestinationFolder "E:\_CorrectedMusic" -FolderPath "E:\Yann Tiersen"
+
+Folder: E:\Yann Tiersen
+Representative audio file: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\01 - Intro.flac
+Current Album Artist: Yann Tiersen
+Current Album       : C'était ici (Live album)
+Current Year        : 2002
+Enter Album Artist (blank to keep):
+Enter Album (blank to keep):
+Enter Year (blank to keep):
+
+Filename preview (original vs. default renaming):
+  Original: 01 - Intro.flac
+  Default:  01 - Intro.flac
+
+  Original: 02 - La Valse d'Amélie.flac
+  Default:  02 - La Valse d'Amélie.flac
+
+  Original: 03 - C'était ici.flac
+  Default:  03 - C'était ici.flac
+
+Preserve original filenames during move? (Y/N, default N):
+No changes for E:\Yann Tiersen
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\01 - Intro.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\02 - La Valse d'Amélie.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\03 - C'était ici.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\04 - Rue des cascades.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\05 - La Rupture.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\06 - La Terrasse.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\07 - Déja loin.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\08 - Sur le fil.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\09 - Le Jour d'avant.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\10 - Le Banquet.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\11 - Les Jours tristes.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\12 - La Noyée.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\13 - Le Moulin.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\14 - Le Fromveur.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\15 - L'Homme aux bras ballants.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\16 - L'Autre Valse d'Amélie.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\01 - Bagatelle.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\02 - Le Méridien.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\03 - L'Absente.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\04 - La Parade.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\05 - La Noyée II.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\06 - Monochrome.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\07 - Plus au Sud.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\08 - Les Bras de mer.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\09 - Comptine d'un autre été - L'apres-midi.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\10 - Le Quartier.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\11 - La Crise.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\12 - Février.flac
+No tag changes for E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\13 - La Valse des monstres.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\01  - Yann Tiersen - Amy.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\02  - Yann Tiersen - Dust Lane.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\03  - Yann Tiersen - Dark Stuff.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\04  - Yann Tiersen - Palestine.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\05  - Yann Tiersen - Chapter 19.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\06  - Yann Tiersen - Ashes.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\07  - Yann Tiersen - Till The End.flac
+No tag changes for E:\Yann Tiersen\2010 - Dust Lane\08  - Yann Tiersen - Fuck Me.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\01  - Another Shore.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\02  - I'm Gonna Live Anyhow.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\03  - Monuments.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\04  - The Gutter.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\05  - Exit 25 Block 20.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\06  - Hesitation Wound.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\07  - Forgive Me.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\08  - The Trial.flac
+No tag changes for E:\Yann Tiersen\2011 - Skyline\09  - Vanishing Point.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\01 - Intro.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\01 - Intro.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\02 - La Valse d'Amélie.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\02 - La Valse d'Amélie.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\03 - C'était ici.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\03 - C'était ici.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\04 - Rue des cascades.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\04 - Rue des cascades.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\05 - La Rupture.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\05 - La Rupture.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\06 - La Terrasse.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\06 - La Terrasse.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\07 - Déja loin.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\07 - Déja loin.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\08 - Sur le fil.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\08 - Sur le fil.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\09 - Le Jour d'avant.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\09 - Le Jour d'avant.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\10 - Le Banquet.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\10 - Le Banquet.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\11 - Les Jours tristes.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\11 - Les Jours tristes.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\12 - La Noyée.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\12 - La Noyée.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\13 - Le Moulin.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\13 - Le Moulin.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\14 - Le Fromveur.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\14 - Le Fromveur.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\15 - L'Homme aux bras ballants.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\15 - L'Homme aux bras ballants.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 1\16 - L'Autre Valse d'Amélie.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\16 - L'Autre Valse d'Amélie.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\01 - Bagatelle.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\01 - Bagatelle.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\02 - Le Méridien.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\02 - Le Méridien.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\03 - L'Absente.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\03 - L'Absente.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\04 - La Parade.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\04 - La Parade.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\05 - La Noyée II.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\05 - La Noyée II.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\06 - Monochrome.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\06 - Monochrome.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\07 - Plus au Sud.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\07 - Plus au Sud.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\08 - Les Bras de mer.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\08 - Les Bras de mer.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\09 - Comptine d'un autre été - L'apres-midi.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\09 - Comptine d'un autre été - L'apres-midi.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\10 - Le Quartier.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\10 - Le Quartier.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\11 - La Crise.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\11 - La Crise.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\12 - Février.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\12 - Février.flac
+Moved: E:\Yann Tiersen\2002 - C'était ici (Live album)\disc 2\13 - La Valse des monstres.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 2\13 - La Valse des monstres.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\01  - Yann Tiersen - Amy.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\01 - Yann Tiersen - Amy.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\02  - Yann Tiersen - Dust Lane.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\02 - Yann Tiersen - Dust Lane.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\03  - Yann Tiersen - Dark Stuff.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\03 - Yann Tiersen - Dark Stuff.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\04  - Yann Tiersen - Palestine.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\04 - Yann Tiersen - Palestine.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\05  - Yann Tiersen - Chapter 19.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\05 - Yann Tiersen - Chapter 19.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\06  - Yann Tiersen - Ashes.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\06 - Yann Tiersen - Ashes.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\07  - Yann Tiersen - Till The End.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\07 - Yann Tiersen - Till The End.flac
+Moved: E:\Yann Tiersen\2010 - Dust Lane\08  - Yann Tiersen - Fuck Me.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\08 - Yann Tiersen - Fuck Me.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\01  - Another Shore.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\01 - Another Shore.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\02  - I'm Gonna Live Anyhow.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\02 - I'm Gonna Live Anyhow.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\03  - Monuments.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\03 - Monuments.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\04  - The Gutter.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\04 - The Gutter.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\05  - Exit 25 Block 20.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\05 - Exit 25 Block 20.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\06  - Hesitation Wound.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\06 - Hesitation Wound.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\07  - Forgive Me.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\07 - Forgive Me.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\08  - The Trial.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\08 - The Trial.flac
+Moved: E:\Yann Tiersen\2011 - Skyline\09  - Vanishing Point.flac -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Disc 1\09 - Vanishing Point.flac
+Moved: E:\Yann Tiersen\Covers & tracklist\1995 - La Valse des monstres a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1995 - La Valse des monstres a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1995 - La Valse des monstres b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1995 - La Valse des monstres b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1996 - Rue des cascades a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1996 - Rue des cascades a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1996 - Rue des cascades b box.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1996 - Rue des cascades b box.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1996 - Rue des cascades b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1996 - Rue des cascades b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1998 - Le Phare a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1998 - Le Phare a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1998 - Le Phare b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1998 - Le Phare b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1998 - Le Phare in.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1998 - Le Phare in.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1999 - Black Session (Live album) a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1999 - Black Session (Live album) a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1999 - Black Session (Live album) b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1999 - Black Session (Live album) b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1999 - Tout est calme (collaboration With The Married Monk) a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1999 - Tout est calme (collaboration With The Married Monk) a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1999 - Tout est calme (collaboration With The Married Monk) b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1999 - Tout est calme (collaboration With The Married Monk) b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\1999 - Tout est calme (collaboration With The Married Monk) in.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\1999 - Tout est calme (collaboration With The Married Monk) in.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - Amelie (Soundtrack) back.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - Amelie (Soundtrack) back.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 1.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 1.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 2.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 2.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 3.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 3.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 4.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - Amelie (Soundtrack) booklet 4.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - Amelie (Soundtrack) CD.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - Amelie (Soundtrack) CD.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - L'Absente a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - L'Absente a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2001 - L'Absente b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2001 - L'Absente b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2002 - C'était ici (Live album) a.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2002 - C'était ici (Live album) a.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2002 - C'était ici (Live album) a1.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2002 - C'était ici (Live album) a1.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2002 - C'était ici (Live album) b box.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2002 - C'était ici (Live album) b box.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2002 - C'était ici (Live album) b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2002 - C'était ici (Live album) b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2003 - Good Bye, Lenin! (Soundtrack) a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2003 - Good Bye, Lenin! (Soundtrack) a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2003 - Good Bye, Lenin! (Soundtrack) b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2003 - Good Bye, Lenin! (Soundtrack) b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2004 - Yann Tiersen & Shannon Wright a-b.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2004 - Yann Tiersen & Shannon Wright a-b.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2004 - Yann Tiersen & Shannon Wright a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2004 - Yann Tiersen & Shannon Wright a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2004 - Yann Tiersen & Shannon Wright CD.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2004 - Yann Tiersen & Shannon Wright CD.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2005 - Les Retrouvailles a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2005 - Les Retrouvailles a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2005 - Les Retrouvailles b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2005 - Les Retrouvailles b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2005 - Les Retrouvailles cd.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2005 - Les Retrouvailles cd.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2005 - Les Retrouvailles in.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2005 - Les Retrouvailles in.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2006 - On Tour (Live album) a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2006 - On Tour (Live album) a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2006 - On Tour (Live album) b.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2006 - On Tour (Live album) b.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2008 - Tabarly (Soundtrack) a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2008 - Tabarly (Soundtrack) a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\2008 - Tabarly (Soundtrack) b.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2008 - Tabarly (Soundtrack) b.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2008 - Tabarly (Soundtrack) cd.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2008 - Tabarly (Soundtrack) cd.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2008 - Tabarly (Soundtrack) in1.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2008 - Tabarly (Soundtrack) in1.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2008 - Tabarly (Soundtrack) in2.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2008 - Tabarly (Soundtrack) in2.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2010 - Dust Lane a.jpg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2010 - Dust Lane a.jpg
+Moved: E:\Yann Tiersen\Covers & tracklist\2011 - Skyline a.jpeg -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\2011 - Skyline a.jpeg
+Moved: E:\Yann Tiersen\Covers & tracklist\Yann.Tiersen.Discography.1995-2011.FLAC-tracks.Lossless_tracklist.txt -> E:\_CorrectedMusic\Yann Tiersen\2002 - C'était ici (Live album)\Covers & tracklist\Yann.Tiersen.Discography.1995-2011.FLAC-tracks.Lossless_tracklist.txt

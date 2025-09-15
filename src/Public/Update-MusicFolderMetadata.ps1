@@ -353,7 +353,7 @@ function Update-MusicFolderMetadata {
             }
 
             # No changes requested?
-            $noChanges = (($applyAlbumArtist -eq $null -or $applyAlbumArtist -eq '') -and ($applyAlbum -eq $null -or $applyAlbum -eq '') -and (-not $applyYear))
+            $noChanges = (($null -eq $applyAlbumArtist -or $applyAlbumArtist -eq '') -and ($null -eq $applyAlbum -or $applyAlbum -eq '') -and (-not $applyYear))
             if ($noChanges) {
                 if (-not $Quiet) { Write-Output "No changes for $folder" }
                 # If the user requested a move, proceed to move even when there are no tag changes.
@@ -379,6 +379,29 @@ function Update-MusicFolderMetadata {
 
             # Apply changes to all audio files in the folder
             $audioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() }
+
+            # Safeguard: Check for multiple albums in the folder
+            $albumsInFolder = @()
+            foreach ($af in $audioFiles) {
+                try {
+                    $tag = Invoke-TagLibCreate -Path $af.FullName
+                    $album = $tag.Tag.Album
+                    if ($album -and $albumsInFolder -notcontains $album) {
+                        $albumsInFolder += $album
+                    }
+                } catch {
+                    # Skip files that can't be read
+                }
+            }
+            if ($albumsInFolder.Count -gt 1) {
+                Write-Warning "Multiple albums detected in folder '$folder': $($albumsInFolder -join ', ')"
+                $response = Read-Host "This folder contains files from multiple albums. Continue processing as a single album? (Y/N)"
+                if ($response -ne 'Y' -and $response -ne 'y') {
+                    Write-Output "Skipping folder: $folder"
+                    continue
+                }
+            }
+
             # Precompute non-audio files and audio root so planned moves always include non-audio files
             $otherFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
             $audioDirs = @($audioFiles | ForEach-Object { $_.DirectoryName } | Sort-Object -Unique)
