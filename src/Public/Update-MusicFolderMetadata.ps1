@@ -7,8 +7,15 @@
     mode (prompting for metadata) or scripted mode (using provided parameters). The function can update
     embedded audio file tags and optionally move folders to a destination with proper organization.
 
+    The function automatically enters interactive mode when:
+    - The -Interactive parameter is specified, OR
+    - Any required metadata (AlbumArtist, Album, Year) is missing and no metadata is loaded from JSON
+
     In interactive mode with SkipMode, users can enter '\' to postpone processing complex folders.
     The function supports loading/saving metadata from/to JSON files for automation workflows.
+    
+    Note: The -Quiet parameter suppresses verbose output but still displays essential information
+    during interactive mode, including current metadata values and prompts.
 
 .PARAMETER FolderPath
     Path(s) to music folder(s) to process. Accepts pipeline input and has 'Path' alias. Mandatory parameter.
@@ -24,9 +31,10 @@
 
 .PARAMETER Interactive
     Switch parameter. When specified, prompts user for metadata values not provided as parameters.
+    If not specified, the function automatically prompts when any required metadata is missing.
 
 .PARAMETER Quiet
-    Switch parameter. When specified, suppresses detailed console output.
+    Switch parameter. When specified, suppresses detailed console output except for essential interactive prompts and current metadata values.
 
 .PARAMETER DestinationFolder
     Destination directory for moving processed folders. Required when using -Move.
@@ -238,8 +246,12 @@ function Update-MusicFolderMetadata {
             }
 
             $doInteractive = $false
-            if ($Interactive.IsPresent) { $doInteractive = $true }
-            elseif (-not $AlbumArtist -and -not $Album -and -not $Year -and -not $loadedMetadata.ContainsKey($folder)) { $doInteractive = $true }
+            if ($Interactive.IsPresent) { 
+                $doInteractive = $true 
+            }
+            elseif ((-not $AlbumArtist -or -not $Album -or -not $Year) -and -not $loadedMetadata.ContainsKey($folder)) { 
+                $doInteractive = $true 
+            }
 
             if ($doInteractive) {
                 # Normalize WhatIf detection: accept explicit -WhatIf or $WhatIfPreference being 'Inquire'/'Continue' etc.
@@ -253,50 +265,24 @@ function Update-MusicFolderMetadata {
                 if (-not $Quiet) { Write-Output "`nFolder: $folder" }
                 # Provide the full path to the first audio file found so user can infer metadata from path
                 if ($firstAudio -and -not $Quiet) { Write-Output "Representative audio file: $($firstAudio.FullName)" }
-                if (-not $Quiet) { 
-                    # Show current values - green if no new value provided (will be kept)
-                    if ($applyAlbumArtist) {
-                        Write-Output "Current Album Artist: $currentAlbumArtist"
-                    } else {
-                        Write-Host "Current Album Artist: $currentAlbumArtist" -ForegroundColor Green
-                    }
-                    
-                    if ($applyAlbum) {
-                        Write-Output "Current Album       : $currentAlbum"
-                    } else {
-                        Write-Host "Current Album       : $currentAlbum" -ForegroundColor Green
-                    }
-                    
-                    if ($applyYear) {
-                        Write-Output "Current Year        : $currentYear"
-                    } else {
-                        Write-Host "Current Year        : $currentYear" -ForegroundColor Green
-                    }
-                    
-                    # Show new values in green (these will be applied)
-                    $hasProposedChanges = $false
-                    if ($applyAlbumArtist) {
-                        Write-Host "New Album Artist    : $applyAlbumArtist" -ForegroundColor Green
-                        $hasProposedChanges = $true
-                    }
-                    if ($applyAlbum) {
-                        Write-Host "New Album          : $applyAlbum" -ForegroundColor Green
-                        $hasProposedChanges = $true
-                    }
-                    if ($applyYear) {
-                        Write-Host "New Year           : $applyYear" -ForegroundColor Green
-                        $hasProposedChanges = $true
-                    }
-                    
-                    if ($hasProposedChanges) {
-                        Write-Output ""
-                        Write-Host "Changes will be applied to all audio files in this folder." -ForegroundColor Green
-                        Write-Host "Press Enter to accept the new changes, or enter new values to override." -ForegroundColor Green
-                    } else {
-                        Write-Output ""
-                        Write-Output "No changes proposed - all values match current tags."
-                        Write-Output "Enter new values if you want to make changes."
-                    }
+                # Always show current values in interactive mode, even with -Quiet
+                # Show current values - what will be applied if user presses enter
+                if ($applyAlbumArtist) {
+                    Write-Host "Current Album Artist: $applyAlbumArtist" -ForegroundColor Green
+                } else {
+                    Write-Output "Current Album Artist: $currentAlbumArtist"
+                }
+                
+                if ($applyAlbum) {
+                    Write-Host "Current Album       : $applyAlbum" -ForegroundColor Green
+                } else {
+                    Write-Output "Current Album       : $currentAlbum"
+                }
+                
+                if ($applyYear) {
+                    Write-Host "Current Year        : $applyYear" -ForegroundColor Green
+                } else {
+                    Write-Output "Current Year        : $currentYear"
                 }
                 
                 # Flag to track if folder should be skipped

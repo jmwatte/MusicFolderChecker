@@ -325,9 +325,33 @@ function Update-BoxSet {
                     if (-not $Quiet) { Write-Host "Created destination folder: $DestinationFolder" -ForegroundColor Green }
                 }
 
-                # Create the final destination path (preserve BoxSet name)
+                # Determine BoxSet artist for folder structure
+                $boxSetArtist = if ($BoxSetArtist) {
+                    $BoxSetArtist
+                } elseif ($AlbumArtist) {
+                    $AlbumArtist
+                } else {
+                    # Try to extract from first album folder name
+                    $firstAlbum = $albumFolders | Select-Object -First 1
+                    if ($firstAlbum -and $firstAlbum.Name -match '^(\d{4})\s*-\s*(.+?)\s*-\s*(.+)') {
+                        $matches[2]  # Artist from "Year - Artist - Album" pattern
+                    } elseif ($firstAlbum -and $firstAlbum.Name -match '^(\d{4})\s*-\s*(.+)') {
+                        "Unknown Artist"  # Fallback if we can't parse artist
+                    } else {
+                        "Unknown Artist"
+                    }
+                }
+
+                # Create the final destination path with artist subfolder
                 $boxSetName = Split-Path $boxSetPath -Leaf
-                $finalDestination = Join-Path $DestinationFolder $boxSetName
+                $artistFolder = Join-Path $DestinationFolder $boxSetArtist
+                $finalDestination = Join-Path $artistFolder $boxSetName
+
+                # Ensure artist folder exists
+                if (-not (Test-Path $artistFolder)) {
+                    New-Item -ItemType Directory -Path $artistFolder -Force | Out-Null
+                    if (-not $Quiet) { Write-Host "Created artist folder: $artistFolder" -ForegroundColor Green }
+                }
 
                 if (-not $Quiet) { Write-Host "Moving BoxSet to: $finalDestination" -ForegroundColor Cyan }
 
