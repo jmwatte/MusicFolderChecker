@@ -51,6 +51,14 @@ function Set-DiscFromFolderName {
 
     $totalDiscs = $discFolders.Count
 
+    # Track statistics for better reporting
+    $stats = @{
+        TotalFiles = 0
+        AlreadyCorrect = 0
+        WouldUpdate = 0
+        Errors = 0
+    }
+
     foreach ($discFolder in $discFolders) {
         # Extract disc number from various naming patterns
         $discNumber = [int]($discFolder.Name -replace '.*(?:^|\s|\(|\[|\-)[\s\-]*(?:disc|cd)[\s\-]*(\d+)[\]\)]*.*', '$1')
@@ -64,12 +72,14 @@ function Set-DiscFromFolderName {
         Write-Verbose "Found $($audioFiles.Count) audio files in $($discFolder.Name)"
 
         foreach ($file in $audioFiles) {
+            $stats.TotalFiles++
             Write-Verbose "Processing file: $($file.Name)"
             try {
                 $tagFile = Invoke-TagLibCreate -Path $file.FullName
             }
             catch {
                 Write-Output "Failed to read tags from $($file.FullName): $_"
+                $stats.Errors++
                 continue
             }
 
@@ -82,9 +92,11 @@ function Set-DiscFromFolderName {
 
             if (-not $needsUpdate) {
                 Write-Verbose "Disc tags already correct for $($file.FullName)"
+                $stats.AlreadyCorrect++
                 continue
             }
 
+            $stats.WouldUpdate++
             if ($PSCmdlet.ShouldProcess($file.FullName, "Set disc to $discNumber/$totalDiscs")) {
                 try {
                     $tagFile.Tag.Disc = $discNumber
@@ -94,9 +106,35 @@ function Set-DiscFromFolderName {
                 }
                 catch {
                     Write-Output "Failed to update disc tags for $($file.FullName): $_"
+                    $stats.Errors++
                 }
             }
         }
+    }
+
+    # Provide informative summary
+    $isWhatIf = $PSCmdlet.MyInvocation.BoundParameters.ContainsKey('WhatIf') -or $WhatIfPreference
+    Write-Verbose "WhatIf detection: BoundParameters=$($PSCmdlet.MyInvocation.BoundParameters.ContainsKey('WhatIf')), WhatIfPreference=$WhatIfPreference, isWhatIf=$isWhatIf"
+    Write-Verbose "Stats: TotalFiles=$($stats.TotalFiles), AlreadyCorrect=$($stats.AlreadyCorrect), WouldUpdate=$($stats.WouldUpdate), Errors=$($stats.Errors)"
+    
+    if ($isWhatIf) {
+        if ($stats.WouldUpdate -gt 0) {
+            Write-Output "WhatIf: Would update disc tags for $($stats.WouldUpdate) files across $($discFolders.Count) discs"
+        }
+        if ($stats.AlreadyCorrect -gt 0) {
+            Write-Output "WhatIf: All $($stats.TotalFiles) files already have correct disc tags - no changes needed"
+        }
+        if ($stats.WouldUpdate -eq 0 -and $stats.AlreadyCorrect -eq 0) {
+            Write-Output "WhatIf: No audio files found to process"
+        }
+    } else {
+        if ($stats.WouldUpdate -gt 0) {
+            Write-Output "Updated disc tags for $($stats.WouldUpdate) files"
+        }
+    }
+
+    if ($stats.Errors -gt 0) {
+        Write-Output "Warning: Encountered $($stats.Errors) errors during processing"
     }
 
     Write-Output "Disc tag setting complete for $FolderPath"

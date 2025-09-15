@@ -55,6 +55,12 @@
 .PARAMETER PreserveTrackArtists
     For compilation albums (Various Artists), preserve individual track artists instead of overwriting them with the album artist. Default is true for compilations.
 
+.PARAMETER PreserveFilenames
+    When moving files, preserve original filenames instead of renaming to standardized format.
+
+.PARAMETER DefaultPreserveFilenames
+    Set the default behavior for filename preservation in interactive mode. When $true, the default will be to preserve filenames. When $false (default), the default will be to rename files to standardized format.
+
 .INPUTS
     System.String
     You can pipe folder paths to Update-MusicFolderMetadata.
@@ -85,6 +91,14 @@
 .EXAMPLE
     Update-MusicFolderMetadata -FolderPath 'E:\Music\Compilations\Various Artists - 2020 Hits' -AlbumArtist 'Various Artists' -PreserveTrackArtists
     Updates compilation album metadata while preserving individual track artists
+
+.EXAMPLE
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive -Move -DestinationFolder 'E:\Processed' -DefaultPreserveFilenames:$true
+    Processes folder interactively with move, defaulting to preserve original filenames during the move operation
+
+.EXAMPLE
+    Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive -Move -DestinationFolder 'E:\Processed'
+    Processes folder interactively with intelligent filename analysis - automatically determines whether to preserve or rename filenames based on quality analysis
 
 .NOTES
     Author: MusicFolderChecker Module
@@ -140,6 +154,9 @@ function Update-MusicFolderMetadata {
     
     [Parameter()]
     [switch]$PreserveFilenames,
+    
+    [Parameter()]
+    [bool]$DefaultPreserveFilenames = $false,
     
     [Parameter()]
     [string]$OutputMetadataJson,        [Parameter()]
@@ -394,7 +411,7 @@ function Update-MusicFolderMetadata {
                             }
                         }
                     }
-                    # Get sample audio files for filename preview
+                    # Get sample audio files for filename preview and analysis
                     $sampleAudioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() } | Select-Object -First 3
                     if ($sampleAudioFiles) {
                         Write-Output "`nFilename preview (original vs. default renaming):"
@@ -419,26 +436,66 @@ function Update-MusicFolderMetadata {
                             }
                         }
                     }
+
+                    # Analyze filename quality if no explicit default was set
+                    $filenameAnalysis = $null
+                    if (-not $PSBoundParameters.ContainsKey('DefaultPreserveFilenames')) {
+                        $allAudioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() }
+                        if ($allAudioFiles.Count -gt 0) {
+                            $filenameAnalysis = Get-FilenameQualityAnalysis -AudioFiles $allAudioFiles -MusicExtensions $musicExtensions
+                            $DefaultPreserveFilenames = $filenameAnalysis.ShouldPreserveFilenames
+                            
+                            if (-not $Quiet) {
+                                Write-Output "`nFilename Analysis:"
+                                Write-Output "  Quality Score: $([math]::Round($filenameAnalysis.GoodPatternRatio * 100, 0))% good patterns"
+                                Write-Output "  Track Numbers: $([math]::Round($filenameAnalysis.TrackNumberRatio * 100, 0))% have track numbers"
+                                Write-Output "  Recommendation: $($filenameAnalysis.Recommendation) filenames (confidence: $([math]::Round($filenameAnalysis.Confidence * 100, 0))%)"
+                                if ($filenameAnalysis.Reasons.Count -gt 0) {
+                                    Write-Output "  Reason: $($filenameAnalysis.Reasons[0])"
+                                }
+                            }
+                        }
+                    }
     
                     # Prompt for filename preservation if moving
                     if (-not $skipThisFolder -and $Move.IsPresent) {
+                        # Determine the default based on the parameter or analysis
+                        $defaultPreserve = if ($DefaultPreserveFilenames) { 'Y' } else { 'N' }
+                        $defaultSource = if ($PSBoundParameters.ContainsKey('DefaultPreserveFilenames')) { 'user-set' } else { 'analysis' }
+                        
                         if ($SkipMode) {
                             Write-Host -NoNewline "Preserve original filenames during move? (Y/N, "
-                            Write-Host -NoNewline "default N" -ForegroundColor Green
+                            Write-Host -NoNewline "default $defaultPreserve" -ForegroundColor Green
+                            if ($defaultSource -eq 'analysis') {
+                                Write-Host -NoNewline " [auto]" -ForegroundColor Cyan
+                            }
                             Write-Host ", '\' to postpone this folder): "
                             $resp = Read-Host
                             if ($resp -eq '\') {
                                 $skipThisFolder = $true
                             } elseif ($resp -eq 'Y' -or $resp -eq 'y') {
                                 $PreserveFilenames = $true
+                            } elseif ($resp -eq 'N' -or $resp -eq 'n') {
+                                $PreserveFilenames = $false
+                            } else {
+                                # Empty response means use default
+                                $PreserveFilenames = $DefaultPreserveFilenames
                             }
                         } else {
                             Write-Host -NoNewline "Preserve original filenames during move? (Y/N, "
-                            Write-Host -NoNewline "default N" -ForegroundColor Green
+                            Write-Host -NoNewline "default $defaultPreserve" -ForegroundColor Green
+                            if ($defaultSource -eq 'analysis') {
+                                Write-Host -NoNewline " [auto]" -ForegroundColor Cyan
+                            }
                             Write-Host "): "
                             $resp = Read-Host
                             if ($resp -eq 'Y' -or $resp -eq 'y') {
                                 $PreserveFilenames = $true
+                            } elseif ($resp -eq 'N' -or $resp -eq 'n') {
+                                $PreserveFilenames = $false
+                            } else {
+                                # Empty response means use default
+                                $PreserveFilenames = $DefaultPreserveFilenames
                             }
                         }
                     }
