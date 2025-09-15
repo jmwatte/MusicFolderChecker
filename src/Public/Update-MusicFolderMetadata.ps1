@@ -4,7 +4,25 @@
 
 .DESCRIPTION
     Update-MusicFolderMetadata is the main function for processing music folders. It can work in interactive
-    mode (prompting for metadata) or scripted mode (using provided parameters). The function can update
+    mode (prompting for                 # Always show current values in interactive mode, even with -Quiet
+                # Show current values - what will be applied if user presses enter
+                if ($applyAlbumArtist) {
+                    Write-Host "Current Album Artist: $applyAlbumArtist" -ForegroundColor Green
+                } else {
+                    Write-Host "Current Album Artist: $currentAlbumArtist" -ForegroundColor Green
+                }
+                
+                if ($applyAlbum) {
+                    Write-Host "Current Album       : $applyAlbum" -ForegroundColor Green
+                } else {
+                    Write-Host "Current Album       : $currentAlbum" -ForegroundColor Green
+                }
+                
+                if ($applyYear) {
+                    Write-Host "Current Year        : $applyYear" -ForegroundColor Green
+                } else {
+                    Write-Host "Current Year        : $currentYear" -ForegroundColor Green
+                }ed mode (using provided parameters). The function can update
     embedded audio file tags and optionally move folders to a destination with proper organization.
 
     The function automatically enters interactive mode when:
