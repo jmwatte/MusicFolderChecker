@@ -11,6 +11,13 @@ function Get-FilenameQualityAnalysis {
 
     .OUTPUTS
         PSCustomObject with analysis results and recommendation.
+
+    .NOTES
+        Track number detection supports various formats:
+        - Standard: 01, 1., 001, 1-, 01_, 01
+        - Parentheses: (01), (1), (001)
+        - Brackets: [01], [1], [001]
+        - Separators: -, _, space
     #>
     param(
         [Parameter(Mandatory=$true)]
@@ -41,16 +48,17 @@ function Get-FilenameQualityAnalysis {
         }
         $filenameLengths += $filename.Length
 
-        # Check for track number patterns (01, 1., 01., etc.)
-        $hasTrackNumber = $filename -match '^(?:\d{1,2}|\d{1,2}\.)\s*[-_\s]'
+        # Check for track number patterns (comprehensive detection)
+        # Supports: 01, 1., 001, 1-, 01_, 01 , (01), [01], etc.
+        $hasTrackNumber = $filename -match '^(?:\d{1,3}|\d{1,3}\.|\(\d{1,3}\)|\[\d{1,3}\])\s*[-_\s]'
         if ($hasTrackNumber) {
             $trackNumberPatterns += $matches[0].Trim()
             $consistentTrackNumbers++
         }
 
         # Check for reasonable filename patterns
-        # Good patterns: "01 - Title", "1. Title", "01_Title"
-        $goodPattern = $filename -match '^(?:\d{1,2}|\d{1,2}\.)\s*[-_\s]\s*.{3,}'
+        # Good patterns: "01 - Title", "1. Title", "(01) Title", "[01] Title", etc.
+        $goodPattern = $filename -match '^(?:\d{1,3}|\d{1,3}\.|\(\d{1,3}\)|\[\d{1,3}\])\s*[-_\s]\s*.{3,}'
         if ($goodPattern) {
             $goodPatternFiles++
         }

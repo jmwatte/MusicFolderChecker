@@ -460,8 +460,10 @@ function Update-MusicFolderMetadata {
                     # Prompt for filename preservation if moving
                     if (-not $skipThisFolder -and $Move.IsPresent) {
                         # Determine the default based on the parameter or analysis
-                        $defaultPreserve = if ($DefaultPreserveFilenames) { 'Y' } else { 'N' }
-                        $defaultSource = if ($PSBoundParameters.ContainsKey('DefaultPreserveFilenames')) { 'user-set' } else { 'analysis' }
+                        $defaultPreserve = if ($PSBoundParameters.ContainsKey('PreserveFilenames') -or $DefaultPreserveFilenames) { 'Y' } else { 'N' }
+                        $defaultSource = if ($PSBoundParameters.ContainsKey('PreserveFilenames')) { 'user-set' } 
+                                       elseif ($PSBoundParameters.ContainsKey('DefaultPreserveFilenames')) { 'user-set' } 
+                                       else { 'analysis' }
                         
                         if ($SkipMode) {
                             Write-Host -NoNewline "Preserve original filenames during move? (Y/N, "
