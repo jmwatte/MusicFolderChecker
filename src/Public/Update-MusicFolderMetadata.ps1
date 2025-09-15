@@ -250,6 +250,28 @@ function Update-MusicFolderMetadata {
             $currentAlbum = $tagFile.Tag.Album
             $currentYear = $tagFile.Tag.Year
 
+            # Try to parse folder name for better current values when no parameters provided
+            $folderName = Split-Path $folder -Leaf
+            $parentFolderName = Split-Path (Split-Path $folder -Parent) -Leaf
+            
+            # Parse folder name like "1939 - The 6 Cello Suites Disc 1" or "2002 - The Golden Age Of The Andrews Sisters"
+            if ($folderName -match '^(\d{4})\s*-\s*(.+)$') {
+                $parsedYear = [int]$matches[1]
+                $parsedAlbum = $matches[2].Trim()
+                
+                # Update current values if no parameters provided
+                if (-not $AlbumArtist) { $currentAlbumArtist = $parentFolderName }
+                if (-not $Album) { $currentAlbum = $parsedAlbum }
+                if (-not $Year) { $currentYear = $parsedYear }
+            } elseif ($folderName -match '^(.+?)\s*-\s*(.+)$') {
+                # Fallback: try to parse as "Artist - Album" 
+                $possibleArtist = $matches[1].Trim()
+                $possibleAlbum = $matches[2].Trim()
+                
+                if (-not $AlbumArtist) { $currentAlbumArtist = $possibleArtist }
+                if (-not $Album) { $currentAlbum = $possibleAlbum }
+            }
+
             $applyAlbumArtist = $AlbumArtist
             $applyAlbum = $Album
             $applyYear = $Year
@@ -288,19 +310,19 @@ function Update-MusicFolderMetadata {
                 if ($applyAlbumArtist) {
                     Write-Host "Current Album Artist: $applyAlbumArtist" -ForegroundColor Green
                 } else {
-                    Write-Output "Current Album Artist: $currentAlbumArtist"
+                    Write-Host "Current Album Artist: $currentAlbumArtist" -ForegroundColor Green
                 }
                 
                 if ($applyAlbum) {
                     Write-Host "Current Album       : $applyAlbum" -ForegroundColor Green
                 } else {
-                    Write-Output "Current Album       : $currentAlbum"
+                    Write-Host "Current Album       : $currentAlbum" -ForegroundColor Green
                 }
                 
                 if ($applyYear) {
                     Write-Host "Current Year        : $applyYear" -ForegroundColor Green
                 } else {
-                    Write-Output "Current Year        : $currentYear"
+                    Write-Host "Current Year        : $currentYear" -ForegroundColor Green
                 }
                 
                 # Flag to track if folder should be skipped
@@ -461,8 +483,8 @@ function Update-MusicFolderMetadata {
                         }
                     }
     
-                    # Prompt for filename preservation if moving
-                    if (-not $skipThisFolder -and $Move.IsPresent) {
+                    # Prompt for filename preservation if moving (only if not explicitly set)
+                    if (-not $skipThisFolder -and $Move.IsPresent -and -not $PSBoundParameters.ContainsKey('PreserveFilenames')) {
                         # Determine the default based on the parameter or analysis
                         $defaultPreserve = if ($PSBoundParameters.ContainsKey('PreserveFilenames') -or $DefaultPreserveFilenames) { 'Y' } else { 'N' }
                         $defaultSource = if ($PSBoundParameters.ContainsKey('PreserveFilenames')) { 'user-set' } 
