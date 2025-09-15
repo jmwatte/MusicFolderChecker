@@ -32,19 +32,19 @@ function Get-FolderStructureAnalysis {
         MixedAlbum = "MixedAlbum"
         MultiDiscAlbum = "MultiDiscAlbum"
         CompilationFolder = "CompilationFolder"
+        BoxSet = "BoxSet"
         AmbiguousStructure = "AmbiguousStructure"
         NonMusicFolder = "NonMusicFolder"
     }
 
     # Get folder information
     $folderName = Split-Path $Path -Leaf
-    $parentName = Split-Path (Split-Path $Path -Parent) -Leaf
 
     # Analyze subfolders
     $subfolders = Get-ChildItem -LiteralPath $Path -Directory -ErrorAction SilentlyContinue
-    $albumSubfolders = $subfolders | Where-Object { $_.Name -match '^\d{4} - .+' }
+    $albumSubfolders = $subfolders | Where-Object { $_.Name -match '^\d{4}\s*-\s*.+' }
     $discSubfolders = $subfolders | Where-Object { $_.Name -match '(?i)(?:disc|cd)\s*\d+' }
-    $compilationSubfolders = $subfolders | Where-Object { $_.Name -match '^\d{4} - .+ - .+' } # Artist - Album pattern
+    $compilationSubfolders = $subfolders | Where-Object { $_.Name -match '^\d{4}\s*-\s*.+\s*-\s*.+' } # Artist - Album pattern
 
     # Analyze audio files
     $audioFiles = @()
@@ -63,7 +63,10 @@ function Get-FolderStructureAnalysis {
     }
     foreach ($albumFolder in $albumSubfolders) {
         foreach ($ext in $AudioExtensions) {
+            # Count audio files directly in album folder
             $albumSubfolderAudioCount += (Get-ChildItem -LiteralPath $albumFolder.FullName -File -Filter "*$ext" -ErrorAction SilentlyContinue).Count
+            # Also count audio files in subfolders (for disc structures)
+            $albumSubfolderAudioCount += (Get-ChildItem -LiteralPath $albumFolder.FullName -File -Filter "*$ext" -Recurse -ErrorAction SilentlyContinue).Count
         }
     }
 
@@ -88,6 +91,46 @@ function Get-FolderStructureAnalysis {
     }
 
     # Analysis logic with confidence scoring
+
+    # 0. Check for Box Set (highest priority - before Artist Folder)
+    if ($albumSubfolders.Count -gt 2 -and -not $hasDirectAudio -and $albumSubfolderAudioCount -gt 0) {
+        # Analyze if this looks like a box set
+        $boxSetIndicators = 0
+        $totalDiscsInBoxSet = 0
+        $artistNames = @()
+
+        # Check each album subfolder for disc structure
+        foreach ($albumFolder in $albumSubfolders) {
+            $albumDiscs = Get-ChildItem -LiteralPath $albumFolder.FullName -Directory -ErrorAction SilentlyContinue |
+                         Where-Object { $_.Name -match '(?i)(?:disc|cd)\s*\d+' }
+            $totalDiscsInBoxSet += $albumDiscs.Count
+
+            # Try to extract artist from album folder name (for compilations)
+            if ($albumFolder.Name -match '^(.+?)\s*-\s*(.+)$') {
+                if ($matches[1]) {
+                    $artistNames += $matches[1].Trim()
+                }
+            }
+        }
+
+        # Box set indicators
+        if ($folderName -match '(?i)(?:complete|collection|box|set|songbook)') { $boxSetIndicators++ }
+        if ($albumSubfolders.Count -gt 3) { $boxSetIndicators++ } # Many albums suggest collection
+        if ($totalDiscsInBoxSet -gt $albumSubfolders.Count) { $boxSetIndicators++ } # Multiple discs per album
+        if ($artistNames.Count -gt 0 -and ($artistNames | Select-Object -Unique).Count -le 2) { $boxSetIndicators++ } # Consistent artist
+
+        if ($boxSetIndicators -gt 2) {
+            $result.StructureType = $structureTypes.BoxSet
+            $result.Confidence = 0.85
+            $result.Details += "BOX SET DETECTED: $($albumSubfolders.Count) albums, $totalDiscsInBoxSet total discs"
+            $result.Details += "Collection appears to be: '$folderName'"
+            $result.Recommendations += "Process as box set - each album subfolder is a separate release"
+            $result.Recommendations += "Consider processing albums individually or as collection"
+            $result.Metadata.BoxSetIndicators = $boxSetIndicators
+            $result.Metadata.TotalDiscsInBoxSet = $totalDiscsInBoxSet
+            return $result
+        }
+    }
 
     # 1. Check for Artist Folder (highest confidence)
     if ($albumSubfolders.Count -gt 0 -and -not $hasDirectAudio -and $albumSubfolderAudioCount -gt 0) {

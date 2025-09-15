@@ -43,10 +43,42 @@ Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -AlbumArti
 - `-SkipMode`: Enable '\' option to postpone folders in interactive mode
 - `-Move`: Move folders to destination after processing
 - `-DestinationFolder`: Target directory for moved folders
+- `-PreserveFilenames`: Preserve original filenames during move (switch parameter)
+- `-DefaultPreserveFilenames`: Set default for filename preservation in interactive mode (boolean)
 - `-LogPath`: JSONL log file for audit trail
 - `-MetadataJson`: Load metadata from JSON file
 - `-OutputMetadataJson`: Save collected metadata to JSON
 - `-OnConflict`: Handle move conflicts ('Skip', 'Overwrite', 'Merge')
+
+### Filename Preservation and Analysis
+
+**Intelligent Filename Analysis:** The module automatically analyzes filename quality and provides recommendations for preservation vs. standardization.
+
+**Features:**
+- Detects track numbers in multiple formats: `01`, `001`, `(01)`, `[01]`, `1-`, `01_`, etc.
+- Analyzes pattern consistency across all files in an album
+- Considers filename length and variance
+- Provides confidence scores for recommendations
+- Automatically suggests preserve vs. rename based on quality metrics
+
+**Usage Examples:**
+```powershell
+# Preserve original filenames during move
+Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive -Move -DestinationFolder 'E:\Processed' -PreserveFilenames
+
+# Set default to preserve in interactive mode
+Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive -Move -DestinationFolder 'E:\Processed' -DefaultPreserveFilenames:$true
+
+# Let analysis determine the best approach (default behavior)
+Update-MusicFolderMetadata -FolderPath 'E:\Music\Artist\2020 - Album' -Interactive -Move -DestinationFolder 'E:\Processed'
+```
+
+**Analysis Results Include:**
+- Pattern consistency ratio
+- Track number detection ratio
+- Filename length statistics
+- Confidence score and reasoning
+- Clear preserve/rename recommendation
 
 ### Find-BadMusicFolderStructure
 Scans folder structures and validates against expected naming conventions.
@@ -324,7 +356,7 @@ Find-BadMusicFolderStructure -StartingPath 'E:\Music' -FoldersToSkip 'E:\_Correc
 #### Automated Processing:
 ```powershell
 # Process using collected metadata
-Update-MusicFolderMetadata -InputMetadataJson 'C:\Temp\collected_metadata.json' -DestinationFolder 'E:\_CorrectedMusic' -Move -LogPath 'C:\Temp\automation_run.jsonl'
+Update-MusicFolderMetadata -MetadataJson 'C:\Temp\collected_metadata.json' -DestinationFolder 'E:\_CorrectedMusic' -Move -LogPath 'C:\Temp\automation_run.jsonl'
 ```
 
 ### 🔍 Testing Results
