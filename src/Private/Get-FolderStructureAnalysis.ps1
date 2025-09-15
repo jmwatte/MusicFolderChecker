@@ -22,7 +22,7 @@ function Get-FolderStructureAnalysis {
         [Parameter(Mandatory)]
         [string]$Path,
 
-        [string[]]$AudioExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac')
+        [string[]]$AudioExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.ape', '.dsd', '.dsd', '.aiff', '.aif')
     )
 
     # Define structure types as strings (PowerShell enum support varies)
@@ -37,6 +37,9 @@ function Get-FolderStructureAnalysis {
         NonMusicFolder = "NonMusicFolder"
     }
 
+    # Normalize path to handle accidentally escaped brackets
+    $Path = $Path -replace '`\[', '[' -replace '`\]', ']'
+
     # Get folder information
     $folderName = Split-Path $Path -Leaf
 
@@ -46,29 +49,13 @@ function Get-FolderStructureAnalysis {
     $discSubfolders = $subfolders | Where-Object { $_.Name -match '(?i)(?:disc|cd)\s*\d+' }
     $compilationSubfolders = $subfolders | Where-Object { $_.Name -match '^\d{4}\s*-\s*.+\s*-\s*.+' } # Artist - Album pattern
 
-    # Analyze audio files
+    # Analyze audio files (search recursively throughout the entire folder tree)
     $audioFiles = @()
     foreach ($ext in $AudioExtensions) {
-        $audioFiles += Get-ChildItem -LiteralPath $Path -File -Filter "*$ext" -ErrorAction SilentlyContinue
+        $audioFiles += Get-ChildItem -LiteralPath $Path -File -Filter "*$ext" -Recurse -ErrorAction SilentlyContinue
     }
-    $hasDirectAudio = $audioFiles.Count -gt 0
-
-    # Analyze subfolder audio files
-    $subfolderAudioCount = 0
-    $albumSubfolderAudioCount = 0
-    foreach ($subfolder in $subfolders) {
-        foreach ($ext in $AudioExtensions) {
-            $subfolderAudioCount += (Get-ChildItem -LiteralPath $subfolder.FullName -File -Filter "*$ext" -ErrorAction SilentlyContinue).Count
-        }
-    }
-    foreach ($albumFolder in $albumSubfolders) {
-        foreach ($ext in $AudioExtensions) {
-            # Count audio files directly in album folder
-            $albumSubfolderAudioCount += (Get-ChildItem -LiteralPath $albumFolder.FullName -File -Filter "*$ext" -ErrorAction SilentlyContinue).Count
-            # Also count audio files in subfolders (for disc structures)
-            $albumSubfolderAudioCount += (Get-ChildItem -LiteralPath $albumFolder.FullName -File -Filter "*$ext" -Recurse -ErrorAction SilentlyContinue).Count
-        }
-    }
+    $hasDirectAudio = ($audioFiles | Where-Object { $_.DirectoryName -eq $Path }).Count -gt 0
+    $totalAudioCount = $audioFiles.Count
 
     # Initialize analysis result
     $result = [PSCustomObject]@{
@@ -80,13 +67,14 @@ function Get-FolderStructureAnalysis {
         Recommendations = @()
         Metadata = @{
             HasDirectAudio = $hasDirectAudio
-            DirectAudioCount = $audioFiles.Count
+            DirectAudioCount = ($audioFiles | Where-Object { $_.DirectoryName -eq $Path }).Count
             SubfolderCount = $subfolders.Count
             AlbumSubfolderCount = $albumSubfolders.Count
             DiscSubfolderCount = $discSubfolders.Count
             CompilationSubfolderCount = $compilationSubfolders.Count
-            TotalSubfolderAudioCount = $subfolderAudioCount
-            AlbumSubfolderAudioCount = $albumSubfolderAudioCount
+            TotalSubfolderAudioCount = ($audioFiles | Where-Object { $_.DirectoryName -ne $Path }).Count
+            AlbumSubfolderAudioCount = ($audioFiles | Where-Object { $_.FullName -like "$Path\*" -and $_.DirectoryName -ne $Path }).Count
+            TotalAudioCount = $audioFiles.Count
         }
     }
 
@@ -211,10 +199,10 @@ function Get-FolderStructureAnalysis {
     }
 
     # 6. Default: Ambiguous or Non-Music
-    if ($subfolderAudioCount -gt 0) {
+    if ($totalAudioCount -gt 0) {
         $result.StructureType = $structureTypes.AmbiguousStructure
         $result.Confidence = 0.2
-        $result.Details += "Ambiguous structure: audio files in subfolders but unclear organization"
+        $result.Details += "Ambiguous structure: audio files found but unclear organization"
         $result.Recommendations += "Manual review recommended - unclear folder structure"
     } else {
         $result.StructureType = $structureTypes.NonMusicFolder
