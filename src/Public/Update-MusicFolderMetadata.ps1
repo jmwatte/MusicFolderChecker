@@ -236,32 +236,110 @@ function Update-MusicFolderMetadata {
                 if (-not $Quiet) { Write-Output "`nFolder: $folder" }
                 # Provide the full path to the first audio file found so user can infer metadata from path
                 if ($firstAudio -and -not $Quiet) { Write-Output "Representative audio file: $($firstAudio.FullName)" }
-                if (-not $Quiet) { Write-Output "Current Album Artist: $currentAlbumArtist" }
-                if (-not $Quiet) { Write-Output "Current Album       : $currentAlbum" }
-                if (-not $Quiet) { Write-Output "Current Year        : $currentYear" }
+                if (-not $Quiet) { 
+                    # Show current values - green if no new value provided (will be kept)
+                    if ($applyAlbumArtist) {
+                        Write-Output "Current Album Artist: $currentAlbumArtist"
+                    } else {
+                        Write-Host "Current Album Artist: $currentAlbumArtist" -ForegroundColor Green
+                    }
+                    
+                    if ($applyAlbum) {
+                        Write-Output "Current Album       : $currentAlbum"
+                    } else {
+                        Write-Host "Current Album       : $currentAlbum" -ForegroundColor Green
+                    }
+                    
+                    if ($applyYear) {
+                        Write-Output "Current Year        : $currentYear"
+                    } else {
+                        Write-Host "Current Year        : $currentYear" -ForegroundColor Green
+                    }
+                    
+                    # Show new values in green (these will be applied)
+                    $hasProposedChanges = $false
+                    if ($applyAlbumArtist) {
+                        Write-Host "New Album Artist    : $applyAlbumArtist" -ForegroundColor Green
+                        $hasProposedChanges = $true
+                    }
+                    if ($applyAlbum) {
+                        Write-Host "New Album          : $applyAlbum" -ForegroundColor Green
+                        $hasProposedChanges = $true
+                    }
+                    if ($applyYear) {
+                        Write-Host "New Year           : $applyYear" -ForegroundColor Green
+                        $hasProposedChanges = $true
+                    }
+                    
+                    if ($hasProposedChanges) {
+                        Write-Output ""
+                        Write-Host "Changes will be applied to all audio files in this folder." -ForegroundColor Green
+                        Write-Host "Press Enter to accept the new changes, or enter new values to override." -ForegroundColor Green
+                    } else {
+                        Write-Output ""
+                        Write-Output "No changes proposed - all values match current tags."
+                        Write-Output "Enter new values if you want to make changes."
+                    }
+                }
                 
                 # Flag to track if folder should be skipped
                 $skipThisFolder = $false
                 
                 try {
                     if ($SkipMode) {
-                        $resp = Read-Host -Prompt "Enter Album Artist (blank to keep, '\' to postpone this folder)"
+                        if ($applyAlbumArtist) {
+                            Write-Host -NoNewline "Enter Album Artist ("
+                            Write-Host -NoNewline "blank to accept new" -ForegroundColor Green
+                            Write-Host ", '\' to postpone this folder): "
+                        } else {
+                            Write-Host -NoNewline "Enter Album Artist ("
+                            Write-Host -NoNewline "blank to keep current" -ForegroundColor Green
+                            Write-Host ", '\' to postpone this folder): "
+                        }
+                        $resp = Read-Host
                         if ($resp -eq '\') {
                             $skipThisFolder = $true
                         }
                     } else {
-                        $resp = Read-Host -Prompt "Enter Album Artist (blank to keep)"
+                        if ($applyAlbumArtist) {
+                            Write-Host -NoNewline "Enter Album Artist ("
+                            Write-Host -NoNewline "blank to accept new" -ForegroundColor Green
+                            Write-Host "): "
+                        } else {
+                            Write-Host -NoNewline "Enter Album Artist ("
+                            Write-Host -NoNewline "blank to keep current" -ForegroundColor Green
+                            Write-Host "): "
+                        }
+                        $resp = Read-Host
                     }
                     if ($resp -ne '' -and -not $skipThisFolder) { $applyAlbumArtist = $resp }
                     
                     if (-not $skipThisFolder) {
                         if ($SkipMode) {
-                            $resp = Read-Host -Prompt "Enter Album (blank to keep, '\' to postpone this folder)"
+                            if ($applyAlbum) {
+                                Write-Host -NoNewline "Enter Album ("
+                                Write-Host -NoNewline "blank to accept new" -ForegroundColor Green
+                                Write-Host ", '\' to postpone this folder): "
+                            } else {
+                                Write-Host -NoNewline "Enter Album ("
+                                Write-Host -NoNewline "blank to keep current" -ForegroundColor Green
+                                Write-Host ", '\' to postpone this folder): "
+                            }
+                            $resp = Read-Host
                             if ($resp -eq '\') {
                                 $skipThisFolder = $true
                             }
                         } else {
-                            $resp = Read-Host -Prompt "Enter Album (blank to keep)"
+                            if ($applyAlbum) {
+                                Write-Host -NoNewline "Enter Album ("
+                                Write-Host -NoNewline "blank to accept new" -ForegroundColor Green
+                                Write-Host "): "
+                            } else {
+                                Write-Host -NoNewline "Enter Album ("
+                                Write-Host -NoNewline "blank to keep current" -ForegroundColor Green
+                                Write-Host "): "
+                            }
+                            $resp = Read-Host
                         }
                         if ($resp -ne '' -and -not $skipThisFolder) { $applyAlbum = $resp }
                     }
@@ -270,16 +348,34 @@ function Update-MusicFolderMetadata {
                     if (-not $skipThisFolder) {
                         while ($true) {
                             if ($SkipMode) {
-                                $resp = Read-Host -Prompt "Enter Year (blank to keep, '\' to postpone this folder)"
+                                if ($applyYear) {
+                                    Write-Host -NoNewline "Enter Year ("
+                                    Write-Host -NoNewline "blank to accept new" -ForegroundColor Green
+                                    Write-Host ", '\' to postpone this folder): "
+                                } else {
+                                    Write-Host -NoNewline "Enter Year ("
+                                    Write-Host -NoNewline "blank to keep current" -ForegroundColor Green
+                                    Write-Host ", '\' to postpone this folder): "
+                                }
+                                $resp = Read-Host
                                 if ($resp -eq '\') {
                                     $skipThisFolder = $true
                                     break
                                 }
                             } else {
-                                $resp = Read-Host -Prompt "Enter Year (blank to keep)"
+                                if ($applyYear) {
+                                    Write-Host -NoNewline "Enter Year ("
+                                    Write-Host -NoNewline "blank to accept new" -ForegroundColor Green
+                                    Write-Host "): "
+                                } else {
+                                    Write-Host -NoNewline "Enter Year ("
+                                    Write-Host -NoNewline "blank to keep current" -ForegroundColor Green
+                                    Write-Host "): "
+                                }
+                                $resp = Read-Host
                             }
                             if ($resp -eq '') {
-                                # User chose to keep existing year
+                                # User chose to accept the new/current year
                                 break
                             }
                             # Try parse integer year
@@ -289,7 +385,11 @@ function Update-MusicFolderMetadata {
                                 break
                             }
                             else {
-                                Write-Output "Invalid year entered. Please enter a four-digit year (e.g. 2011), or press Enter to keep the current value."
+                                if ($applyYear) {
+                                    Write-Output "Invalid year entered. Please enter a four-digit year (e.g. 2011), or press Enter to accept the new value."
+                                } else {
+                                    Write-Output "Invalid year entered. Please enter a four-digit year (e.g. 2011), or press Enter to keep the current value."
+                                }
                                 # loop continues and user will be prompted again
                             }
                         }
@@ -311,7 +411,7 @@ function Update-MusicFolderMetadata {
                                 $titleSafe = [regex]::Replace($title, '[\\/:*?"<>|]', '')
                                 $defaultName = "${trackSafe} - ${titleSafe}$($f.Extension)"
                                 Write-Output "  Original: $($f.Name)"
-                                Write-Output "  Default:  $defaultName"
+                                Write-Host -NoNewline "  Default:  $defaultName" -ForegroundColor Green
                                 Write-Output ""
                             } else {
                                 Write-Output "  $($f.Name) - (could not read tags)"
@@ -323,14 +423,20 @@ function Update-MusicFolderMetadata {
                     # Prompt for filename preservation if moving
                     if (-not $skipThisFolder -and $Move.IsPresent) {
                         if ($SkipMode) {
-                            $resp = Read-Host -Prompt "Preserve original filenames during move? (Y/N, default N, '\' to postpone this folder)"
+                            Write-Host -NoNewline "Preserve original filenames during move? (Y/N, "
+                            Write-Host -NoNewline "default N" -ForegroundColor Green
+                            Write-Host ", '\' to postpone this folder): "
+                            $resp = Read-Host
                             if ($resp -eq '\') {
                                 $skipThisFolder = $true
                             } elseif ($resp -eq 'Y' -or $resp -eq 'y') {
                                 $PreserveFilenames = $true
                             }
                         } else {
-                            $resp = Read-Host -Prompt "Preserve original filenames during move? (Y/N, default N)"
+                            Write-Host -NoNewline "Preserve original filenames during move? (Y/N, "
+                            Write-Host -NoNewline "default N" -ForegroundColor Green
+                            Write-Host "): "
+                            $resp = Read-Host
                             if ($resp -eq 'Y' -or $resp -eq 'y') {
                                 $PreserveFilenames = $true
                             }
@@ -382,20 +488,40 @@ function Update-MusicFolderMetadata {
 
             # Safeguard: Check for multiple albums in the folder
             $albumsInFolder = @()
+            $artistsInFolder = @()
             foreach ($af in $audioFiles) {
                 try {
                     $tag = Invoke-TagLibCreate -Path $af.FullName
                     $album = $tag.Tag.Album
+                    $artist = ($tag.Tag.AlbumArtists.Count -gt 0) ? $tag.Tag.AlbumArtists[0] :
+                             ($tag.Tag.Performers.Count -gt 0 ? $tag.Tag.Performers[0] : '')
+                    
                     if ($album -and $albumsInFolder -notcontains $album) {
                         $albumsInFolder += $album
+                    }
+                    if ($artist -and $artistsInFolder -notcontains $artist) {
+                        $artistsInFolder += $artist
                     }
                 } catch {
                     # Skip files that can't be read
                 }
             }
-            if ($albumsInFolder.Count -gt 1) {
-                Write-Warning "Multiple albums detected in folder '$folder': $($albumsInFolder -join ', ')"
-                $response = Read-Host "This folder contains files from multiple albums. Continue processing as a single album? (Y/N)"
+            
+            # Only warn if we have multiple albums AND multiple artists (indicating mixed content)
+            # For compilations, we expect multiple artists but usually one album name
+            if ($albumsInFolder.Count -gt 1 -and $artistsInFolder.Count -gt 1) {
+                Write-Warning "Multiple albums and artists detected in folder '$folder':"
+                Write-Warning "Albums: $($albumsInFolder -join ', ')"
+                Write-Warning "Artists: $($artistsInFolder -join ', ')"
+                $response = Read-Host "This appears to be mixed content from different albums. Continue processing? (Y/N)"
+                if ($response -ne 'Y' -and $response -ne 'y') {
+                    Write-Output "Skipping folder: $folder"
+                    continue
+                }
+            } elseif ($albumsInFolder.Count -gt 1) {
+                Write-Warning "Multiple album names detected: $($albumsInFolder -join ', ')"
+                Write-Warning "This might be a compilation or incorrectly tagged files."
+                $response = Read-Host "Continue processing as a single album? (Y/N)"
                 if ($response -ne 'Y' -and $response -ne 'y') {
                     Write-Output "Skipping folder: $folder"
                     continue
