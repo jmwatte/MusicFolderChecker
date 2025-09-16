@@ -250,9 +250,9 @@ function Find-BadMusicFolderStructure {
                 }
             }
 
-            # Detect collection roots: folders with many album subfolders (3+) that don't contain music files directly
+            # Detect collection roots: folders with many album subfolders (2+) that don't contain music files directly
             $directMusicFiles = Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue | Where-Object { $audioExtensions -contains $_.Extension.ToLower() }
-            $isCollectionRoot = $albumSubfolders.Count -ge 3 -and $directMusicFiles.Count -eq 0 -and $potentialArtistSubfolders.Count -eq 0
+            $isCollectionRoot = $albumSubfolders.Count -ge 2 -and $directMusicFiles.Count -eq 0 -and $potentialArtistSubfolders.Count -eq 0
             
             if ($isCollectionRoot) {
                 $validationResult.Reason = "CollectionRoot"

@@ -250,7 +250,26 @@ function Update-MusicFolderMetadata {
             $currentAlbum = $tagFile.Tag.Album
             $currentYear = $tagFile.Tag.Year
 
-            # Try to parse folder name for better current values when no parameters provided
+            # Detect obviously corrupted metadata and prefer folder parsing in those cases
+            $metadataLooksValid = $true
+            if ($currentAlbum -and $currentAlbum -match '^\d+\.\s*') {
+                # Album starts with track number pattern (e.g., "01. Track Name")
+                $metadataLooksValid = $false
+            }
+            if ($currentAlbumArtist -and $currentAlbumArtist -match '^\d+\.\s*') {
+                # AlbumArtist starts with track number pattern
+                $metadataLooksValid = $false
+            }
+            if ($currentAlbum -and $firstAudio -and $currentAlbum -eq [System.IO.Path]::GetFileNameWithoutExtension($firstAudio.Name)) {
+                # Album is the same as filename (corrupted)
+                $metadataLooksValid = $false
+            }
+            if ($currentAlbumArtist -and $firstAudio -and $currentAlbumArtist -eq [System.IO.Path]::GetFileNameWithoutExtension($firstAudio.Name)) {
+                # AlbumArtist is the same as filename (corrupted)
+                $metadataLooksValid = $false
+            }
+
+            # Try to parse folder name for better current values when no parameters provided or metadata looks corrupted
             $folderName = Split-Path $folder -Leaf
             $parentFolderName = Split-Path (Split-Path $folder -Parent) -Leaf
             
@@ -259,29 +278,29 @@ function Update-MusicFolderMetadata {
                 $parsedYear = [int]$matches[1]
                 $parsedAlbum = $matches[2].Trim()
                 
-                # Update current values if no parameters provided
-                if (-not $AlbumArtist) { $currentAlbumArtist = $parentFolderName }
-                if (-not $Album) { $currentAlbum = $parsedAlbum }
-                if (-not $Year) { $currentYear = $parsedYear }
+                # Update current values if no parameters provided OR metadata looks corrupted
+                if (-not $AlbumArtist -or -not $metadataLooksValid) { $currentAlbumArtist = $parentFolderName }
+                if (-not $Album -or -not $metadataLooksValid) { $currentAlbum = $parsedAlbum }
+                if (-not $Year -or -not $metadataLooksValid) { $currentYear = $parsedYear }
             } elseif ($folderName -match '^(.+?)\s*-\s*(.+)$') {
                 # Fallback: try to parse as "Artist - Album" 
                 $possibleArtist = $matches[1].Trim()
                 $possibleAlbum = $matches[2].Trim()
                 
-                if (-not $AlbumArtist) { $currentAlbumArtist = $possibleArtist }
-                if (-not $Album) { $currentAlbum = $possibleAlbum }
+                if (-not $AlbumArtist -or -not $metadataLooksValid) { $currentAlbumArtist = $possibleArtist }
+                if (-not $Album -or -not $metadataLooksValid) { $currentAlbum = $possibleAlbum }
             }
 
             $applyAlbumArtist = $AlbumArtist
             $applyAlbum = $Album
             $applyYear = $Year
 
-            # Use loaded metadata if available
+            # Use loaded metadata if available and (no parameters provided OR metadata looks corrupted)
             if ($loadedMetadata.ContainsKey($folder)) {
                 $metadata = $loadedMetadata[$folder]
-                if (-not $applyAlbumArtist -and $metadata.AlbumArtist) { $applyAlbumArtist = $metadata.AlbumArtist }
-                if (-not $applyAlbum -and $metadata.Album) { $applyAlbum = $metadata.Album }
-                if (-not $applyYear -and $metadata.Year) { $applyYear = $metadata.Year }
+                if ((-not $applyAlbumArtist -or -not $metadataLooksValid) -and $metadata.AlbumArtist) { $applyAlbumArtist = $metadata.AlbumArtist }
+                if ((-not $applyAlbum -or -not $metadataLooksValid) -and $metadata.Album) { $applyAlbum = $metadata.Album }
+                if ((-not $applyYear -or -not $metadataLooksValid) -and $metadata.Year) { $applyYear = $metadata.Year }
                 if (-not $Quiet) { Write-Output "Using pre-loaded metadata for $folder" }
             }
 
@@ -291,6 +310,11 @@ function Update-MusicFolderMetadata {
             }
             elseif ((-not $AlbumArtist -or -not $Album -or -not $Year) -and -not $loadedMetadata.ContainsKey($folder)) { 
                 $doInteractive = $true 
+            }
+            elseif (-not $metadataLooksValid) {
+                # Force interactive mode when metadata looks corrupted so user can review/correct
+                $doInteractive = $true
+                if (-not $Quiet) { Write-Output "Warning: File metadata appears corrupted, entering interactive mode for review" }
             }
 
             if ($doInteractive) {
