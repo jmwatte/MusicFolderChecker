@@ -16,7 +16,8 @@
     FoldersToSkip supports both comma-separated strings and PowerShell arrays.
 
 .PARAMETER StartingPath
-    The root directory path to begin scanning. This parameter is mandatory and accepts pipeline input.
+    The root directory path(s) to begin scanning. This parameter is mandatory and accepts pipeline input.
+    Can be a single path or multiple paths.
 
 .PARAMETER Good
     Switch parameter. When specified, returns only folders with good structure.
@@ -51,8 +52,8 @@
     With -Simple switch, returns boolean values.
 
 .EXAMPLE
-    Find-BadMusicFolderStructure -StartingPath 'E:\Music'
-    Scans the E:\Music directory and returns detailed validation results for all folders.
+    Find-BadMusicFolderStructure -StartingPath 'E:\Music','E:\MoreMusic'
+    Scans multiple directories and returns detailed validation results for all folders.
 
 .EXAMPLE
     Find-BadMusicFolderStructure -StartingPath 'E:\Music' -Good -Quiet
@@ -81,7 +82,7 @@ function Find-BadMusicFolderStructure {
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias('FullName')]
-        [string]$StartingPath,
+        [string[]]$StartingPath,
 
         [switch]$Good,
 
@@ -133,7 +134,27 @@ function Find-BadMusicFolderStructure {
     }
 
     process {
-        $folders = @($StartingPath) + (Get-ChildItem -LiteralPath $StartingPath -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object -Unique | ForEach-Object { $_.FullName }) | Select-Object -Unique
+        # Filter out files from StartingPath - only process folders
+        $startingFolders = @()
+        foreach ($path in $StartingPath) {
+            if (Test-Path -LiteralPath $path) {
+                $item = Get-Item -LiteralPath $path
+                if ($item.PSIsContainer) {
+                    $startingFolders += $path
+                } else {
+                    Write-Warning "Skipping file (not a folder): $path"
+                }
+            } else {
+                Write-Warning "Path not found: $path"
+            }
+        }
+
+        if ($startingFolders.Count -eq 0) {
+            Write-Warning "No valid folders found to process"
+            return
+        }
+
+        $folders = @($startingFolders) + (Get-ChildItem -LiteralPath $startingFolders -Recurse | Where-Object { $_.PSIsContainer } | Sort-Object -Unique | ForEach-Object { $_.FullName }) | Select-Object -Unique
 
         foreach ($folder in $folders) {
             $validationResult = [PSCustomObject]@{
@@ -181,11 +202,18 @@ function Find-BadMusicFolderStructure {
                 }
             }
 
-            if (-not $Quiet) {
-                Write-Host "� Checking folder: $folder"
+            # Skip obvious collection root folders
+            $folderName = Split-Path $folder -Leaf
+            if ($folderName -match '^(?i)(music|audio|collection|library|media|sound|mp3|flac)$' -or 
+                $folder -match '^[A-Za-z]:\\$') {
+                $validationResult.Reason = "CollectionRoot"
+                $validationResult.Details = "Appears to be a collection root folder - should not be validated individually"
+                $validationResult.Status = "Skipped"
+                $results += $validationResult
+                continue
             }
 
-            # Check if folder exists and is accessible
+            # Check if this is an artist folder containing album subfolders
             if (-not (Test-Path -LiteralPath $folder)) {
                 $validationResult.Reason = "NotFound"
                 $validationResult.Details = "Folder does not exist"
@@ -207,13 +235,38 @@ function Find-BadMusicFolderStructure {
             # Check if this is an artist folder containing album subfolders
             $subfolders = Get-ChildItem -LiteralPath $folder -Directory -ErrorAction SilentlyContinue
             $albumSubfolders = @()
+            $potentialArtistSubfolders = @()
+            
             foreach ($subfolder in $subfolders) {
                 if ($subfolder.Name -match '^\d{4} - .+$') {
                     $albumSubfolders += $subfolder
+                } else {
+                    # Check if this could be an artist folder (contains album subfolders)
+                    $artistSubfolders = Get-ChildItem -LiteralPath $subfolder.FullName -Directory -ErrorAction SilentlyContinue
+                    $hasAlbumSubfolders = $artistSubfolders | Where-Object { $_.Name -match '^\d{4} - .+$' }
+                    if ($hasAlbumSubfolders) {
+                        $potentialArtistSubfolders += $subfolder
+                    }
                 }
             }
 
-            if ($albumSubfolders) {
+            # Detect collection roots: folders with many album subfolders (3+) that don't contain music files directly
+            $directMusicFiles = Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue | Where-Object { $audioExtensions -contains $_.Extension.ToLower() }
+            $isCollectionRoot = $albumSubfolders.Count -ge 3 -and $directMusicFiles.Count -eq 0 -and $potentialArtistSubfolders.Count -eq 0
+            
+            if ($isCollectionRoot) {
+                $validationResult.Reason = "CollectionRoot"
+                $validationResult.Details = "Contains $($albumSubfolders.Count) album subfolders - appears to be a collection root, not an individual artist folder"
+                $validationResult.Status = "Bad"
+                $results += $validationResult
+                continue
+            }
+
+            # If we have potential artist subfolders, this might be a collection root
+            # Only treat as artist folder if we have direct album subfolders AND no artist subfolders
+            $isArtistFolder = $albumSubfolders.Count -gt 0 -and $potentialArtistSubfolders.Count -eq 0 -and -not $isCollectionRoot
+
+            if ($isArtistFolder) {
                 # This is an artist folder - check if any album subfolder contains music files
                 $hasMusicFiles = $false
                 foreach ($albumFolder in $albumSubfolders) {
@@ -291,6 +344,14 @@ function Find-BadMusicFolderStructure {
                 if ($result.Status -ne "Skipped" -and $result.Status -ne "Error") {
                     try {
                         $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path
+                        
+                        # Skip if the path is not actually a folder
+                        if ($structureAnalysis.Metadata.IsFile -or -not $structureAnalysis.Metadata.ContainsKey('Exists') -or $structureAnalysis.Metadata.Exists -eq $false) {
+                            # Don't enhance results for files or non-existent paths
+                            $enhancedResults += $result
+                            continue
+                        }
+                        
                         $enhancedResult = $result | Select-Object *,
                             @{Name="StructureType"; Expression={$structureAnalysis.StructureType}},
                             @{Name="Confidence"; Expression={$structureAnalysis.Confidence}},

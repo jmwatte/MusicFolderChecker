@@ -430,6 +430,21 @@ Tips & troubleshooting
 - To force disc subfolders regardless of tags, you can request a `-ForceDiscFolder` option (not implemented yet) — request it if desired.
 - For very large libraries, log file sizes may grow; use `jq` or PowerShell to filter JSONL lines.
 
+### Module Import and Function Availability
+**Issue:** Private functions like `Invoke-TagLibCreate` are not available when running scripts that import the module.
+
+**Root Cause:** Private functions are dot-sourced in the module but not exported, making them unavailable outside the module's scope.
+
+**Solution:** 
+1. Ensure the module is properly imported: `Import-Module .\MusicFolderChecker.psm1 -Force`
+2. For testing/debugging scripts, private functions needed externally must be explicitly exported in `MusicFolderChecker.psm1` using `Export-ModuleMember -Function 'FunctionName'`
+3. Currently exported private functions: `Get-FolderStructureAnalysis`, `Invoke-TagLibCreate`
+
+**Prevention:** When creating test scripts or utilities that need access to private functions, either:
+- Export the required functions in the PSM1 file
+- Move the function to `src/Public/` if it should be publicly available
+- Use module-scoped calls within the module's functions instead of external scripts
+
 Extending / Development notes
 -----------------------------
 - Logger helper: `src/Private/Write-StructuredLog.ps1` (JSONL output).

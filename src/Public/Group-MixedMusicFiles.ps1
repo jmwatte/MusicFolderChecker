@@ -138,7 +138,8 @@ function Group-MixedMusicFiles {
                 if ($PSCmdlet.ShouldProcess($file.FullName, "Move to $destFile")) {
                     try {
                         Move-Item -LiteralPath $file.FullName -Destination $destFile -Force
-                        Write-Output "Moved: $($file.FullName) -> $destFile"
+                        Write-Output "$($file.FullName)"
+                        Write-Output "-> $destFile"
                         if ($LogPath) {
                             Write-StructuredLog -Path $LogPath -Entry @{
                                 Function = 'Group-MixedMusicFiles'
@@ -176,7 +177,8 @@ function Group-MixedMusicFiles {
                             if ($PSCmdlet.ShouldProcess($file.FullName, "Move to $destFile")) {
                                 try {
                                     Move-Item -LiteralPath $file.FullName -Destination $destFile -Force
-                                    Write-Output "Moved: $($file.FullName) -> $destFile"
+                                    Write-Output "$($file.FullName)"
+                                    Write-Output "-> $destFile"
                                 }
                                 catch {
                                     Write-Error "Failed to move $($file.FullName): $_"

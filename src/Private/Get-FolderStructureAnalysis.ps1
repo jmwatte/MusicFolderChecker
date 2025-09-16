@@ -37,6 +37,32 @@ function Get-FolderStructureAnalysis {
         NonMusicFolder = "NonMusicFolder"
     }
 
+    # Check if path exists and is a folder
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return [PSCustomObject]@{
+            Path = $Path
+            FolderName = Split-Path $Path -Leaf
+            StructureType = "NonMusicFolder"
+            Confidence = 0.9
+            Details = @("Path does not exist")
+            Recommendations = @("Verify the path exists")
+            Metadata = @{ Exists = $false }
+        }
+    }
+
+    $item = Get-Item -LiteralPath $Path
+    if (-not $item.PSIsContainer) {
+        return [PSCustomObject]@{
+            Path = $Path
+            FolderName = Split-Path $Path -Leaf
+            StructureType = "NonMusicFolder"
+            Confidence = 0.9
+            Details = @("Path is a file, not a folder")
+            Recommendations = @("Only folders can be analyzed for music structure")
+            Metadata = @{ IsFile = $true; Extension = $item.Extension }
+        }
+    }
+
     # Normalize path to handle accidentally escaped brackets
     $Path = $Path -replace '`\[', '[' -replace '`\]', ']'
 
@@ -55,7 +81,17 @@ function Get-FolderStructureAnalysis {
         $audioFiles += Get-ChildItem -LiteralPath $Path -File -Filter "*$ext" -Recurse -ErrorAction SilentlyContinue
     }
     $hasDirectAudio = ($audioFiles | Where-Object { $_.DirectoryName -eq $Path }).Count -gt 0
-    $totalAudioCount = $audioFiles.Count
+
+    # Calculate album subfolder audio count
+    $albumSubfolderAudioCount = 0
+    foreach ($file in $audioFiles) {
+        foreach ($albumFolder in $albumSubfolders) {
+            if ($file.DirectoryName.StartsWith($albumFolder.FullName)) {
+                $albumSubfolderAudioCount++
+                break
+            }
+        }
+    }
 
     # Initialize analysis result
     $result = [PSCustomObject]@{
@@ -73,7 +109,7 @@ function Get-FolderStructureAnalysis {
             DiscSubfolderCount = $discSubfolders.Count
             CompilationSubfolderCount = $compilationSubfolders.Count
             TotalSubfolderAudioCount = ($audioFiles | Where-Object { $_.DirectoryName -ne $Path }).Count
-            AlbumSubfolderAudioCount = ($audioFiles | Where-Object { $_.FullName -like "$Path\*" -and $_.DirectoryName -ne $Path }).Count
+            AlbumSubfolderAudioCount = $albumSubfolderAudioCount
             TotalAudioCount = $audioFiles.Count
         }
     }
@@ -142,7 +178,31 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 2. Check for Simple Album
+    # 2. Check for Compilation (Various Artists)
+    if ($hasDirectAudio -and $albumSubfolders.Count -eq 0 -and $subfolders.Count -le 2) {
+        $isCompilation = $false
+        
+        # Check folder name for compilation indicators
+        if ($folderName -match '^(?i)(VA|Various Artists?|V\.A\.?)') {
+            $isCompilation = $true
+        }
+        
+        # Check for large number of files (compilations often have many tracks)
+        if ($audioFiles.Count -gt 50) {
+            $isCompilation = $true
+        }
+        
+        if ($isCompilation) {
+            $result.StructureType = $structureTypes.CompilationFolder
+            $result.Confidence = 0.8
+            $result.Details += "Compilation detected: $($audioFiles.Count) tracks from various artists"
+            $result.Recommendations += "Process as compilation - avoid setting uniform year/artist on all tracks"
+            $result.Recommendations += "Consider using -PreserveTrackArtists to keep original track artists"
+            return $result
+        }
+    }
+
+    # 3. Check for Simple Album
     if ($hasDirectAudio -and $albumSubfolders.Count -eq 0 -and $subfolders.Count -le 2) {
         $confidence = 0.8
 
@@ -168,7 +228,7 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 3. Check for Mixed Album (AMBIGUOUS - needs review)
+    # 4. Check for Mixed Album (AMBIGUOUS - needs review)
     if ($hasDirectAudio -and $albumSubfolders.Count -gt 0) {
         $result.StructureType = $structureTypes.MixedAlbum
         $result.Confidence = 0.3
@@ -180,7 +240,7 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 4. Check for Compilation Folder
+    # 5. Check for Compilation Folder
     if ($compilationSubfolders.Count -gt 0 -and -not $hasDirectAudio) {
         $result.StructureType = $structureTypes.CompilationFolder
         $result.Confidence = 0.7
@@ -189,7 +249,7 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 5. Check for Multi-Disc Album (alternative detection)
+    # 6. Check for Multi-Disc Album (alternative detection)
     if ($discSubfolders.Count -gt 1 -and -not $hasDirectAudio) {
         $result.StructureType = $structureTypes.MultiDiscAlbum
         $result.Confidence = 0.8
@@ -198,8 +258,8 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 6. Default: Ambiguous or Non-Music
-    if ($totalAudioCount -gt 0) {
+    # 7. Default: Ambiguous or Non-Music
+    if ($audioFiles.Count -gt 0) {
         $result.StructureType = $structureTypes.AmbiguousStructure
         $result.Confidence = 0.2
         $result.Details += "Ambiguous structure: audio files found but unclear organization"

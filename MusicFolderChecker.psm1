@@ -51,3 +51,4 @@ Get-ChildItem -Path "$PSScriptRoot/src/Public/*.ps1" | ForEach-Object {
 
 # Export specific private functions that are needed for testing/debugging
 Export-ModuleMember -Function 'Get-FolderStructureAnalysis'
+Export-ModuleMember -Function 'Invoke-TagLibCreate'

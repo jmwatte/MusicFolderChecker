@@ -1,0 +1,889 @@
+(Get-MfcLogSummary -LogPath "C:\Users\resto\AppData\Local\Temp\MusicFolderChecker\MusicFolderStructureScan_20250916_170543.log").Entries|?{$_.Status -eq "Good"}|Select-Object -First 10  |Update-MusicFolderMetadata  -move -SkipMode  -DestinationFolder "E:\_CorrectedMusic" -PreserveFilenames
+Skipping missing folder: E:\Hans Zimmer
+Skipping missing folder: E:\Hans Zimmer\2014 - Interstellar (Original Motion Picture Soundtrack) [Expanded Edition]
+
+Folder: E:\Leonard Cohen
+Representative audio file: E:\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Introduction - Leonard Cohen.flac
+Current Album Artist: 01. Introduction
+Current Album       : 01. Introduction - Leonard Cohen
+Current Year        : 1970
+Enter Album Artist (blank to keep current, '\' to postpone this folder):
+Leonard Cohen
+Enter Album (blank to keep current, '\' to postpone this folder):
+Live at the Isle of Wight
+Enter Year (blank to keep current, '\' to postpone this folder):
+
+
+Filename preview (original vs. default renaming):
+  Original: 01 -  Introduction - Leonard Cohen.flac
+  Default:  00 - Introduction - Leonard Cohen.flac
+  Original: 02 -  Bird On The Wire - Leonard Cohen.flac
+  Default:  00 - Bird On The Wire - Leonard Cohen.flac
+  Original: 03 - ''intro to so long marianne'' - leonard cohen.flac
+  Default:  00 - ''Intro to So Long Marianne'' - Leonard Cohen.flac
+
+Filename Analysis:
+  Quality Score: 100% good patterns
+  Track Numbers: 100% have track numbers
+  Recommendation: Rename filenames (confidence: 70%)
+  Reason: Mostly good naming patterns with track numbers
+WARNING: Multiple albums and artists detected in folder 'E:\Leonard Cohen':
+WARNING: Albums: 01. Introduction - Leonard Cohen, 02. Bird On The Wire - Leonard Cohen, 03. ''Intro to So Long Marianne'' - Leonard Cohen, 04. So Long Marianne - Leonard Cohen, 05. ''Intro - Let's Renew Ourselves Now...'' - Leonard Cohen, 06. You Know Who I Am - Leonard Cohen, 07. ''Intro To Poems'' - Leonard Cohen, 08. Lady Midnight - Leonard Cohen, 09. A Person Who Eats Meat , Intro - They Locked Up A Man [Poem], 10. One Of Us Cannot Be Wrong - Leonard Cohen, 11. The Stranger Song - Leonard Cohen, 12. Tonight Will Be Fine - Leonard Cohen, 13. Hey, That's No Way To Say Goodbye - Leonard Cohen, 14. Diamonds In The Mine - Leonard Cohen, 15. Suzanne - Leonard Cohen, 16. Sing Another Song, Boys - Leonard Cohen, 17. The Partisan - Leonard Cohen, 18. Famous Blue Raincoat - Leonard Cohen, 19. Seems So Long Ago, Nancy - Leonard Cohen, 01 - Is This What You Wanted, 02 - Chelsea Hotel #2, 03 - Lover Lover Lover, 04 - Field Commander Cohen, 05 - Why Don't You Try, 06 - There Is a War, 07 - A Singer Must Die, 08 - I Tried to Leave You, 09 - Who By Fire, 10 - Take This Longing, 11 - Leaving Green Sleeves, 01. Suzanne - Leonard Cohen, 02. Sisters Of Mercy - Leonard Cohen, 03. So Long, Marianne - Leonard Cohen, 04. Bird On The Wire - Leonard Cohen, 05. Lady Midnight - Leonard Cohen, 06. The Partisan - Leonard Cohen, 07. Hey, That's No Way To Say Goodbye - Leonard Cohen, 08. Famous Blue Raincoat - Leonard Cohen, 09. Last Year's Man - Leonard Cohen, 10. Chelsea Hotel No. 2 - Leonard Cohen, 11. Who By Fire - Leonard Cohen, 12. Take This Longing - Leonard Cohen, 01. True Love Leaves No Traces [Ronee Blakley bv] - Leonard Cohen, 02. Iodine [Ronee Blakley bv][rhy arr Nino Tempo] - Leonard Cohen, 03. Paper Thin Hotel - Leonard Cohen, 04. Memories [Ronee Blakley bv] - Leonard Cohen, 05. I Left A Woman Waiting [rhy arr Nino Tempo] - Leonard Cohen, 06. Don't Go Home With Your Hard-On [Dylan,Ginsberg,Bill Diez bv] - Leonard Cohen, 07. Fingerprints - Leonard Cohen, 08. Death Of A Ladies' Man - Leonard Cohen, 01. The Guests - Leonard Cohen, 02. Humbled in Love - Leonard Cohen, 03. The Window - Leonard Cohen, 04. Came So Far for Beauty - Leonard Cohen, 05. The Lost Canadian (Un Canadien Errant) - Leonard Cohen, 06. The Traitor - Leonard Cohen, 07. Our Lady of Solitude - Leonard Cohen, 08. The Gypsy's Wife - Leonard Cohen, 09. The Smokey Life - Leonard Cohen, 10. Ballad of the Absent Mare - Leonard Cohen, 01. Dance Me To The End Of Love - Leonard Cohen, 02. Coming Back To You - Leonard Cohen, 03. The Law - Leonard Cohen, 04. Night Comes On - Leonard Cohen, 05. Hallelujah - Leonard Cohen, 06. The Captain - Leonard Cohen, 07. Hunter's Lullaby - Leonard Cohen, 08. Heart With No Companion - Leonard Cohen, 09. If It Be Your Will - Leonard Cohen, 01. First we take Manhattan - Cohen, Leonard, 02. Ain't no cure for love - Cohen, Leonard, 03. Everybody knows - Cohen, Leonard, 04. I'm your man - Cohen, Leonard, 05. Take this waltz - Cohen, Leonard, 06. Jazz police - Cohen, Leonard, 07. I can't forget - Cohen, Leonard, 08. Tower of song - Cohen, Leonard, 01. The Future - Leonard Cohen, 02. Waiting for the Miracle - Leonard Cohen, 03. Be for Real - Leonard Cohen, 04. Closing Time - Leonard Cohen, 05. Anthem - Leonard Cohen, 06. Democracy - Leonard Cohen, 07. Light as the Breeze - Leonard Cohen, 08. Always - Leonard Cohen, 09. Tacoma Trailer - Leonard Cohen, 03. Everybody Knows - Leonard Cohen, 04. Joan Of Arc - Leonard Cohen, 05. There Is A War - Leonard Cohen, 06. Sisters Of Mercy - Leonard Cohen, 07. Hallelujah - Leonard Cohen, 08. I'm Your Man - Leonard Cohen, 09. Who By Fire - Leonard Cohen, 11. If It Be Your Will - Leonard Cohen, 12. Heart With No Companion - Leonard Cohen, 13. Suzanne - Leonard Cohen, 01. Everybody Knows - Leonard Cohen, 02. I'm Your Man - Leonard Cohen, 03. Take This Waltz - Leonard Cohen, 04. Tower of Song - Leonard Cohen, 07. The Future - Leonard Cohen, 08. Closing Time - Leonard Cohen, 09. Dance Me To The End Of Love - Leonard Cohen, 10. Suzanne - Leonard Cohen, 11. Hallelujah - Leonard Cohen, 12. Never Any Good - Leonard Cohen, 13. The Great Event - Leonard Cohen, 01. Field Commander Cohen - Leonard Cohen, 02. The Window - Leonard Cohen, 03. The Smokey Life - Leonard Cohen, 04. The Gypsy's Wife - Leonard Cohen, 05. Lover Lover Lover - Leonard Cohen, 06. Hey, That's No Way to Say Goodbye - Leonard Cohen, 07. The Stranger Song - Leonard Cohen, 08. The Guests - Leonard Cohen, 09. Memories - Leonard Cohen, 10. Why Don't You Try - Leonard Cohen, 11. Bird on the Wire - Leonard Cohen, 12. So Long, Marianne - Leonard Cohen, 01. In My Secret Life - Leonard Cohen, 02. A Thousand Kisses Deep - Leonard Cohen, 03. That Don't  Make It Junk - Leonard Cohen, 04. Here It Is - Leonard Cohen, 05. Love Itself - Leonard Cohen, 06. By The Rivers Dark - Leonard Cohen, 07. Alexandra Leaving - Leonard Cohen, 08. You Have Loved Enough - Leonard Cohen, 09. Boogie Street - Leonard Cohen, 10. The Land Of Plenty - Leonard Cohen, 01. Go No More A-Roving - Leonard Cohen, 02. Because Of - Leonard Cohen, 03. The Letters - Leonard Cohen, 04. Undertow - Leonard Cohen, 05. Morning Glory - Leonard Cohen, 06. On That Day - Leonard Cohen, 07. Villanelle For Our Time - Leonard Cohen, 08. There For You - Leonard Cohen, 09. Dear Heather - Leonard Cohen, 10. Nightingale - Leonard Cohen, 11. To A Teacher - Leonard Cohen, 12. The Faith - Leonard Cohen, 13. Tenessee Waltz - Leonard Cohen, 01 - Cohen, Leonard - Bird on a Wire, 02 - Cohen, Leonard - Story of Isaac, 03 - Cohen, Leonard - A Bunch of Lonesome Heroes, 04 - Cohen, Leonard - The Partisan, 05 - Cohen, Leonard - Seems So Long Ago, Nancy, 06 - Cohen, Leonard - The Old Revolution, 07 - Cohen, Leonard - The Butcher, 08 - Cohen, Leonard - You Know Who I Am, 09 - Cohen, Leonard - Lady Midnight, 10 - Cohen, Leonard - Tonight Will Be Fine, 11 - Cohen, Leonard - Like a Bird (Bird on the Wire), 12 - Cohen, Leonard - Nothing to One (You Know Who I Am), 02. Master Song - Leonard Cohen, 03. Winter Lady - Leonard Cohen, 04. The Stranger Song - Leonard Cohen, 05. Sisters Of Mercy - Leonard Cohen, 06. So Long, Marianne - Leonard Cohen, 08. Stories Of The Street - Leonard Cohen, 09. Teachers - Leonard Cohen, 11. Store Room (Bonus Track) - Leonard Cohen, 12. Blessed Is The Memory (Bonus Track) - Leonard Cohen, 01. Avalanche - Leonard Cohen, 02. Last Year's Man - Leonard Cohen, 03. Dress Rehearsal Rag - Leonard Cohen, 04. Diamonds In The Mine - Leonard Cohen, 05. Love Calls You By Your Name - Leonard Cohen, 06. Famous Blue Raincoat - Leonard Cohen, 07. Sing Another Song, Boys - Leonard Cohen, 08. Joan Of Arc - Leonard Cohen, 09. Dress Rehearsal Rag (Early Version) - Leonard Cohen, 02. The Future - Leonard Cohen, 03. Aint No Cure For Love - Leonard Cohen, 05. Everybody Knows - Leonard Cohen, 06. In My Secret Life - Leonard Cohen, 07. Who By Fire - Leonard Cohen, 08. Hey, Thats No Way To Say Goodbye - Leonard Cohen, 09. Anthem - Leonard Cohen, 10. Introduction - Leonard Cohen, 11. Tower Of Song - Leonard Cohen, 12. Suzanne - Leonard Cohen, 13. The Gypsy's Wife - Leonard Cohen, 01. Boogie Street - Leonard Cohen, 02. Hallelujah - Leonard Cohen, 03. Democracy - Leonard Cohen, 04. I'm Your Man - Leonard Cohen, 05. Recitation - Leonard Cohen, 06. Take This Waltz - Leonard Cohen, 07. So Long, Marianne - Leonard Cohen, 08. First We Take Manhattan - Leonard Cohen, 09. Sisters Of Mercy - Leonard Cohen, 10. If It Be Your Will - Leonard Cohen, 11. Closing Time - Leonard Cohen, 12. I Tried To Leave You - Leonard Cohen, 13. Whither Thou Goest - Leonard Cohen, 01. Lover, Lover, Lover - Leonard Cohen, 03. Chelsea Hotel - Leonard Cohen, 04. Heart with No Companion - Leonard Cohen, 05. That Don't Make It Junk - Leonard Cohen, 06. Waiting for the Miracle - Leonard Cohen, 07. Avalanche - Leonard Cohen, 08. Suzanne - Leonard Cohen, 09. The Partisan - Leonard Cohen, 10. Famous Blue Raincoat - Leonard Cohen, 12. Closing Time - Leonard Cohen, 01. Going Home - Leonard Cohen, 02. Amen - Leonard Cohen, 03. Show Me the Place - Leonard Cohen, 04. Darkness - Leonard Cohen, 05. Anyhow - Leonard Cohen, 06. Crazy To Love You - Leonard Cohen, 07. Come Healing - Leonard Cohen, 08. Banjo - Leonard Cohen, 09. Lullaby - Leonard Cohen, 10. Different Sides - Leonard Cohen
+WARNING: Artists: 01. Introduction, 02. Bird On The Wire, 03. ''Intro to So Long Marianne'', 04. So Long Marianne, 05. ''Intro, 06. You Know Who I Am, 07. ''Intro To Poems'', 08. Lady Midnight, 09. A Person Who Eats Meat ;Intro, 10. One Of Us Cannot Be Wrong, 11. The Stranger Song, 12. Tonight Will Be Fine, 13. Hey;That's No Way To Say Goodbye, 14. Diamonds In The Mine, 15. Suzanne, 16. Sing Another Song;Boys, 17. The Partisan, 18. Famous Blue Raincoat, 19. Seems So Long Ago;Nancy, 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 01. Suzanne, 02. Sisters Of Mercy, 03. So Long;Marianne, 04. Bird On The Wire, 05. Lady Midnight, 06. The Partisan, 07. Hey;That's No Way To Say Goodbye, 08. Famous Blue Raincoat, 09. Last Year's Man, 10. Chelsea Hotel No. 2, 11. Who By Fire, 12. Take This Longing, 01. True Love Leaves No Traces [Ronee Blakley bv], 02. Iodine [Ronee Blakley bv][rhy arr Nino Tempo], 03. Paper Thin Hotel, 04. Memories [Ronee Blakley bv], 05. I Left A Woman Waiting [rhy arr Nino Tempo], 06. Don't Go Home With Your Hard-On [Dylan,Ginsberg,Bill Diez bv], 07. Fingerprints, 08. Death Of A Ladies' Man, 01. The Guests, 02. Humbled in Love, 03. The Window, 04. Came So Far for Beauty, 05. The Lost Canadian (Un Canadien Errant), 06. The Traitor, 07. Our Lady of Solitude, 08. The Gypsy's Wife, 09. The Smokey Life, 10. Ballad of the Absent Mare, 01. Dance Me To The End Of Love, 02. Coming Back To You, 03. The Law, 04. Night Comes On, 05. Hallelujah, 06. The Captain, 07. Hunter's Lullaby, 08. Heart With No Companion, 09. If It Be Your Will, 01. First we take Manhattan, 02. Ain't no cure for love, 03. Everybody knows, 04. I'm your man, 05. Take this waltz, 06. Jazz police, 07. I can't forget, 08. Tower of song, 01. The Future, 02. Waiting for the Miracle, 03. Be for Real, 04. Closing Time, 05. Anthem, 06. Democracy, 07. Light as the Breeze, 08. Always, 09. Tacoma Trailer, 04. Joan Of Arc, 05. There Is A War, 06. Sisters Of Mercy, 07. Hallelujah, 08. I'm Your Man, 09. Who By Fire, 11. If It Be Your Will, 12. Heart With No Companion, 13. Suzanne, 01. Everybody Knows, 02. I'm Your Man, 03. Take This Waltz, 04. Tower of Song, 07. The Future, 08. Closing Time, 09. Dance Me To The End Of Love, 10. Suzanne, 11. Hallelujah, 12. Never Any Good, 13. The Great Event, 01. Field Commander Cohen, 02. The Window, 03. The Smokey Life, 04. The Gypsy's Wife, 05. Lover Lover Lover, 06. Hey;That's No Way to Say Goodbye, 07. The Stranger Song, 08. The Guests, 09. Memories, 10. Why Don't You Try, 11. Bird on the Wire, 12. So Long;Marianne, 01. In My Secret Life, 02. A Thousand Kisses Deep, 03. That Don't  Make It Junk, 04. Here It Is, 05. Love Itself, 06. By The Rivers Dark, 07. Alexandra Leaving, 08. You Have Loved Enough, 09. Boogie Street, 10. The Land Of Plenty, 01. Go No More A-Roving, 02. Because Of, 03. The Letters, 04. Undertow, 05. Morning Glory, 06. On That Day, 07. Villanelle For Our Time, 08. There For You, 09. Dear Heather, 10. Nightingale, 11. To A Teacher, 12. The Faith, 13. Tenessee Waltz, 12, 02. Master Song, 03. Winter Lady, 04. The Stranger Song, 05. Sisters Of Mercy, 06. So Long;Marianne, 08. Stories Of The Street, 09. Teachers, 11. Store Room (Bonus Track), 12. Blessed Is The Memory (Bonus Track), 01. Avalanche, 02. Last Year's Man, 03. Dress Rehearsal Rag, 04. Diamonds In The Mine, 05. Love Calls You By Your Name, 06. Famous Blue Raincoat, 07. Sing Another Song;Boys, 08. Joan Of Arc, 09. Dress Rehearsal Rag (Early Version), 02. The Future, 03. Aint No Cure For Love, 05. Everybody Knows, 06. In My Secret Life, 07. Who By Fire, 08. Hey;Thats No Way To Say Goodbye, 09. Anthem, 10. Introduction, 11. Tower Of Song, 12. Suzanne, 13. The Gypsy's Wife, 01. Boogie Street, 02. Hallelujah, 03. Democracy, 05. Recitation, 06. Take This Waltz, 07. So Long;Marianne, 08. First We Take Manhattan, 09. Sisters Of Mercy, 10. If It Be Your Will, 11. Closing Time, 12. I Tried To Leave You, 13. Whither Thou Goest, 01. Lover;Lover;Lover, 03. Chelsea Hotel, 04. Heart with No Companion, 05. That Don't Make It Junk, 06. Waiting for the Miracle, 07. Avalanche, 08. Suzanne, 09. The Partisan, 10. Famous Blue Raincoat, 12. Closing Time, 01. Going Home, 02. Amen, 03. Show Me the Place, 04. Darkness, 05. Anyhow, 06. Crazy To Love You, 07. Come Healing, 08. Banjo, 09. Lullaby, 10. Different Sides
+This appears to be mixed content from different albums. Continue processing? (Y/N): y
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Introduction - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird On The Wire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\03 - ''intro to so long marianne'' - leonard cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  So Long Marianne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\05 - ''intro - let's renew ourselves now...'' - leonard cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  You Know Who I Am - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\07 - ''intro to poems'' - leonard cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Lady Midnight - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  A Person Who Eats Meat , Intro - They Locked Up A Man [Poem].flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  The Stranger Song - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Tonight Will Be Fine - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\14 -  Diamonds In The Mine - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\15 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\16 -  Sing Another Song, Boys - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\17 -  The Partisan - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\18 -  Famous Blue Raincoat - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1970 - Live at the Isle of Wight\19 -  Seems So Long Ago, Nancy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\01 - Is This What You Wanted.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\02 - Chelsea Hotel #2.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\03 - Lover Lover Lover.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\04 - Field Commander Cohen.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\05 - Why Don't You Try.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\06 - There Is a War.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\07 - A Singer Must Die.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\08 - I Tried to Leave You.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\09 - Who By Fire.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\10 - Take This Longing.flac
+Updated: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\11 - Leaving Green Sleeves.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\01 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\02 -  Sisters Of Mercy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\03 -  So Long, Marianne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\04 -  Bird On The Wire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\05 -  Lady Midnight - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\06 -  The Partisan - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\08 -  Famous Blue Raincoat - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\09 -  Last Year's Man - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\10 -  Chelsea Hotel No. 2 - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\11 -  Who By Fire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1975 - The Best Of\12 -  Take This Longing - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\01 -  True Love Leaves No Traces [Ronee Blakley bv] - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\02 -  Iodine [Ronee Blakley bv][rhy arr Nino Tempo] - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\03 -  Paper Thin Hotel - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\04 -  Memories [Ronee Blakley bv] - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\05 -  I Left A Woman Waiting [rhy arr Nino Tempo] - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\06 -  Don't Go Home With Your Hard-On [Dylan,Ginsberg,Bill Diez bv] - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\07 -  Fingerprints - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1977 - Death Of A Ladies Man\08 -  Death Of A Ladies' Man - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\01 -  The Guests - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\02 -  Humbled in Love - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\03 -  The Window - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\04 -  Came So Far for Beauty - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\05 -  The Lost Canadian (Un Canadien Errant) - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\06 -  The Traitor - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\07 -  Our Lady of Solitude - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\08 -  The Gypsy's Wife - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\09 -  The Smokey Life - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1979 - Recent Songs\10 -  Ballad of the Absent Mare - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\02 -  Coming Back To You - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\03 -  The Law - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\04 -  Night Comes On - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\05 -  Hallelujah - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\06 -  The Captain - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\07 -  Hunter's Lullaby - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\08 -  Heart With No Companion - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1984 - Various Positions\09 -  If It Be Your Will - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\01 -  First we take Manhattan - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\02 -  Ain't no cure for love - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\03 -  Everybody knows - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\04 -  I'm your man - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\05 -  Take this waltz - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\06 -  Jazz police - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\07 -  I can't forget - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1988 - I'm Your Man\08 -  Tower of song - Cohen, Leonard.flac
+Updated: E:\Leonard Cohen\1992 - The Future\01 -  The Future - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\02 -  Waiting for the Miracle - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\03 -  Be for Real - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\04 -  Closing Time - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\05 -  Anthem - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\06 -  Democracy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\07 -  Light as the Breeze - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\08 -  Always - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1992 - The Future\09 -  Tacoma Trailer - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\02 -  Bird On The Wire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\03 -  Everybody Knows - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\04 -  Joan Of Arc - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\05 -  There Is A War - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\06 -  Sisters Of Mercy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\07 -  Hallelujah - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\08 -  I'm Your Man - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\09 -  Who By Fire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\11 -  If It Be Your Will - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\12 -  Heart With No Companion - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1994 - Cohen Live\13 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\01 -  Everybody Knows - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\02 -  I'm Your Man - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\03 -  Take This Waltz - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\04 -  Tower of Song - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\05 -  Anthem - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\06 -  Democracy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\07 -  The Future - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\08 -  Closing Time - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\09 -  Dance Me To The End Of Love - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\10 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\11 -  Hallelujah - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\12 -  Never Any Good - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\1997 - More Best Of\13 -  The Great Event - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\01 -  Field Commander Cohen - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\02 -  The Window - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\03 -  The Smokey Life - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\04 -  The Gypsy's Wife - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\05 -  Lover Lover Lover - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\06 -  Hey, That's No Way to Say Goodbye - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\07 -  The Stranger Song - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\08 -  The Guests - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\09 -  Memories - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\10 -  Why Don't You Try - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\11 -  Bird on the Wire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2000 - Tour of 1979\12 -  So Long, Marianne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\01 -  In My Secret Life - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\02 -  A Thousand Kisses Deep - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\03 -  That Don't  Make It Junk - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\04 -  Here It Is - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\05 -  Love Itself - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\06 -  By The Rivers Dark - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\07 -  Alexandra Leaving - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\08 -  You Have Loved Enough - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\09 -  Boogie Street - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2001 - Ten New Songs\10 -  The Land Of Plenty - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\01 -  Go No More A-Roving - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\02 -  Because Of - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\03 -  The Letters - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\04 -  Undertow - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\05 -  Morning Glory - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\06 -  On That Day - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\07 -  Villanelle For Our Time - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\08 -  There For You - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\09 -  Dear Heather - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\10 -  Nightingale - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\11 -  To A Teacher - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\12 -  The Faith - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2004 - Dear Heather\13 -  Tenessee Waltz - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\01 - Cohen, Leonard - Bird on a Wire.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\02 - Cohen, Leonard - Story of Isaac.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\03 - Cohen, Leonard - A Bunch of Lonesome Heroes.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\04 - Cohen, Leonard - The Partisan.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\05 - Cohen, Leonard - Seems So Long Ago, Nancy.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\06 - Cohen, Leonard - The Old Revolution.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\07 - Cohen, Leonard - The Butcher.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\08 - Cohen, Leonard - You Know Who I Am.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\09 - Cohen, Leonard - Lady Midnight.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\10 - Cohen, Leonard - Tonight Will Be Fine.flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\11 - Cohen, Leonard - Like a Bird (Bird on the Wire).flac
+Updated: E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\12 - Cohen, Leonard - Nothing to One (You Know Who I Am).flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\01 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\02 -  Master Song - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\03 -  Winter Lady - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\04 -  The Stranger Song - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\05 -  Sisters Of Mercy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\06 -  So Long, Marianne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\08 -  Stories Of The Street - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\09 -  Teachers - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\11 -  Store Room (Bonus Track) - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\12 -  Blessed Is The Memory (Bonus Track) - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\01 -  Avalanche - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\02 -  Last Year's Man - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\03 -  Dress Rehearsal Rag - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\04 -  Diamonds In The Mine - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\05 -  Love Calls You By Your Name - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\06 -  Famous Blue Raincoat - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\07 -  Sing Another Song, Boys - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\08 -  Joan Of Arc - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\09 -  Dress Rehearsal Rag (Early Version) - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\02 -  The Future - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\03 -  Aint No Cure For Love - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\04 -  Bird On The Wire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\05 -  Everybody Knows - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\06 -  In My Secret Life - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\07 -  Who By Fire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\08 -  Hey, Thats No Way To Say Goodbye - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\09 -  Anthem - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\10 -  Introduction - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\11 -  Tower Of Song - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\12 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 1\13 -  The Gypsy's Wife - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\01 -  Boogie Street - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\02 -  Hallelujah - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\03 -  Democracy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\04 -  I'm Your Man - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\05 -  Recitation - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\06 -  Take This Waltz - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\07 -  So Long, Marianne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\08 -  First We Take Manhattan - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\09 -  Sisters Of Mercy - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\10 -  If It Be Your Will - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\11 -  Closing Time - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\12 -  I Tried To Leave You - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2009 - Live in London\Disc 2\13 -  Whither Thou Goest - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\01 -  Lover, Lover, Lover - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\02 -  Bird on the Wire - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\03 -  Chelsea Hotel - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\04 -  Heart with No Companion - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\05 -  That Don't Make It Junk - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\06 -  Waiting for the Miracle - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\07 -  Avalanche - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\08 -  Suzanne - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\09 -  The Partisan - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\10 -  Famous Blue Raincoat - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\11 -  Hallelujah - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2010 - Songs From The Road\12 -  Closing Time - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\01 -  Going Home - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\02 -  Amen - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\03 -  Show Me the Place - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\04 -  Darkness - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\05 -  Anyhow - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\06 -  Crazy To Love You - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\07 -  Come Healing - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\08 -  Banjo - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\09 -  Lullaby - Leonard Cohen.flac
+Updated: E:\Leonard Cohen\2012 - Old Ideas\10 -  Different Sides - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Introduction - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Introduction - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird On The Wire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird On The Wire - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\03 - ''intro to so long marianne'' - leonard cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 - ''intro to so long marianne'' - leonard cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  So Long Marianne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  So Long Marianne - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\05 - ''intro - let's renew ourselves now...'' - leonard cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 - ''intro - let's renew ourselves now...'' - leonard cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  You Know Who I Am - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  You Know Who I Am - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\07 - ''intro to poems'' - leonard cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 - ''intro to poems'' - leonard cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Lady Midnight - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Lady Midnight - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  A Person Who Eats Meat , Intro - They Locked Up A Man [Poem].flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  A Person Who Eats Meat , Intro - They Locked Up A Man [Poem].flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  The Stranger Song - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  The Stranger Song - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Tonight Will Be Fine - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Tonight Will Be Fine - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\14 -  Diamonds In The Mine - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\14 -  Diamonds In The Mine - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\15 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\15 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\16 -  Sing Another Song, Boys - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\16 -  Sing Another Song, Boys - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\17 -  The Partisan - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\17 -  The Partisan - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\18 -  Famous Blue Raincoat - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\18 -  Famous Blue Raincoat - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\19 -  Seems So Long Ago, Nancy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\19 -  Seems So Long Ago, Nancy - Leonard Cohen.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\01 - Is This What You Wanted.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 - Is This What You Wanted.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\02 - Chelsea Hotel #2.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 - Chelsea Hotel #2.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\03 - Lover Lover Lover.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 - Lover Lover Lover.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\04 - Field Commander Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 - Field Commander Cohen.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\05 - Why Don't You Try.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 - Why Don't You Try.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\06 - There Is a War.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 - There Is a War.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\07 - A Singer Must Die.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 - A Singer Must Die.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\08 - I Tried to Leave You.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 - I Tried to Leave You.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\09 - Who By Fire.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 - Who By Fire.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\10 - Take This Longing.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 - Take This Longing.flac
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\11 - Leaving Green Sleeves.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 - Leaving Green Sleeves.flac
+E:\Leonard Cohen\1975 - The Best Of\01 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\02 -  Sisters Of Mercy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Sisters Of Mercy - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\03 -  So Long, Marianne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  So Long, Marianne - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\04 -  Bird On The Wire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Bird On The Wire - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\05 -  Lady Midnight - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Lady Midnight - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\06 -  The Partisan - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  The Partisan - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\08 -  Famous Blue Raincoat - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Famous Blue Raincoat - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\09 -  Last Year's Man - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Last Year's Man - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\10 -  Chelsea Hotel No. 2 - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Chelsea Hotel No. 2 - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\11 -  Who By Fire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Who By Fire - Leonard Cohen.flac
+E:\Leonard Cohen\1975 - The Best Of\12 -  Take This Longing - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Take This Longing - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\01 -  True Love Leaves No Traces [Ronee Blakley bv] - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  True Love Leaves No Traces [Ronee Blakley bv] - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\02 -  Iodine [Ronee Blakley bv][rhy arr Nino Tempo] - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Iodine [Ronee Blakley bv][rhy arr Nino Tempo] - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\03 -  Paper Thin Hotel - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Paper Thin Hotel - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\04 -  Memories [Ronee Blakley bv] - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Memories [Ronee Blakley bv] - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\05 -  I Left A Woman Waiting [rhy arr Nino Tempo] - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  I Left A Woman Waiting [rhy arr Nino Tempo] - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\06 -  Don't Go Home With Your Hard-On [Dylan,Ginsberg,Bill Diez bv] - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Don't Go Home With Your Hard-On [Dylan,Ginsberg,Bill Diez bv] - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\07 -  Fingerprints - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Fingerprints - Leonard Cohen.flac
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\08 -  Death Of A Ladies' Man - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Death Of A Ladies' Man - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\01 -  The Guests - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  The Guests - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\02 -  Humbled in Love - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Humbled in Love - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\03 -  The Window - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  The Window - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\04 -  Came So Far for Beauty - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Came So Far for Beauty - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\05 -  The Lost Canadian (Un Canadien Errant) - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  The Lost Canadian (Un Canadien Errant) - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\06 -  The Traitor - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  The Traitor - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\07 -  Our Lady of Solitude - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Our Lady of Solitude - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\08 -  The Gypsy's Wife - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  The Gypsy's Wife - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\09 -  The Smokey Life - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  The Smokey Life - Leonard Cohen.flac
+E:\Leonard Cohen\1979 - Recent Songs\10 -  Ballad of the Absent Mare - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Ballad of the Absent Mare - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\02 -  Coming Back To You - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Coming Back To You - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\03 -  The Law - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  The Law - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\04 -  Night Comes On - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Night Comes On - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\05 -  Hallelujah - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Hallelujah - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\06 -  The Captain - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  The Captain - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\07 -  Hunter's Lullaby - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Hunter's Lullaby - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\08 -  Heart With No Companion - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Heart With No Companion - Leonard Cohen.flac
+E:\Leonard Cohen\1984 - Various Positions\09 -  If It Be Your Will - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  If It Be Your Will - Leonard Cohen.flac
+E:\Leonard Cohen\1988 - I'm Your Man\01 -  First we take Manhattan - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  First we take Manhattan - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\02 -  Ain't no cure for love - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Ain't no cure for love - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\03 -  Everybody knows - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Everybody knows - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\04 -  I'm your man - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  I'm your man - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\05 -  Take this waltz - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Take this waltz - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\06 -  Jazz police - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Jazz police - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\07 -  I can't forget - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  I can't forget - Cohen, Leonard.flac
+E:\Leonard Cohen\1988 - I'm Your Man\08 -  Tower of song - Cohen, Leonard.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Tower of song - Cohen, Leonard.flac
+E:\Leonard Cohen\1992 - The Future\01 -  The Future - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  The Future - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\02 -  Waiting for the Miracle - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Waiting for the Miracle - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\03 -  Be for Real - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Be for Real - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\04 -  Closing Time - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Closing Time - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\05 -  Anthem - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Anthem - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\06 -  Democracy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Democracy - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\07 -  Light as the Breeze - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Light as the Breeze - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\08 -  Always - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Always - Leonard Cohen.flac
+E:\Leonard Cohen\1992 - The Future\09 -  Tacoma Trailer - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Tacoma Trailer - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird On The Wire - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\02 -  Bird On The Wire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird On The Wire - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\03 -  Everybody Knows - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Everybody Knows - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\04 -  Joan Of Arc - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Joan Of Arc - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\05 -  There Is A War - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  There Is A War - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\06 -  Sisters Of Mercy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Sisters Of Mercy - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\07 -  Hallelujah - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Hallelujah - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\08 -  I'm Your Man - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  I'm Your Man - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\09 -  Who By Fire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Who By Fire - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\11 -  If It Be Your Will - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  If It Be Your Will - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\12 -  Heart With No Companion - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Heart With No Companion - Leonard Cohen.flac
+E:\Leonard Cohen\1994 - Cohen Live\13 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\01 -  Everybody Knows - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Everybody Knows - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\02 -  I'm Your Man - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  I'm Your Man - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\03 -  Take This Waltz - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Take This Waltz - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\04 -  Tower of Song - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Tower of Song - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Anthem - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\05 -  Anthem - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Anthem - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Democracy - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\06 -  Democracy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Democracy - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\07 -  The Future - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  The Future - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\08 -  Closing Time - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Closing Time - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\09 -  Dance Me To The End Of Love - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Dance Me To The End Of Love - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\10 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\11 -  Hallelujah - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Hallelujah - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\12 -  Never Any Good - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Never Any Good - Leonard Cohen.flac
+E:\Leonard Cohen\1997 - More Best Of\13 -  The Great Event - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  The Great Event - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\01 -  Field Commander Cohen - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Field Commander Cohen - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\02 -  The Window - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  The Window - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\03 -  The Smokey Life - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  The Smokey Life - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\04 -  The Gypsy's Wife - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  The Gypsy's Wife - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\05 -  Lover Lover Lover - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Lover Lover Lover - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\06 -  Hey, That's No Way to Say Goodbye - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Hey, That's No Way to Say Goodbye - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\07 -  The Stranger Song - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  The Stranger Song - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\08 -  The Guests - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  The Guests - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\09 -  Memories - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Memories - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\10 -  Why Don't You Try - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Why Don't You Try - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\11 -  Bird on the Wire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Bird on the Wire - Leonard Cohen.flac
+E:\Leonard Cohen\2000 - Tour of 1979\12 -  So Long, Marianne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  So Long, Marianne - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\01 -  In My Secret Life - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  In My Secret Life - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\02 -  A Thousand Kisses Deep - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  A Thousand Kisses Deep - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\03 -  That Don't  Make It Junk - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  That Don't  Make It Junk - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\04 -  Here It Is - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Here It Is - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\05 -  Love Itself - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Love Itself - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\06 -  By The Rivers Dark - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  By The Rivers Dark - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\07 -  Alexandra Leaving - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Alexandra Leaving - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\08 -  You Have Loved Enough - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  You Have Loved Enough - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\09 -  Boogie Street - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Boogie Street - Leonard Cohen.flac
+E:\Leonard Cohen\2001 - Ten New Songs\10 -  The Land Of Plenty - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  The Land Of Plenty - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\01 -  Go No More A-Roving - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Go No More A-Roving - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\02 -  Because Of - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Because Of - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\03 -  The Letters - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  The Letters - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\04 -  Undertow - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Undertow - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\05 -  Morning Glory - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Morning Glory - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\06 -  On That Day - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  On That Day - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\07 -  Villanelle For Our Time - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Villanelle For Our Time - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\08 -  There For You - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  There For You - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\09 -  Dear Heather - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Dear Heather - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\10 -  Nightingale - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Nightingale - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\11 -  To A Teacher - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  To A Teacher - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\12 -  The Faith - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  The Faith - Leonard Cohen.flac
+E:\Leonard Cohen\2004 - Dear Heather\13 -  Tenessee Waltz - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  Tenessee Waltz - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\01 - Cohen, Leonard - Bird on a Wire.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 - Cohen, Leonard - Bird on a Wire.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\02 - Cohen, Leonard - Story of Isaac.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 - Cohen, Leonard - Story of Isaac.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\03 - Cohen, Leonard - A Bunch of Lonesome Heroes.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 - Cohen, Leonard - A Bunch of Lonesome Heroes.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\04 - Cohen, Leonard - The Partisan.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 - Cohen, Leonard - The Partisan.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\05 - Cohen, Leonard - Seems So Long Ago, Nancy.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 - Cohen, Leonard - Seems So Long Ago, Nancy.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\06 - Cohen, Leonard - The Old Revolution.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 - Cohen, Leonard - The Old Revolution.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\07 - Cohen, Leonard - The Butcher.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 - Cohen, Leonard - The Butcher.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\08 - Cohen, Leonard - You Know Who I Am.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 - Cohen, Leonard - You Know Who I Am.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\09 - Cohen, Leonard - Lady Midnight.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 - Cohen, Leonard - Lady Midnight.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\10 - Cohen, Leonard - Tonight Will Be Fine.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 - Cohen, Leonard - Tonight Will Be Fine.flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\11 - Cohen, Leonard - Like a Bird (Bird on the Wire).flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 - Cohen, Leonard - Like a Bird (Bird on the Wire).flac
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\12 - Cohen, Leonard - Nothing to One (You Know Who I Am).flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 - Cohen, Leonard - Nothing to One (You Know Who I Am).flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\01 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\02 -  Master Song - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Master Song - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\03 -  Winter Lady - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Winter Lady - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\04 -  The Stranger Song - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  The Stranger Song - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\05 -  Sisters Of Mercy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Sisters Of Mercy - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\06 -  So Long, Marianne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  So Long, Marianne - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Hey, That's No Way To Say Goodbye - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\08 -  Stories Of The Street - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Stories Of The Street - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\09 -  Teachers - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Teachers - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  One Of Us Cannot Be Wrong - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\11 -  Store Room (Bonus Track) - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Store Room (Bonus Track) - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\12 -  Blessed Is The Memory (Bonus Track) - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Blessed Is The Memory (Bonus Track) - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\01 -  Avalanche - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Avalanche - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\02 -  Last Year's Man - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Last Year's Man - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\03 -  Dress Rehearsal Rag - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Dress Rehearsal Rag - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\04 -  Diamonds In The Mine - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Diamonds In The Mine - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\05 -  Love Calls You By Your Name - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Love Calls You By Your Name - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\06 -  Famous Blue Raincoat - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Famous Blue Raincoat - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\07 -  Sing Another Song, Boys - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Sing Another Song, Boys - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\08 -  Joan Of Arc - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Joan Of Arc - Leonard Cohen.flac
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\09 -  Dress Rehearsal Rag (Early Version) - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Dress Rehearsal Rag (Early Version) - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Dance Me To The End Of Love - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\02 -  The Future - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  The Future - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\03 -  Aint No Cure For Love - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Aint No Cure For Love - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Bird On The Wire - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\04 -  Bird On The Wire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Bird On The Wire - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\05 -  Everybody Knows - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Everybody Knows - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\06 -  In My Secret Life - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  In My Secret Life - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\07 -  Who By Fire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Who By Fire - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\08 -  Hey, Thats No Way To Say Goodbye - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Hey, Thats No Way To Say Goodbye - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\09 -  Anthem - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Anthem - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\10 -  Introduction - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Introduction - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\11 -  Tower Of Song - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Tower Of Song - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\12 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 1\13 -  The Gypsy's Wife - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  The Gypsy's Wife - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\01 -  Boogie Street - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Boogie Street - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\02 -  Hallelujah - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Hallelujah - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\03 -  Democracy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Democracy - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\04 -  I'm Your Man - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  I'm Your Man - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\05 -  Recitation - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Recitation - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\06 -  Take This Waltz - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Take This Waltz - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\07 -  So Long, Marianne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  So Long, Marianne - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\08 -  First We Take Manhattan - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  First We Take Manhattan - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\09 -  Sisters Of Mercy - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Sisters Of Mercy - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\10 -  If It Be Your Will - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  If It Be Your Will - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\11 -  Closing Time - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Closing Time - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\12 -  I Tried To Leave You - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  I Tried To Leave You - Leonard Cohen.flac
+E:\Leonard Cohen\2009 - Live in London\Disc 2\13 -  Whither Thou Goest - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\13 -  Whither Thou Goest - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\01 -  Lover, Lover, Lover - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Lover, Lover, Lover - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird on the Wire - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\02 -  Bird on the Wire - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Bird on the Wire - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\03 -  Chelsea Hotel - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Chelsea Hotel - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\04 -  Heart with No Companion - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Heart with No Companion - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\05 -  That Don't Make It Junk - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  That Don't Make It Junk - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\06 -  Waiting for the Miracle - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Waiting for the Miracle - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\07 -  Avalanche - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Avalanche - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\08 -  Suzanne - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Suzanne - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\09 -  The Partisan - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  The Partisan - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\10 -  Famous Blue Raincoat - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Famous Blue Raincoat - Leonard Cohen.flac
+Destination file exists, skipping: E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Hallelujah - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\11 -  Hallelujah - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\11 -  Hallelujah - Leonard Cohen.flac
+E:\Leonard Cohen\2010 - Songs From The Road\12 -  Closing Time - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\12 -  Closing Time - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\01 -  Going Home - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\01 -  Going Home - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\02 -  Amen - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\02 -  Amen - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\03 -  Show Me the Place - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\03 -  Show Me the Place - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\04 -  Darkness - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\04 -  Darkness - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\05 -  Anyhow - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\05 -  Anyhow - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\06 -  Crazy To Love You - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\06 -  Crazy To Love You - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\07 -  Come Healing - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\07 -  Come Healing - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\08 -  Banjo - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\08 -  Banjo - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\09 -  Lullaby - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\09 -  Lullaby - Leonard Cohen.flac
+E:\Leonard Cohen\2012 - Old Ideas\10 -  Different Sides - Leonard Cohen.flac
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\10 -  Different Sides - Leonard Cohen.flac
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\Leonard Cohen - Live At The Isle Of Wight 1970.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1970 - Live at the Isle of Wight\Leonard Cohen - Live At The Isle Of Wight 1970.log
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\Leonard Cohen - Live At The Isle Of Wight 1970.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1970 - Live at the Isle of Wight\Leonard Cohen - Live At The Isle Of Wight 1970.m3u
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\Live At The Isle Of Wight 1970.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1970 - Live at the Isle of Wight\Live At The Isle Of Wight 1970.cue
+E:\Leonard Cohen\1970 - Live at the Isle of Wight\Live At The Isle Of Wight 1970.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1970 - Live at the Isle of Wight\Live At The Isle Of Wight 1970.cue.bak
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\Leonard Cohen - New Skin For The Old Ceremony.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1974 - New Skin For The Old Ceremony\Leonard Cohen - New Skin For The Old Ceremony.log
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\Leonard Cohen - New Skin For The Old Ceremony.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1974 - New Skin For The Old Ceremony\Leonard Cohen - New Skin For The Old Ceremony.m3u
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\New Skin For The Old Ceremony.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1974 - New Skin For The Old Ceremony\New Skin For The Old Ceremony.cue
+E:\Leonard Cohen\1974 - New Skin For The Old Ceremony\New Skin For The Old Ceremony.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1974 - New Skin For The Old Ceremony\New Skin For The Old Ceremony.cue.bak
+E:\Leonard Cohen\1975 - The Best Of\Leonard Cohen - The Best Of Leonard Cohen.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1975 - The Best Of\Leonard Cohen - The Best Of Leonard Cohen.log
+E:\Leonard Cohen\1975 - The Best Of\Leonard Cohen - The Best Of Leonard Cohen.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1975 - The Best Of\Leonard Cohen - The Best Of Leonard Cohen.m3u
+E:\Leonard Cohen\1975 - The Best Of\The Best Of Leonard Cohen.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1975 - The Best Of\The Best Of Leonard Cohen.cue
+E:\Leonard Cohen\1975 - The Best Of\The Best Of Leonard Cohen.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1975 - The Best Of\The Best Of Leonard Cohen.cue.bak
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\Death Of A Ladies' Man.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1977 - Death Of A Ladies Man\Death Of A Ladies' Man.cue
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\Death Of A Ladies' Man.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1977 - Death Of A Ladies Man\Death Of A Ladies' Man.cue.bak
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\Leonard Cohen - Death Of A Ladies' Man.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1977 - Death Of A Ladies Man\Leonard Cohen - Death Of A Ladies' Man.log
+E:\Leonard Cohen\1977 - Death Of A Ladies Man\Leonard Cohen - Death Of A Ladies' Man.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1977 - Death Of A Ladies Man\Leonard Cohen - Death Of A Ladies' Man.m3u
+E:\Leonard Cohen\1979 - Recent Songs\Leonard Cohen - Recent Songs.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1979 - Recent Songs\Leonard Cohen - Recent Songs.log
+E:\Leonard Cohen\1979 - Recent Songs\Leonard Cohen - Recent Songs.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1979 - Recent Songs\Leonard Cohen - Recent Songs.m3u
+E:\Leonard Cohen\1979 - Recent Songs\Recent Songs.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1979 - Recent Songs\Recent Songs.cue
+E:\Leonard Cohen\1979 - Recent Songs\Recent Songs.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1979 - Recent Songs\Recent Songs.cue.bak
+E:\Leonard Cohen\1984 - Various Positions\Leonard Cohen - Various Positions.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1984 - Various Positions\Leonard Cohen - Various Positions.log
+E:\Leonard Cohen\1984 - Various Positions\Leonard Cohen - Various Positions.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1984 - Various Positions\Leonard Cohen - Various Positions.m3u
+E:\Leonard Cohen\1984 - Various Positions\Various Positions.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1984 - Various Positions\Various Positions.cue
+E:\Leonard Cohen\1984 - Various Positions\Various Positions.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1984 - Various Positions\Various Positions.cue.bak
+E:\Leonard Cohen\1988 - I'm Your Man\Cohen, Leonard - I'm Your Man.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1988 - I'm Your Man\Cohen, Leonard - I'm Your Man.log
+E:\Leonard Cohen\1988 - I'm Your Man\Cohen, Leonard - I'm Your Man.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1988 - I'm Your Man\Cohen, Leonard - I'm Your Man.m3u
+E:\Leonard Cohen\1988 - I'm Your Man\I'm Your Man.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1988 - I'm Your Man\I'm Your Man.cue
+E:\Leonard Cohen\1988 - I'm Your Man\I'm Your Man.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1988 - I'm Your Man\I'm Your Man.cue.bak
+E:\Leonard Cohen\1992 - The Future\Leonard Cohen - The Future.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1992 - The Future\Leonard Cohen - The Future.log
+E:\Leonard Cohen\1992 - The Future\Leonard Cohen - The Future.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1992 - The Future\Leonard Cohen - The Future.m3u
+E:\Leonard Cohen\1992 - The Future\The Future.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1992 - The Future\The Future.cue
+E:\Leonard Cohen\1992 - The Future\The Future.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1992 - The Future\The Future.cue.bak
+E:\Leonard Cohen\1994 - Cohen Live\Leonard Cohen - Cohen Live.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1994 - Cohen Live\Leonard Cohen - Cohen Live.log
+E:\Leonard Cohen\1994 - Cohen Live\Leonard Cohen - Cohen Live.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1994 - Cohen Live\Leonard Cohen - Cohen Live.m3u
+E:\Leonard Cohen\1997 - More Best Of\Leonard Cohen - More Best Of.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1997 - More Best Of\Leonard Cohen - More Best Of.log
+E:\Leonard Cohen\1997 - More Best Of\Leonard Cohen - More Best Of.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1997 - More Best Of\Leonard Cohen - More Best Of.m3u
+E:\Leonard Cohen\1997 - More Best Of\More Best Of.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1997 - More Best Of\More Best Of.cue
+E:\Leonard Cohen\1997 - More Best Of\More Best Of.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\1997 - More Best Of\More Best Of.cue.bak
+E:\Leonard Cohen\2000 - Tour of 1979\Field Commander Cohen.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2000 - Tour of 1979\Field Commander Cohen.cue
+E:\Leonard Cohen\2000 - Tour of 1979\Field Commander Cohen.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2000 - Tour of 1979\Field Commander Cohen.cue.bak
+E:\Leonard Cohen\2000 - Tour of 1979\Leonard Cohen - Field Commander Cohen.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2000 - Tour of 1979\Leonard Cohen - Field Commander Cohen.log
+E:\Leonard Cohen\2000 - Tour of 1979\Leonard Cohen - Field Commander Cohen.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2000 - Tour of 1979\Leonard Cohen - Field Commander Cohen.m3u
+E:\Leonard Cohen\2001 - Ten New Songs\Leonard Cohen - Ten New Songs.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2001 - Ten New Songs\Leonard Cohen - Ten New Songs.log
+E:\Leonard Cohen\2001 - Ten New Songs\Leonard Cohen - Ten New Songs.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2001 - Ten New Songs\Leonard Cohen - Ten New Songs.m3u
+E:\Leonard Cohen\2001 - Ten New Songs\Ten New Songs.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2001 - Ten New Songs\Ten New Songs.cue
+E:\Leonard Cohen\2001 - Ten New Songs\Ten New Songs.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2001 - Ten New Songs\Ten New Songs.cue.bak
+E:\Leonard Cohen\2004 - Dear Heather\Dear Heather.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2004 - Dear Heather\Dear Heather.cue
+E:\Leonard Cohen\2004 - Dear Heather\Dear Heather.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2004 - Dear Heather\Dear Heather.cue.bak
+E:\Leonard Cohen\2004 - Dear Heather\Leonard Cohen - Dear Heather.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2004 - Dear Heather\Leonard Cohen - Dear Heather.log
+E:\Leonard Cohen\2004 - Dear Heather\Leonard Cohen - Dear Heather.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2004 - Dear Heather\Leonard Cohen - Dear Heather.m3u
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\Cohen, Leonard - Songs from a Room.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs From A Room 1969 (Remastered)\Cohen, Leonard - Songs from a Room.m3u
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\Songs from a Room.CUE
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs From A Room 1969 (Remastered)\Songs from a Room.CUE
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\Songs from a Room.CUE.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs From A Room 1969 (Remastered)\Songs from a Room.CUE.bak
+E:\Leonard Cohen\2007 - Songs From A Room 1969 (Remastered)\Songs from a Room.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs From A Room 1969 (Remastered)\Songs from a Room.log
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\Leonard Cohen - Songs Of Leonard Cohen.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs of Leonard Cohen 1967 (Remastered)\Leonard Cohen - Songs Of Leonard Cohen.log
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\Leonard Cohen - Songs Of Leonard Cohen.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs of Leonard Cohen 1967 (Remastered)\Leonard Cohen - Songs Of Leonard Cohen.m3u
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\Songs Of Leonard Cohen.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs of Leonard Cohen 1967 (Remastered)\Songs Of Leonard Cohen.cue
+E:\Leonard Cohen\2007 - Songs of Leonard Cohen 1967 (Remastered)\Songs Of Leonard Cohen.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs of Leonard Cohen 1967 (Remastered)\Songs Of Leonard Cohen.cue.bak
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\Leonard Cohen - Songs Of Love and Hate (Remastered + Expanded).log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs Of Love & Hate 1971 (Remastered)\Leonard Cohen - Songs Of Love and Hate (Remastered + Expanded).log
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\Leonard Cohen - Songs Of Love and Hate (Remastered + Expanded).m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs Of Love & Hate 1971 (Remastered)\Leonard Cohen - Songs Of Love and Hate (Remastered + Expanded).m3u
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\Songs Of Love and Hate (Remastered + Expanded).cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs Of Love & Hate 1971 (Remastered)\Songs Of Love and Hate (Remastered + Expanded).cue
+E:\Leonard Cohen\2007 - Songs Of Love & Hate 1971 (Remastered)\Songs Of Love and Hate (Remastered + Expanded).cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2007 - Songs Of Love & Hate 1971 (Remastered)\Songs Of Love and Hate (Remastered + Expanded).cue.bak
+E:\Leonard Cohen\2009 - Live in London\Disc 1\Leonard Cohen - Live In London [Disc 1].log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2009 - Live in London\Disc 1\Leonard Cohen - Live In London [Disc 1].log
+E:\Leonard Cohen\2009 - Live in London\Disc 1\Leonard Cohen - Live In London [Disc 1].m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2009 - Live in London\Disc 1\Leonard Cohen - Live In London [Disc 1].m3u
+E:\Leonard Cohen\2009 - Live in London\Disc 2\Leonard Cohen - Live In London - CD 2.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2009 - Live in London\Disc 2\Leonard Cohen - Live In London - CD 2.log
+E:\Leonard Cohen\2009 - Live in London\Disc 2\Leonard Cohen - Live In London - CD 2.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2009 - Live in London\Disc 2\Leonard Cohen - Live In London - CD 2.m3u
+E:\Leonard Cohen\2009 - Live in London\Disc 2\Live In London - CD 2.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2009 - Live in London\Disc 2\Live In London - CD 2.cue
+E:\Leonard Cohen\2009 - Live in London\Disc 2\Live In London - CD 2.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2009 - Live in London\Disc 2\Live In London - CD 2.cue.bak
+E:\Leonard Cohen\2010 - Songs From The Road\Leonard Cohen - Songs from the Road.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2010 - Songs From The Road\Leonard Cohen - Songs from the Road.log
+E:\Leonard Cohen\2010 - Songs From The Road\Leonard Cohen - Songs from the Road.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2010 - Songs From The Road\Leonard Cohen - Songs from the Road.m3u
+E:\Leonard Cohen\2010 - Songs From The Road\Songs from the Road.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2010 - Songs From The Road\Songs from the Road.cue
+E:\Leonard Cohen\2010 - Songs From The Road\Songs from the Road.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2010 - Songs From The Road\Songs from the Road.cue.bak
+E:\Leonard Cohen\2012 - Old Ideas\Leonard Cohen - Old Ideas.log
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2012 - Old Ideas\Leonard Cohen - Old Ideas.log
+E:\Leonard Cohen\2012 - Old Ideas\Leonard Cohen - Old Ideas.m3u
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2012 - Old Ideas\Leonard Cohen - Old Ideas.m3u
+E:\Leonard Cohen\2012 - Old Ideas\Old Ideas.cue
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2012 - Old Ideas\Old Ideas.cue
+E:\Leonard Cohen\2012 - Old Ideas\Old Ideas.cue.bak
+-> E:\_CorrectedMusic\Leonard Cohen\1970 - Live at the Isle of Wight\2012 - Old Ideas\Old Ideas.cue.bak
+Skipping missing folder: E:\Leonard Cohen\1970 - Live at the Isle of Wight
+Skipping missing folder: E:\Leonard Cohen\1974 - New Skin For The Old Ceremony
+Skipping missing folder: E:\Leonard Cohen\1975 - The Best Of
+Skipping missing folder: E:\Leonard Cohen\1977 - Death Of A Ladies Man
+Skipping missing folder: E:\Leonard Cohen\1979 - Recent Songs
+Skipping missing folder: E:\Leonard Cohen\1984 - Various Positions
+Skipping missing folder: E:\Leonard Cohen\1988 - I'm Your Man
+ ~ ◉
