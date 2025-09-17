@@ -42,6 +42,11 @@
 .PARAMETER Simple
     Switch parameter for backward compatibility. Returns boolean results instead of detailed objects.
 
+.PARAMETER AnalysisMode
+    Controls the depth of structure analysis when -AnalyzeStructure is used. Valid values: 'Basic', 'Deep'.
+    - Basic: Standard analysis (default)
+    - Deep: Enables consensus-based hints and alternative BoxSet detection for ambiguous/nested collections
+
 .INPUTS
     System.String
     You can pipe folder paths to Find-BadMusicFolderStructure.
@@ -103,7 +108,10 @@ function Find-BadMusicFolderStructure {
 
         [switch]$Simple,  # New parameter for backward compatibility
 
-        [switch]$AnalyzeStructure  # Enhanced analysis with structure type detection
+        [switch]$AnalyzeStructure,  # Enhanced analysis with structure type detection
+
+        [ValidateSet('Basic','Deep')]
+        [string]$AnalysisMode = 'Basic'
     )
 
     begin {
@@ -343,10 +351,18 @@ function Find-BadMusicFolderStructure {
             foreach ($result in $results) {
                 if ($result.Status -ne "Skipped" -and $result.Status -ne "Error") {
                     try {
-                        $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path
+                        # Forward depth mode to analyzer; Deep enables consensus-based hints
+                        if ($AnalysisMode -eq 'Deep') {
+                            $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path -UseConsensusHints:$true
+                        } else {
+                            $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path
+                        }
                         
-                        # Skip if the path is not actually a folder
-                        if ($structureAnalysis.Metadata.IsFile -or -not $structureAnalysis.Metadata.ContainsKey('Exists') -or $structureAnalysis.Metadata.Exists -eq $false) {
+                        # Skip only if analysis says it's a file, or if it explicitly says it doesn't exist
+                        $isFile = $false; $notExists = $false
+                        try { if ($structureAnalysis.Metadata.IsFile) { $isFile = $true } } catch { }
+                        try { if ($structureAnalysis.Metadata.ContainsKey('Exists') -and -not $structureAnalysis.Metadata.Exists) { $notExists = $true } } catch { }
+                        if ($isFile -or $notExists) {
                             # Don't enhance results for files or non-existent paths
                             $enhancedResults += $result
                             continue
