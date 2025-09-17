@@ -32,6 +32,16 @@ function New-MfcConsensusPlan {
     .PARAMETER OutputPath
         Optional path to write the plan as JSON (array). If not specified, writes objects to the pipeline.
 
+    .PARAMETER JsonlPath
+        Optional path to append each plan item as a single-line JSON object (JSONL) as it is computed.
+        Useful for long runs and resuming later.
+
+    .PARAMETER ShowProgress
+        Show a progress bar while scanning folders.
+
+    .PARAMETER MaxFolders
+        Limit the number of folders analyzed (0 = no limit). Helpful for sampling quick previews.
+
     .PARAMETER Fast
         Enable fast sampling mode for consensus (limited files per subfolder and overall). Useful for large trees or quick previews.
 
@@ -58,12 +68,19 @@ function New-MfcConsensusPlan {
 
         [switch]$Fast,
 
-        [string]$OutputPath
+        [string]$OutputPath,
+
+        [string]$JsonlPath,
+
+        [switch]$ShowProgress,
+
+        [int]$MaxFolders = 0
     )
 
     begin {
         $audioExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.ape', '.aiff', '.aif')
         $plan = @()
+        $emitted = 0
     }
 
     process {
@@ -75,7 +92,17 @@ function New-MfcConsensusPlan {
                 $targets = $targets | Select-Object -Unique
             }
 
+            $total = $targets.Count
+            $index = 0
+
             foreach ($folder in $targets) {
+                $index++
+                if ($ShowProgress) {
+                    $act = "Analyzing $folder"
+                    $pct = if ($total -gt 0) { [int](($index / $total) * 100) } else { 0 }
+                    Write-Progress -Activity 'Building consensus plan' -Status $act -PercentComplete $pct
+                }
+                if ($MaxFolders -gt 0 -and $emitted -ge $MaxFolders) { break }
                 # Determine if folder has enough audio files
                 $audioFiles = @()
                 foreach ($ext in $audioExtensions) {
@@ -123,8 +150,20 @@ function New-MfcConsensusPlan {
                     Reason = if ($analysis -and $analysis.Details) { ($analysis.Details -join '; ') } else { 'Consensus-derived' }
                     Notes = $cons.Details
                 }
+                # Stream JSONL incrementally if requested
+                if ($JsonlPath) {
+                    try { $item | ConvertTo-Json -Depth 6 -Compress | Add-Content -LiteralPath $JsonlPath -Encoding UTF8 } catch { }
+                }
+
+                # Emit to pipeline immediately for responsiveness
+                Write-Output $item
+
+                # Collect for optional OutputPath
                 $plan += $item
+                $emitted++
             }
+
+            if ($MaxFolders -gt 0 -and $emitted -ge $MaxFolders) { break }
         }
     }
 
@@ -137,8 +176,6 @@ function New-MfcConsensusPlan {
             catch {
                 Write-Output ("Failed to write plan to {0}: {1}" -f $OutputPath, $_)
             }
-        } else {
-            $plan
         }
     }
 }
