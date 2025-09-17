@@ -221,7 +221,7 @@ function Find-BadMusicFolderStructure {
                 continue
             }
 
-            # Check if this is an artist folder containing album subfolders
+            # Basic folder existence/emptiness checks
             if (-not (Test-Path -LiteralPath $folder)) {
                 $validationResult.Reason = "NotFound"
                 $validationResult.Details = "Folder does not exist"
@@ -230,7 +230,6 @@ function Find-BadMusicFolderStructure {
                 continue
             }
 
-            # Check if folder is empty
             $allItems = Get-ChildItem -LiteralPath $folder -ErrorAction SilentlyContinue
             if (-not $allItems -or $allItems.Count -eq 0) {
                 $validationResult.Reason = "Empty"
@@ -240,107 +239,104 @@ function Find-BadMusicFolderStructure {
                 continue
             }
 
-            # Check if this is an artist folder containing album subfolders
-            $subfolders = Get-ChildItem -LiteralPath $folder -Directory -ErrorAction SilentlyContinue
-            $albumSubfolders = @()
-            $potentialArtistSubfolders = @()
-            
-            foreach ($subfolder in $subfolders) {
-                if ($subfolder.Name -match '^\d{4} - .+$') {
-                    $albumSubfolders += $subfolder
-                } else {
-                    # Check if this could be an artist folder (contains album subfolders)
-                    $artistSubfolders = Get-ChildItem -LiteralPath $subfolder.FullName -Directory -ErrorAction SilentlyContinue
-                    $hasAlbumSubfolders = $artistSubfolders | Where-Object { $_.Name -match '^\d{4} - .+$' }
-                    if ($hasAlbumSubfolders) {
-                        $potentialArtistSubfolders += $subfolder
-                    }
-                }
-            }
-
-            # Detect collection roots: folders with many album subfolders (2+) that don't contain music files directly
-            $directMusicFiles = Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue | Where-Object { $audioExtensions -contains $_.Extension.ToLower() }
-            $isCollectionRoot = $albumSubfolders.Count -ge 2 -and $directMusicFiles.Count -eq 0 -and $potentialArtistSubfolders.Count -eq 0
-            
-            if ($isCollectionRoot) {
-                $validationResult.Reason = "CollectionRoot"
-                $validationResult.Details = "Contains $($albumSubfolders.Count) album subfolders - appears to be a collection root, not an individual artist folder"
-                $validationResult.Status = "Bad"
-                $results += $validationResult
-                continue
-            }
-
-            # If we have potential artist subfolders, this might be a collection root
-            # Only treat as artist folder if we have direct album subfolders AND no artist subfolders
-            $isArtistFolder = $albumSubfolders.Count -gt 0 -and $potentialArtistSubfolders.Count -eq 0 -and -not $isCollectionRoot
-
-            if ($isArtistFolder) {
-                # This is an artist folder - check if any album subfolder contains music files
-                $hasMusicFiles = $false
-                foreach ($albumFolder in $albumSubfolders) {
-                    foreach ($extension in $audioExtensions) {
-                        $musicFiles = Get-ChildItem -LiteralPath $albumFolder.FullName -File -Filter "*$extension" -ErrorAction SilentlyContinue
-                        if ($musicFiles.Count -gt 0) {
-                            $hasMusicFiles = $true
-                            $firstAudioFile = $musicFiles | Select-Object -First 1
-                            break
-                        }
-                    }
-                    if ($hasMusicFiles) { break }
-                }
-
-                if (-not $hasMusicFiles) {
-                    $validationResult.Reason = "NoMusicFiles"
-                    $validationResult.Details = "No supported audio files found in album subfolders ($($audioExtensions -join ', '))"
-                    $validationResult.Status = "Bad"
-                    $results += $validationResult
-                    continue
-                }
-            } else {
-                # This is an album folder - look for music files directly
-                $firstAudioFile = $null
-                foreach ($extension in $audioExtensions) {
-                    $firstAudioFile = Get-ChildItem -LiteralPath $folder -File -Filter "*$extension" -ErrorAction SilentlyContinue | Select-Object -First 1
-                    if ($firstAudioFile) { break }
-                }
-
-                if (-not $firstAudioFile) {
-                    $validationResult.Reason = "NoMusicFiles"
-                    $validationResult.Details = "No supported audio files found ($($audioExtensions -join ', '))"
-                    $validationResult.Status = "Bad"
-                    $results += $validationResult
-                    continue
-                }
-            }
-
-            # Try to read the audio file to check for corruption
+            # Authoritative classification via analyzer
             try {
-                # TagLib is already loaded at module level, just validate the file
-                [TagLib.File]::Create($firstAudioFile.FullName) | Out-Null
-                # File is readable
-            }
-            catch {
-                $validationResult.Reason = "CorruptedFile"
-                $validationResult.Details = "Audio file appears corrupted: $($firstAudioFile.Name) - $_"
-                $validationResult.Status = "Bad"
+                if ($AnalysisMode -eq 'Deep') {
+                    $structureAnalysis = Get-FolderStructureAnalysis -Path $folder -UseConsensusHints:$true
+                } else {
+                    $structureAnalysis = Get-FolderStructureAnalysis -Path $folder
+                }
+            } catch {
+                $validationResult.Reason = "AnalysisFailed"
+                $validationResult.Details = $_.ToString()
+                $validationResult.Status = "Error"
                 $results += $validationResult
                 continue
             }
 
-            $fullPath = $firstAudioFile.FullName
-            if ($fullPath -match $patternMain -or $fullPath -match $patternDisc) {
-                $validationResult.IsValid = $true
-                $validationResult.Reason = "Valid"
-                $validationResult.Details = "Matches expected folder structure"
-                $validationResult.Status = "Good"
-                $results += $validationResult
+            # Map StructureType -> Good/Bad/Skipped
+            $st = $structureAnalysis.StructureType
+            switch ($st) {
+                'ArtistFolder' {
+                    $validationResult.IsValid = $true
+                    $validationResult.Status = 'Good'
+                    $validationResult.Reason = 'ArtistFolder'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'SimpleAlbum' {
+                    $validationResult.IsValid = $true
+                    $validationResult.Status = 'Good'
+                    $validationResult.Reason = 'SimpleAlbum'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'MultiDiscAlbum' {
+                    $validationResult.IsValid = $true
+                    $validationResult.Status = 'Good'
+                    $validationResult.Reason = 'MultiDiscAlbum'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'CompilationFolder' {
+                    $validationResult.IsValid = $true
+                    $validationResult.Status = 'Good'
+                    $validationResult.Reason = 'CompilationFolder'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'BoxSet' {
+                    $validationResult.IsValid = $true
+                    $validationResult.Status = 'Good'
+                    $validationResult.Reason = 'BoxSet'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'MixedAlbum' {
+                    $validationResult.IsValid = $false
+                    $validationResult.Status = 'Bad'
+                    $validationResult.Reason = 'MixedAlbum'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'AmbiguousStructure' {
+                    $validationResult.IsValid = $false
+                    $validationResult.Status = 'Bad'
+                    $validationResult.Reason = 'AmbiguousStructure'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                'NonMusicFolder' {
+                    $validationResult.IsValid = $false
+                    $validationResult.Status = 'Bad'
+                    $validationResult.Reason = 'NonMusicFolder'
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
+                default {
+                    $validationResult.IsValid = $false
+                    $validationResult.Status = 'Bad'
+                    $validationResult.Reason = $st
+                    $validationResult.Details = ($structureAnalysis.Details -join '; ')
+                }
             }
-            else {
-                $validationResult.Reason = "BadStructure"
-                $validationResult.Details = "Audio files found but folder structure doesn't match expected pattern"
-                $validationResult.Status = "Bad"
-                $results += $validationResult
+
+            # Naming conformance (regex) as a note for album types
+            try {
+                $firstAudio = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue |
+                    Where-Object { $audioExtensions -contains $_.Extension.ToLower() } | Select-Object -First 1
+                if ($firstAudio) {
+                    $fullPath = $firstAudio.FullName
+                    $conforms = ($fullPath -match $patternMain -or $fullPath -match $patternDisc)
+                    if (-not $conforms -and ($st -in @('SimpleAlbum','MultiDiscAlbum'))) {
+                        $validationResult.Details = ((@($validationResult.Details) + 'NamingNonConformant') -join '; ')
+                    }
+                }
+            } catch { }
+
+            # Attach analyzer fields when AnalyzeStructure is requested
+            if ($AnalyzeStructure) {
+                $validationResult | Add-Member -MemberType NoteProperty -Name 'StructureType' -Value $structureAnalysis.StructureType -Force
+                $validationResult | Add-Member -MemberType NoteProperty -Name 'Confidence' -Value $structureAnalysis.Confidence -Force
+                $validationResult | Add-Member -MemberType NoteProperty -Name 'StructureDetails' -Value ($structureAnalysis.Details -join '; ') -Force
+                $validationResult | Add-Member -MemberType NoteProperty -Name 'Recommendations' -Value ($structureAnalysis.Recommendations -join '; ') -Force
+                $validationResult | Add-Member -MemberType NoteProperty -Name 'Metadata' -Value $structureAnalysis.Metadata -Force
             }
+
+            $results += $validationResult
+            continue
         }
     }
 
@@ -351,12 +347,14 @@ function Find-BadMusicFolderStructure {
             foreach ($result in $results) {
                 if ($result.Status -ne "Skipped" -and $result.Status -ne "Error") {
                     try {
-                        # Forward depth mode to analyzer; Deep enables consensus-based hints
-                        if ($AnalysisMode -eq 'Deep') {
-                            $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path -UseConsensusHints:$true
-                        } else {
-                            $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path
+                        # If already has structure fields, skip re-analysis
+                        if ($result.PSObject.Properties['StructureType']) {
+                            $enhancedResults += $result
+                            continue
                         }
+                        # Forward depth mode to analyzer; Deep enables consensus-based hints
+                        if ($AnalysisMode -eq 'Deep') { $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path -UseConsensusHints:$true }
+                        else { $structureAnalysis = Get-FolderStructureAnalysis -Path $result.Path }
                         
                         # Skip only if analysis says it's a file, or if it explicitly says it doesn't exist
                         $isFile = $false; $notExists = $false
@@ -415,7 +413,7 @@ function Find-BadMusicFolderStructure {
                             $logEntry.Metadata = $result.Metadata
                         }
 
-                        $logEntryJson = $logEntry | ConvertTo-Json -Compress
+                        $logEntryJson = $logEntry | ConvertTo-Json -Depth 8 -Compress
                         Write-LogEntry -Path $LogTo -Value "$logEntryJson`r`n"
                     } else {
                         Write-LogEntry -Path $LogTo -Value "GoodFolder $($result.Path)`r`n"
@@ -446,7 +444,7 @@ function Find-BadMusicFolderStructure {
                             $logEntry.Metadata = $result.Metadata
                         }
 
-                        $logEntryJson = $logEntry | ConvertTo-Json -Compress
+                        $logEntryJson = $logEntry | ConvertTo-Json -Depth 8 -Compress
                         Write-LogEntry -Path $LogTo -Value "$logEntryJson`r`n"
                     } else {
                         Write-LogEntry -Path $LogTo -Value "BadFolder $($result.Path) ($($result.Reason))`r`n"
