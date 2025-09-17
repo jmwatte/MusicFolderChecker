@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Music Folder Processing",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/DebugMusicProcessing.ps1",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Run Music Folder Command (Direct)",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "Import-Module \"${workspaceFolder}\\MusicFolderChecker.psm1\" -Force; Find-BadMusicFolderStructure -FoldersToSkip \"E:\\_CorrectedMusic\",\"E:\\_test\",\"E:\\_testb\" -StartingPath \"E:\" -LogTo \"C:\\temp\\ELog.log\"; (Get-MfcLogSummary -LogPath \"C:\\temp\\ELog.log\").Entries | Where-Object {$_.Status -eq \"Good\"} | Select-Object -First 20 | Update-MusicFolderMetadata -Move -SkipMode -DestinationFolder \"E:\\_CorrectedMusic\" -PreserveFilenames -WhatIf",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

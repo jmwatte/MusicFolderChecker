@@ -215,6 +215,18 @@ function Update-MusicFolderMetadata {
 
     process {
         foreach ($folder in $FolderPath) {
+            # Clear variables to prevent state contamination between folders
+            $tagFile = $null
+            $currentAlbumArtist = $null
+            $currentAlbum = $null
+            $currentYear = $null
+            $applyAlbumArtist = $null
+            $applyAlbum = $null
+            $Album= $null
+            $applyYear = $null
+            $firstAudio = $null
+            $metadataLooksValid = $true
+
             if (-not (Test-Path -LiteralPath $folder)) {
                 if (-not $Quiet) { Write-Output "Skipping missing folder: $folder" }
                 continue
@@ -233,7 +245,20 @@ function Update-MusicFolderMetadata {
             }
 
             try {
+                # Clear TagLib cache to prevent state contamination between folders
+                try {
+                    $cache = [TagLib.File]::Cache
+                    if ($cache) {
+                        $cache.Clear()
+                    }
+                } catch {
+                    # Ignore if cache clearing fails
+                }
                 $tagFile = Invoke-TagLibCreate -Path $firstAudio.FullName
+                if (-not $tagFile) {
+                    Write-Output "Failed to read tags from $($firstAudio.FullName): TagLib returned null"
+                    continue
+                }
             }
             catch {
                 Write-Output "Failed to read tags from $($firstAudio.FullName): $_"
@@ -249,6 +274,13 @@ function Update-MusicFolderMetadata {
             $currentAlbumArtist = ($null -ne $tagFile.Tag.AlbumArtists -and $tagFile.Tag.AlbumArtists.Count -gt 0) ? $tagFile.Tag.AlbumArtists[0] : ($null -ne $tagFile.Tag.Performers -and $tagFile.Tag.Performers.Count -gt 0 ? $tagFile.Tag.Performers[0] : '')
             $currentAlbum = $tagFile.Tag.Album
             $currentYear = $tagFile.Tag.Year
+
+            # Dispose TagLib object immediately after reading metadata
+            if ($tagFile) {
+                $tagFile.Dispose()
+                $tagFile = $null
+                [System.GC]::Collect()
+            }
 
             # Detect obviously corrupted metadata and prefer folder parsing in those cases
             $metadataLooksValid = $true
@@ -298,10 +330,24 @@ function Update-MusicFolderMetadata {
             # Use loaded metadata if available and (no parameters provided OR metadata looks corrupted)
             if ($loadedMetadata.ContainsKey($folder)) {
                 $metadata = $loadedMetadata[$folder]
-                if ((-not $applyAlbumArtist -or -not $metadataLooksValid) -and $metadata.AlbumArtist) { $applyAlbumArtist = $metadata.AlbumArtist }
-                if ((-not $applyAlbum -or -not $metadataLooksValid) -and $metadata.Album) { $applyAlbum = $metadata.Album }
-                if ((-not $applyYear -or -not $metadataLooksValid) -and $metadata.Year) { $applyYear = $metadata.Year }
-                if (-not $Quiet) { Write-Output "Using pre-loaded metadata for $folder" }
+                
+                # Validate loaded metadata for corruption
+                $loadedMetadataLooksValid = $true
+                if ($metadata.Album -and $metadata.Album -match '^\d+\.\s*') {
+                    $loadedMetadataLooksValid = $false
+                }
+                if ($metadata.AlbumArtist -and $metadata.AlbumArtist -match '^\d+\.\s*') {
+                    $loadedMetadataLooksValid = $false
+                }
+                
+                if ($loadedMetadataLooksValid) {
+                    if ((-not $applyAlbumArtist -or -not $metadataLooksValid) -and $metadata.AlbumArtist) { $applyAlbumArtist = $metadata.AlbumArtist }
+                    if ((-not $applyAlbum -or -not $metadataLooksValid) -and $metadata.Album) { $applyAlbum = $metadata.Album }
+                    if ((-not $applyYear -or -not $metadataLooksValid) -and $metadata.Year) { $applyYear = $metadata.Year }
+                    if (-not $Quiet) { Write-Output "Using pre-loaded metadata for $folder" }
+                } else {
+                    if (-not $Quiet) { Write-Output "Skipping corrupted pre-loaded metadata for $folder" }
+                }
             }
 
             $doInteractive = $false
@@ -468,6 +514,15 @@ function Update-MusicFolderMetadata {
                         foreach ($f in $sampleAudioFiles) {
                             $tag = $null
                             try {
+                                # Clear TagLib cache
+                                try {
+                                    $cache = [TagLib.File]::Cache
+                                    if ($cache) {
+                                        $cache.Clear()
+                                    }
+                                } catch {
+                                    # Ignore if cache clearing fails
+                                }
                                 $tag = Invoke-TagLibCreate -Path $f.FullName
                             } catch {
                             }
@@ -480,6 +535,10 @@ function Update-MusicFolderMetadata {
                                 Write-Output "  Original: $($f.Name)"
                                 Write-Host -NoNewline "  Default:  $defaultName" -ForegroundColor Green
                                 Write-Output ""
+                                
+                                # Dispose TagLib object
+                                $tag.Dispose()
+                                $tag = $null
                             } else {
                                 Write-Output "  $($f.Name) - (could not read tags)"
                                 Write-Output ""
@@ -595,27 +654,42 @@ function Update-MusicFolderMetadata {
             # Apply changes to all audio files in the folder
             $audioFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -contains $_.Extension.ToLower() }
 
-            # Safeguard: Check for multiple albums in the folder
+             # Safeguard: Check for multiple albums in the folder
             $albumsInFolder = @()
             $artistsInFolder = @()
             foreach ($af in $audioFiles) {
                 try {
+                    # Clear TagLib cache
+                    try {
+                        $cache = [TagLib.File]::Cache
+                        if ($cache) {
+                            $cache.Clear()
+                        }
+                    } catch {
+                        # Ignore if cache clearing fails
+                    }
                     $tag = Invoke-TagLibCreate -Path $af.FullName
-                    $album = $tag.Tag.Album
+                    $albumP = $tag.Tag.Album
                     $artist = ($tag.Tag.AlbumArtists.Count -gt 0) ? $tag.Tag.AlbumArtists[0] :
                              ($tag.Tag.Performers.Count -gt 0 ? $tag.Tag.Performers[0] : '')
                     
-                    if ($album -and $albumsInFolder -notcontains $album) {
-                        $albumsInFolder += $album
+                    if ($albumP -and $albumsInFolder -notcontains $albumP) {
+                        $albumsInFolder += $albumP
                     }
                     if ($artist -and $artistsInFolder -notcontains $artist) {
                         $artistsInFolder += $artist
+                    }
+                    
+                    # Dispose TagLib object immediately
+                    if ($tag) {
+                        $tag.Dispose()
+                        $tag = $null
                     }
                 } catch {
                     # Skip files that can't be read
                 }
             }
-            
+            $Album = $null
             # Only warn if we have multiple albums AND multiple artists (indicating mixed content)
             # For compilations, we expect multiple artists but usually one album name
             if ($albumsInFolder.Count -gt 1 -and $artistsInFolder.Count -gt 1) {
@@ -635,7 +709,7 @@ function Update-MusicFolderMetadata {
                     Write-Output "Skipping folder: $folder"
                     continue
                 }
-            }
+            } 
 
             # Precompute non-audio files and audio root so planned moves always include non-audio files
             $otherFiles = Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $musicExtensions -notcontains $_.Extension.ToLower() }
@@ -655,6 +729,15 @@ function Update-MusicFolderMetadata {
             foreach ($f in $audioFiles) {
                 # Open the file and inspect current tags to determine whether an update is actually required.
                 try {
+                    # Clear TagLib cache
+                    try {
+                        $cache = [TagLib.File]::Cache
+                        if ($cache) {
+                            $cache.Clear()
+                        }
+                    } catch {
+                        # Ignore if cache clearing fails
+                    }
                     $t = Invoke-TagLibCreate -Path $f.FullName
                 }
                 catch {
@@ -673,6 +756,11 @@ function Update-MusicFolderMetadata {
 
                 if (-not $needUpdate) {
                     if (-not $Quiet) { Write-Output "No tag changes for $($f.FullName)" }
+                    # Dispose TagLib object
+                    if ($t) {
+                        $t.Dispose()
+                        $t = $null
+                    }
                     continue
                 }
 
@@ -702,6 +790,12 @@ function Update-MusicFolderMetadata {
                     }
                     catch {
                         Write-Output "Failed to update tags for $($f.FullName): $_" }
+                }
+                
+                # Dispose TagLib object
+                if ($t) {
+                    $t.Dispose()
+                    $t = $null
                 }
             }
 
@@ -767,12 +861,27 @@ function Update-MusicFolderMetadata {
 
                     foreach ($af in $audioFiles) {
                         try {
+                            # Clear TagLib cache
+                            try {
+                                $cache = [TagLib.File]::Cache
+                                if ($cache) {
+                                    $cache.Clear()
+                                }
+                            } catch {
+                                # Ignore if cache clearing fails
+                            }
                             $tmp = Invoke-TagLibCreate -Path $af.FullName
                         }
                         catch { continue }
                         $dRaw = $tmp.Tag.Disc
                         $d = & $parseInt $dRaw
                         if ($d -and $d -ne 0) { $discNumbers += $d }
+                        
+                        # Dispose TagLib object
+                        if ($tmp) {
+                            $tmp.Dispose()
+                            $tmp = $null
+                        }
                     }
                     $discNumbers = $discNumbers | Sort-Object -Unique
                     $useDiscFolders = $false
@@ -796,7 +905,22 @@ function Update-MusicFolderMetadata {
                     if ($applyYear) { $yearSampleRaw = $applyYear }
                     else {
                         try {
-                            $yearSampleRaw = (Invoke-TagLibCreate -Path $audioFiles[0].FullName).Tag.Year
+                            # Clear TagLib cache
+                            try {
+                                $cache = [TagLib.File]::Cache
+                                if ($cache) {
+                                    $cache.Clear()
+                                }
+                            } catch {
+                                # Ignore if cache clearing fails
+                            }
+                            $yearSampleTag = Invoke-TagLibCreate -Path $audioFiles[0].FullName
+                            $yearSampleRaw = $yearSampleTag.Tag.Year
+                            # Dispose TagLib object
+                            if ($yearSampleTag) {
+                                $yearSampleTag.Dispose()
+                                $yearSampleTag = $null
+                            }
                         }
                         catch {
                             $yearSampleRaw = ''
@@ -832,6 +956,15 @@ function Update-MusicFolderMetadata {
                     foreach ($f in $audioFiles) {
                         # Read/update tags for each file (we already opened and updated files above in the loop; reopen to get current tag values)
                         try {
+                            # Clear TagLib cache
+                            try {
+                                $cache = [TagLib.File]::Cache
+                                if ($cache) {
+                                    $cache.Clear()
+                                }
+                            } catch {
+                                # Ignore if cache clearing fails
+                            }
                             $fileTag = Invoke-TagLibCreate -Path $f.FullName
                         }
                         catch {
@@ -847,6 +980,12 @@ function Update-MusicFolderMetadata {
                         $trackRaw = $fileTag.Tag.Track
                         $trackVal = & $parseInt $trackRaw
                         $titleVal = $fileTag.Tag.Title
+
+                        # Dispose TagLib object
+                        if ($fileTag) {
+                            $fileTag.Dispose()
+                            $fileTag = $null
+                        }
 
                         # per-file sanitized values not needed for album-level placement; compute only title/track
                         $titleSafe = & $sanitize $titleVal
