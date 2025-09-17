@@ -4,25 +4,7 @@
 
 .DESCRIPTION
     Update-MusicFolderMetadata is the main function for processing music folders. It can work in interactive
-    mode (prompting for                 # Always show current values in interactive mode, even with -Quiet
-                # Show current values - what will be applied if user presses enter
-                if ($applyAlbumArtist) {
-                    Write-Host "Current Album Artist: $applyAlbumArtist" -ForegroundColor Green
-                } else {
-                    Write-Host "Current Album Artist: $currentAlbumArtist" -ForegroundColor Green
-                }
-                
-                if ($applyAlbum) {
-                    Write-Host "Current Album       : $applyAlbum" -ForegroundColor Green
-                } else {
-                    Write-Host "Current Album       : $currentAlbum" -ForegroundColor Green
-                }
-                
-                if ($applyYear) {
-                    Write-Host "Current Year        : $applyYear" -ForegroundColor Green
-                } else {
-                    Write-Host "Current Year        : $currentYear" -ForegroundColor Green
-                }ed mode (using provided parameters). The function can update
+    mode (prompting for metadata values) or scripted mode (using provided parameters). The function can update
     embedded audio file tags and optionally move folders to a destination with proper organization.
 
     The function automatically enters interactive mode when:
@@ -31,11 +13,9 @@
 
     In interactive mode with SkipMode, users can enter '\' to postpone processing complex folders.
     The function supports loading/saving metadata from/to JSON files for automation workflows.
-    
-    Note: The -Quiet parameter suppresses verbose output but still displays essential information
-    during interactive mode, including current metadata values and prompts.
 
-.PARAMETER FolderPath
+    Note: The -Quiet parameter suppresses verbose output but still displays essential information
+    during interactive mode, including current metadata values and prompts..PARAMETER FolderPath
     Path(s) to music folder(s) to process. Accepts pipeline input and has 'Path' alias. Mandatory parameter.
 
 .PARAMETER AlbumArtist
@@ -1189,7 +1169,7 @@ function Update-MusicFolderMetadata {
                     try {
                         if ($isWhatIf) {
                             if ($plannedMoves.Count -gt 0) {
-                                if (-not $Quiet) { Write-Output "`nWhatIf planned moves for: $folder ($($plannedMoves.Count))" }
+                                if (-not $Quiet) { Write-Output "`nWhatIf planned ($($plannedMoves.Count)) moves for album '$albumValSample' by '$artistValSample'" }
                                 foreach ($p in $plannedMoves) {
                                     # Show just filename for source, and compact destination path
                                     $sourceFile = Split-Path $p.Source -Leaf

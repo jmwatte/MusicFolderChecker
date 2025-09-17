@@ -1,172 +1,148 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="20" errors="0" failures="14" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-09-14" time="08:28:28">
-  <environment clr-version="9.0.8" machine-name="DESKTOP-OLQ2J2M" nunit-version="2.5.8.0" cwd="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker" user-domain="DESKTOP-OLQ2J2M" user="user" os-version="10.0.26100" platform="Microsoft Windows 11 Home|C:\WINDOWS|\Device\Harddisk0\Partition3" />
-  <culture-info current-culture="en-US" current-uiculture="en-US" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.3176" asserts="0" description="Pester">
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="20" errors="0" failures="8" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-09-17" time="17:10:51">
+  <environment user-domain="SER" os-version="10.0.26100" machine-name="SER" platform="Microsoft Windows 11 Pro|C:\WINDOWS|\Device\Harddisk0\Partition3" user="jmw" clr-version="9.0.8" cwd="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker" nunit-version="2.5.8.0" />
+  <culture-info current-culture="en-BE" current-uiculture="en-GB" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="39.3067" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1" executed="True" result="Failure" success="False" time="2.2328" asserts="0" description="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1" executed="True" result="Failure" success="False" time="1.5394" asserts="0" description="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Get-FolderStructureAnalysis" executed="True" result="Failure" success="False" time="1.6262" asserts="0" description="Get-FolderStructureAnalysis">
+          <test-suite type="TestFixture" name="Get-FolderStructureAnalysis" executed="True" result="Failure" success="False" time="0.8812" asserts="0" description="Get-FolderStructureAnalysis">
             <results>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Artist Folder Detection" executed="True" result="Failure" success="False" time="0.372" asserts="0" description="Get-FolderStructureAnalysis.Artist Folder Detection">
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Artist Folder Detection" executed="True" result="Success" success="True" time="0.3193" asserts="0" description="Get-FolderStructureAnalysis.Artist Folder Detection">
                 <results>
-                  <test-case description="Should correctly identify Radiohead as an Artist Folder" name="Get-FolderStructureAnalysis.Artist Folder Detection.Should correctly identify Radiohead as an Artist Folder" time="0.1959" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should correctly identify Radiohead as an Artist Folder" name="Get-FolderStructureAnalysis.Artist Folder Detection.Should correctly identify Radiohead as an Artist Folder" time="0.2177" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have high confidence for proper artist structure" name="Get-FolderStructureAnalysis.Artist Folder Detection.Should have high confidence for proper artist structure" time="0.0313" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Simple Album Detection" executed="True" result="Success" success="True" time="0.3687" asserts="0" description="Get-FolderStructureAnalysis.Simple Album Detection">
+                <results>
+                  <test-case description="Should correctly identify '1995 - The Bends' as a Simple Album" name="Get-FolderStructureAnalysis.Simple Album Detection.Should correctly identify '1995 - The Bends' as a Simple Album" time="0.0309" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Mixed Album Detection" executed="True" result="Failure" success="False" time="0.4448" asserts="0" description="Get-FolderStructureAnalysis.Mixed Album Detection">
+                <results>
+                  <test-case description="Should detect MixedAlbum as ambiguous (MIXED STRUCTURE)" name="Get-FolderStructureAnalysis.Mixed Album Detection.Should detect MixedAlbum as ambiguous (MIXED STRUCTURE)" time="0.0722" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:13</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should have high confidence for proper artist structure" name="Get-FolderStructureAnalysis.Artist Folder Detection.Should have high confidence for proper artist structure" time="0.1202" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:21</stack-trace>
+                      <message>Expected 'MIXED STRUCTURE' to be found in collection @('MIXED STRUCTURE: 2 audio files at root + 1 album subfolders', 'This requires manual review - unclear if subfolders are bonus content or separate albums'), but it was not found.</message>
+                      <stack-trace>at $result.Details | Should -Contain "MIXED STRUCTURE", C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:41
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:41</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Simple Album Detection" executed="True" result="Failure" success="False" time="0.4923" asserts="0" description="Get-FolderStructureAnalysis.Simple Album Detection">
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Multi-Disc Album Detection" executed="True" result="Failure" success="False" time="0.4964" asserts="0" description="Get-FolderStructureAnalysis.Multi-Disc Album Detection">
                 <results>
-                  <test-case description="Should correctly identify '1995 - The Bends' as a Simple Album" name="Get-FolderStructureAnalysis.Simple Album Detection.Should correctly identify '1995 - The Bends' as a Simple Album" time="0.1121" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should correctly identify MultiDisc as a Multi-Disc Album" name="Get-FolderStructureAnalysis.Multi-Disc Album Detection.Should correctly identify MultiDisc as a Multi-Disc Album" time="0.0481" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:28</stack-trace>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 14
+Actual length:   12
+Strings differ at index 0.
+Expected: 'MultiDiscAlbum'
+But was:  'ArtistFolder'
+           ^</message>
+                      <stack-trace>at $result.StructureType | Should -Be "MultiDiscAlbum", C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:50
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:50</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Mixed Album Detection" executed="True" result="Failure" success="False" time="0.6079" asserts="0" description="Get-FolderStructureAnalysis.Mixed Album Detection">
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Compilation Folder Detection" executed="True" result="Failure" success="False" time="0.5422" asserts="0" description="Get-FolderStructureAnalysis.Compilation Folder Detection">
                 <results>
-                  <test-case description="Should detect MixedAlbum as ambiguous (MIXED STRUCTURE)" name="Get-FolderStructureAnalysis.Mixed Album Detection.Should detect MixedAlbum as ambiguous (MIXED STRUCTURE)" time="0.1083" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should correctly identify Various Artists as a Compilation Folder" name="Get-FolderStructureAnalysis.Compilation Folder Detection.Should correctly identify Various Artists as a Compilation Folder" time="0.0413" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:37</stack-trace>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 17
+Actual length:   12
+Strings differ at index 0.
+Expected: 'CompilationFolder'
+But was:  'ArtistFolder'
+           ^</message>
+                      <stack-trace>at $result.StructureType | Should -Be "CompilationFolder", C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:59
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:59</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Multi-Disc Album Detection" executed="True" result="Failure" success="False" time="0.7092" asserts="0" description="Get-FolderStructureAnalysis.Multi-Disc Album Detection">
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Metadata Collection" executed="True" result="Success" success="True" time="0.6293" asserts="0" description="Get-FolderStructureAnalysis.Metadata Collection">
                 <results>
-                  <test-case description="Should correctly identify MultiDisc as a Multi-Disc Album" name="Get-FolderStructureAnalysis.Multi-Disc Album Detection.Should correctly identify MultiDisc as a Multi-Disc Album" time="0.0971" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:48</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should collect correct metadata for Radiohead folder" name="Get-FolderStructureAnalysis.Metadata Collection.Should collect correct metadata for Radiohead folder" time="0.0516" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should collect correct metadata for MixedAlbum folder" name="Get-FolderStructureAnalysis.Metadata Collection.Should collect correct metadata for MixedAlbum folder" time="0.0321" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Compilation Folder Detection" executed="True" result="Failure" success="False" time="0.8806" asserts="0" description="Get-FolderStructureAnalysis.Compilation Folder Detection">
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Confidence Scoring" executed="True" result="Success" success="True" time="0.7126" asserts="0" description="Get-FolderStructureAnalysis.Confidence Scoring">
                 <results>
-                  <test-case description="Should correctly identify Various Artists as a Compilation Folder" name="Get-FolderStructureAnalysis.Compilation Folder Detection.Should correctly identify Various Artists as a Compilation Folder" time="0.1655" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:57</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should give high confidence to clear structures" name="Get-FolderStructureAnalysis.Confidence Scoring.Should give high confidence to clear structures" time="0.046" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should give low confidence to ambiguous structures" name="Get-FolderStructureAnalysis.Confidence Scoring.Should give low confidence to ambiguous structures" time="0.0337" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Metadata Collection" executed="True" result="Failure" success="False" time="1.1353" asserts="0" description="Get-FolderStructureAnalysis.Metadata Collection">
+              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Recommendations" executed="True" result="Failure" success="False" time="0.7956" asserts="0" description="Get-FolderStructureAnalysis.Recommendations">
                 <results>
-                  <test-case description="Should collect correct metadata for Radiohead folder" name="Get-FolderStructureAnalysis.Metadata Collection.Should collect correct metadata for Radiohead folder" time="0.1416" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should provide appropriate recommendations for mixed structures" name="Get-FolderStructureAnalysis.Recommendations.Should provide appropriate recommendations for mixed structures" time="0.0317" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:66</stack-trace>
+                      <message>Expected 'MANUAL REVIEW REQUIRED' to be found in collection @('MANUAL REVIEW REQUIRED: Determine if subfolders are part of this album or separate releases', 'Option 1: Process root files as main album, ignore subfolders', 'Option 2: Process each subfolder as separate album'), but it was not found.</message>
+                      <stack-trace>at $result.Recommendations | Should -Contain "MANUAL REVIEW REQUIRED", C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:104
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:104</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should collect correct metadata for MixedAlbum folder" name="Get-FolderStructureAnalysis.Metadata Collection.Should collect correct metadata for MixedAlbum folder" time="0.1019" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:75</stack-trace>
-                    </failure>
-                  </test-case>
-                </results>
-              </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Confidence Scoring" executed="True" result="Failure" success="False" time="1.3383" asserts="0" description="Get-FolderStructureAnalysis.Confidence Scoring">
-                <results>
-                  <test-case description="Should give high confidence to clear structures" name="Get-FolderStructureAnalysis.Confidence Scoring.Should give high confidence to clear structures" time="0.0987" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:86</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should give low confidence to ambiguous structures" name="Get-FolderStructureAnalysis.Confidence Scoring.Should give low confidence to ambiguous structures" time="0.0972" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:94</stack-trace>
-                    </failure>
-                  </test-case>
-                </results>
-              </test-suite>
-              <test-suite type="TestFixture" name="Get-FolderStructureAnalysis.Recommendations" executed="True" result="Failure" success="False" time="1.5472" asserts="0" description="Get-FolderStructureAnalysis.Recommendations">
-                <results>
-                  <test-case description="Should provide appropriate recommendations for mixed structures" name="Get-FolderStructureAnalysis.Recommendations.Should provide appropriate recommendations for mixed structures" time="0.1091" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:102</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should provide processing recommendations for clear structures" name="Get-FolderStructureAnalysis.Recommendations.Should provide processing recommendations for clear structures" time="0.0944" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-FolderStructureAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Get-FolderStructureAnalysis.Tests.ps1:110</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should provide processing recommendations for clear structures" name="Get-FolderStructureAnalysis.Recommendations.Should provide processing recommendations for clear structures" time="0.0304" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="TestFixture" name="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1" executed="True" result="Failure" success="False" time="0.11" asserts="0" description="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1" executed="True" result="Failure" success="False" time="0.1149" asserts="0" description="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Structured logging" executed="True" result="Failure" success="False" time="0.052" asserts="0" description="Structured logging">
+          <test-suite type="TestFixture" name="Structured logging" executed="True" result="Failure" success="False" time="0.0572" asserts="0" description="Structured logging">
             <results>
-              <test-case description="Write-StructuredLog appends JSONL entries" name="Structured logging.Write-StructuredLog appends JSONL entries" time="0.0318" asserts="0" success="False" result="Failure" executed="True">
+              <test-case description="Write-StructuredLog appends JSONL entries" name="Structured logging.Write-StructuredLog appends JSONL entries" time="0.0332" asserts="0" success="False" result="Failure" executed="True">
                 <failure>
                   <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'LiteralPath'.</message>
-                  <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1:7</stack-trace>
+                  <stack-trace>at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1:7</stack-trace>
                 </failure>
               </test-case>
-              <test-case description="Get-MfcLogSummary returns summary object" name="Structured logging.Get-MfcLogSummary returns summary object" time="0.0158" asserts="0" success="False" result="Failure" executed="True">
+              <test-case description="Get-MfcLogSummary returns summary object" name="Structured logging.Get-MfcLogSummary returns summary object" time="0.0197" asserts="0" success="False" result="Failure" executed="True">
                 <failure>
-                  <message>RuntimeException: Log file not found: C:\Users\resto\AppData\Local\Temp\mfc_test_log.jsonl</message>
-                  <stack-trace>at Get-MfcLogSummary, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\src\Public\Get-MfcLogSummary.ps1:58
-at &lt;ScriptBlock&gt;, C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1:22</stack-trace>
+                  <message>RuntimeException: Log file not found: C:\Users\jmw\AppData\Local\Temp\mfc_test_log.jsonl</message>
+                  <stack-trace>at Get-MfcLogSummary, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\src\Public\Get-MfcLogSummary.ps1:58
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-StructuredLog.Tests.ps1:22</stack-trace>
                 </failure>
               </test-case>
             </results>
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="TestFixture" name="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.EdgeCases.Tests.ps1" executed="True" result="Success" success="True" time="0.4229" asserts="0" description="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.EdgeCases.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.EdgeCases.Tests.ps1" executed="True" result="Success" success="True" time="37.3103" asserts="0" description="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.EdgeCases.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Update-MusicFolderMetadata - edge cases" executed="True" result="Success" success="True" time="0.3274" asserts="0" description="Update-MusicFolderMetadata - edge cases">
+          <test-suite type="TestFixture" name="Update-MusicFolderMetadata - edge cases" executed="True" result="Success" success="True" time="37.2313" asserts="0" description="Update-MusicFolderMetadata - edge cases">
             <results>
-              <test-case description="Skips non-audio files and reports none found" name="Update-MusicFolderMetadata - edge cases.Skips non-audio files and reports none found" time="0.0948" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="Continues when TagLib throws for a corrupted file (no-throw)" name="Update-MusicFolderMetadata - edge cases.Continues when TagLib throws for a corrupted file (no-throw)" time="0.0487" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="Logs and continues on readonly file write failure (no-throw)" name="Update-MusicFolderMetadata - edge cases.Logs and continues on readonly file write failure (no-throw)" time="0.0194" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="Handles unicode filenames/tags (no-throw)" name="Update-MusicFolderMetadata - edge cases.Handles unicode filenames/tags (no-throw)" time="0.0178" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Skips non-audio files and reports none found" name="Update-MusicFolderMetadata - edge cases.Skips non-audio files and reports none found" time="0.0959" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Continues when TagLib throws for a corrupted file (no-throw)" name="Update-MusicFolderMetadata - edge cases.Continues when TagLib throws for a corrupted file (no-throw)" time="20.3921" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Logs and continues on readonly file write failure (no-throw)" name="Update-MusicFolderMetadata - edge cases.Logs and continues on readonly file write failure (no-throw)" time="8.959" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Handles unicode filenames/tags (no-throw)" name="Update-MusicFolderMetadata - edge cases.Handles unicode filenames/tags (no-throw)" time="7.6673" asserts="0" success="True" result="Success" executed="True" />
             </results>
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="TestFixture" name="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.Tests.ps1" executed="True" result="Success" success="True" time="0.5519" asserts="0" description="C:\Users\resto\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.Tests.ps1" executed="True" result="Failure" success="False" time="0.342" asserts="0" description="C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Update-MusicFolderMetadata" executed="True" result="Success" success="True" time="0.4849" asserts="0" description="Update-MusicFolderMetadata">
+          <test-suite type="TestFixture" name="Update-MusicFolderMetadata" executed="True" result="Failure" success="False" time="0.3041" asserts="0" description="Update-MusicFolderMetadata">
             <results>
-              <test-case description="calls Invoke-TagLibCreate and Save for each audio file" name="Update-MusicFolderMetadata.calls Invoke-TagLibCreate and Save for each audio file" time="0.2939" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="Moves folders with mixed content and displays WhatIf summary correctly" name="Update-MusicFolderMetadata.Moves folders with mixed content and displays WhatIf summary correctly" time="0.1664" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="calls Invoke-TagLibCreate and Save for each audio file" name="Update-MusicFolderMetadata.calls Invoke-TagLibCreate and Save for each audio file" time="0.2182" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>RuntimeException: Method invocation failed because [System.Management.Automation.PSCustomObject] does not contain a method named 'Dispose'.</message>
+                  <stack-trace>at Update-MusicFolderMetadata&lt;Process&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\src\Public\Update-MusicFolderMetadata.ps1:269
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.Tests.ps1:33</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="Moves folders with mixed content and displays WhatIf summary correctly" name="Update-MusicFolderMetadata.Moves folders with mixed content and displays WhatIf summary correctly" time="0.061" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>RuntimeException: Method invocation failed because [System.Management.Automation.PSCustomObject] does not contain a method named 'Dispose'.</message>
+                  <stack-trace>at Update-MusicFolderMetadata&lt;Process&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\src\Public\Update-MusicFolderMetadata.ps1:269
+at &lt;ScriptBlock&gt;, C:\Users\jmw\Documents\PowerShell\Modules\MusicFolderChecker\tests\Test-UpdateMusicFolderMetadata.Tests.ps1:88</stack-trace>
+                </failure>
+              </test-case>
             </results>
           </test-suite>
         </results>
