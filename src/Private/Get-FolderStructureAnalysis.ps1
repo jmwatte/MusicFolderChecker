@@ -22,7 +22,9 @@ function Get-FolderStructureAnalysis {
         [Parameter(Mandatory)]
         [string]$Path,
 
-        [string[]]$AudioExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.ape', '.dsd', '.dsd', '.aiff', '.aif')
+        [string[]]$AudioExtensions = @('.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.ape', '.dsd', '.dsd', '.aiff', '.aif'),
+
+        [switch]$UseConsensusHints
     )
 
     # Define structure types as strings (PowerShell enum support varies)
@@ -258,12 +260,61 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 7. Default: Ambiguous or Non-Music
+    # 7. Default: Ambiguous or Non-Music, with tag-consensus assistance
     if ($audioFiles.Count -gt 0) {
+        # Attempt consensus-based hints for folders that don't match naming patterns
         $result.StructureType = $structureTypes.AmbiguousStructure
         $result.Confidence = 0.2
         $result.Details += "Ambiguous structure: audio files found but unclear organization"
-        $result.Recommendations += "Manual review recommended - unclear folder structure"
+
+        if ($UseConsensusHints) {
+            # Try to detect album-like sub-subfolders (e.g., nested under 'vol1', etc.)
+            $deepAlbumCandidates = Get-ChildItem -LiteralPath $Path -Directory -Recurse -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -ne $Path -and (Get-ChildItem -LiteralPath $_.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }).Count -gt 0 } |
+                Sort-Object FullName -Unique
+
+            $consensusSummaries = @()
+            $albumLikeCount = 0
+            foreach ($cand in $deepAlbumCandidates) {
+                # Skip the root itself
+                if ($cand.FullName -eq $Path) { continue }
+                # Gather consensus for each leaf folder that directly contains audio or disc subfolders
+                $filesHere = Get-ChildItem -LiteralPath $cand.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }
+                if ($filesHere.Count -lt 3) { continue }
+
+                $cons = Get-FolderTagConsensus -Path $cand.FullName -AudioExtensions $AudioExtensions -MinFiles 3
+                if ($cons.FileCount -ge 3) {
+                    $albumLikeCount++
+                    $consensusSummaries += [PSCustomObject]@{
+                        Folder = $cand.FullName
+                        Name = $cand.Name
+                        Suggested = $cons.SuggestedFolderName
+                        Year = $cons.SuggestedYear
+                        Album = $cons.SuggestedAlbum
+                        Artist = $cons.SuggestedArtist
+                        Confidence = $cons.Confidence
+                    }
+                }
+            }
+
+            if ($albumLikeCount -ge 3) {
+                # If many album-like groups exist and folder name hints at collection, elevate to BoxSet with moderate confidence
+                $nameHint = ($folderName -match '(?i)(complete|collection|box|set|songbook)')
+                $result.StructureType = $structureTypes.BoxSet
+                $result.Confidence = if ($nameHint) { 0.7 } else { 0.6 }
+                $result.Details += "Consensus-based BoxSet hint: $albumLikeCount album-like groups detected"
+                if ($nameHint) { $result.Details += "Folder name contains collection keyword" }
+                $result.Recommendations += "Process as box set or confirm per-album processing"
+            } else {
+                $result.Recommendations += "Manual review recommended - unclear folder structure"
+            }
+
+            # Attach consensus suggestions to metadata so interactive flows can propose defaults
+            $result.Metadata.ConsensusSuggestions = $consensusSummaries
+            $result.Metadata.AlbumLikeCount = $albumLikeCount
+        } else {
+            $result.Recommendations += "Manual review recommended - unclear folder structure"
+        }
     } else {
         $result.StructureType = $structureTypes.NonMusicFolder
         $result.Confidence = 0.9
