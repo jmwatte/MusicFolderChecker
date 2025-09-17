@@ -7,6 +7,7 @@ function Invoke-MfcConsensusPlan {
     Takes items produced by `New-MfcConsensusPlan` and applies suggested tag updates and optional folder renames.
     Before any mutation, re-checks structure via `Confirm-MfcMutationAllowed` and blocks ArtistFolder/BoxSet unless
     `-AllowCollectionChanges` is set. Honors `-WhatIf` via SupportsShouldProcess.
+    Use `-Verbose` to see detailed decisions (consensus, coverage, inheritance, and fallbacks) per folder.
 
     .PARAMETER Plan
     Plan items from `New-MfcConsensusPlan` (pipeline input supported).
@@ -88,7 +89,31 @@ function Invoke-MfcConsensusPlan {
                 $applyArtist = $item.ProposedAlbumArtist
             }
 
+            # Verbose: explain which fields will be applied or skipped (consensus & coverage)
+            if ($cons) {
+                if ($item.ProposedAlbumArtist) {
+                    if ($cons.ArtistConsensus) { Write-Verbose ("Artist: applying proposed '{0}' (consensus)" -f $item.ProposedAlbumArtist) }
+                    elseif ($AllowFallbackFromFolderName) { Write-Verbose ("Artist: applying proposed '{0}' (fallback from folder name)" -f $item.ProposedAlbumArtist) }
+                    else { Write-Verbose ("Artist: skipping (no consensus and fallback disabled)") }
+                } else { Write-Verbose ("Artist: no proposal available") }
+
+                if ($item.ProposedAlbum) {
+                    if ($cons.AlbumConsensus) { Write-Verbose ("Album: applying proposed '{0}' (consensus)" -f $item.ProposedAlbum) }
+                    elseif ($AllowFallbackFromFolderName) { Write-Verbose ("Album: applying proposed '{0}' (fallback from folder name)" -f $item.ProposedAlbum) }
+                    else { Write-Verbose ("Album: skipping (no consensus and fallback disabled)") }
+                } else { Write-Verbose ("Album: no proposal available") }
+
+                if ($item.ProposedYear) {
+                    if ($cons.YearConsensus) { Write-Verbose ("Year: applying proposed {0} (consensus, coverage={1:P0})" -f $item.ProposedYear, $cons.YearCoverageRatio) }
+                    elseif ($AllowFallbackFromFolderName) { Write-Verbose ("Year: applying proposed {0} (fallback from folder name)" -f $item.ProposedYear) }
+                    else { Write-Verbose ("Year: skipping (no consensus and fallback disabled)") }
+
+                    if ($cons.YearCoverageRatio -lt $MinYearCoverage) { Write-Verbose ("Year: blocked by coverage {0:P0} < MinYearCoverage {1:P0}" -f $cons.YearCoverageRatio, $MinYearCoverage) }
+                } else { Write-Verbose ("Year: no proposal available") }
+            }
+
             # Automatic inheritance: if parent is BoxSet or MultiDiscAlbum and grandparent is ArtistFolder, push artist down
+            $artistInherited = $false
             try {
                 $parentDir = Split-Path -Parent $folder
                 $grandDir  = if ($parentDir) { Split-Path -Parent $parentDir } else { $null }
@@ -99,13 +124,25 @@ function Invoke-MfcConsensusPlan {
                     $artistFromGrand = Split-Path -Leaf $grandDir
                     # Only override when consensus is absent/weak or no proposal present
                     $hasStrongArtist = ($cons -and $cons.ArtistConsensus -and $item.ProposedAlbumArtist)
-                    if (-not $hasStrongArtist) { $applyArtist = $artistFromGrand }
+                    if (-not $hasStrongArtist) { $applyArtist = $artistFromGrand; $artistInherited = $true }
                 }
             } catch { }
 
+            if ($artistInherited) { Write-Verbose ("Artist: inherited from ArtistFolder '{0}' due to parent structure {1}" -f (Split-Path -Leaf $grandDir), ($pa.StructureType)) }
+
             # Apply tag updates using existing updater in scripted mode (no prompts)
             if ($applyYear -or $applyAlbum -or $applyArtist) {
-                if ($PSCmdlet.ShouldProcess($folder, 'Apply tag consensus')) {
+                # Build a clear action message for WhatIf/Confirm
+                $changes = @()
+                if ($applyArtist) { $changes += ("Artist='{0}'{1}" -f $applyArtist, $(if ($artistInherited) { ' (inherited)' } else { '' })) }
+                if ($applyAlbum)  { $changes += ("Album='{0}'" -f $applyAlbum) }
+                if ($applyYear) {
+                    $yrDetail = if ($cons -and $cons.YearCoverageRatio -ge 0) { " (coverage {0:P0})" -f $cons.YearCoverageRatio } else { '' }
+                    $changes += ("Year={0}{1}" -f $applyYear, $yrDetail)
+                }
+                $actionMsg = if ($changes.Count -gt 0) { 'Apply tags: ' + ($changes -join '; ') } else { 'Apply tags (no changes)' }
+
+                if ($PSCmdlet.ShouldProcess($folder, $actionMsg)) {
                     Update-MusicFolderMetadata -FolderPath $folder `
                         -Year $applyYear -Album $applyAlbum -AlbumArtist $applyArtist `
                         -NonInteractive -UseConsensusHints -AllowCollectionChanges:$AllowCollectionChanges `
@@ -120,7 +157,10 @@ function Invoke-MfcConsensusPlan {
                 if ((Test-Path -LiteralPath $target) -and $OnConflict -eq 'Skip') {
                     Write-Output ("Rename skipped (exists): {0} -> {1}" -f $folder, $target)
                 } else {
-                    if ($PSCmdlet.ShouldProcess((Split-Path $folder -Leaf), ("Rename to {0}" -f $target))) {
+                    $fromLeaf = Split-Path $folder -Leaf
+                    $toLeaf   = $item.SuggestedFolderName
+                    $renameMsg = ("Rename folder: '{0}' -> '{1}'" -f $fromLeaf, $toLeaf)
+                    if ($PSCmdlet.ShouldProcess($folder, $renameMsg)) {
                         # Avoid renaming a folder that is the current working directory; move to parent temporarily
                         $prevLocation = $null; $movedOut = $false
                         try {
