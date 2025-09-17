@@ -167,7 +167,13 @@ function Update-MusicFolderMetadata {
     [Parameter()]
     [string]$OutputMetadataJson,        [Parameter()]
         [ValidateSet('Skip','Overwrite','Merge')]
-        [string]$OnConflict = 'Skip'
+        [string]$OnConflict = 'Skip',
+
+        [Parameter()]
+        [switch]$AllowCollectionChanges,
+
+        [Parameter()]
+        [switch]$UseConsensusHints
     )
 
     begin {
@@ -195,6 +201,38 @@ function Update-MusicFolderMetadata {
 
     process {
         foreach ($folder in $FolderPath) {
+            # Phase 2 safety: classify folder structure and apply guardrails for collections
+            try {
+                $folderAnalysis = if ($UseConsensusHints) {
+                    Get-FolderStructureAnalysis -Path $folder -UseConsensusHints:$true
+                } else {
+                    Get-FolderStructureAnalysis -Path $folder
+                }
+            }
+            catch {
+                if (-not $Quiet) { Write-Output ("Warning: Failed to analyze structure for {0}: {1}" -f $folder, $_) }
+                $folderAnalysis = $null
+            }
+
+            if ($folderAnalysis) {
+                $st = $folderAnalysis.StructureType
+                if ($st -in @('BoxSet','ArtistFolder')) {
+                    if (-not $AllowCollectionChanges) {
+                        if ($Interactive) {
+                            Write-Warning "This folder appears to be a $st. Processing it as a single album may alter a collection."
+                            Write-Output "Recommendations: $($folderAnalysis.Recommendations -join '; ')"
+                            $resp = Read-Host "Continue anyway? (Y/N)"
+                            if ($resp -ne 'Y' -and $resp -ne 'y') {
+                                if (-not $Quiet) { Write-Output "Skipping collection root: $folder" }
+                                continue
+                            }
+                        } else {
+                            if (-not $Quiet) { Write-Output "Skipping collection root (use -AllowCollectionChanges to override): $folder" }
+                            continue
+                        }
+                    }
+                }
+            }
             # Clear variables to prevent state contamination between folders
             $tagFile = $null
             $currentAlbumArtist = $null
@@ -321,6 +359,17 @@ function Update-MusicFolderMetadata {
             $applyAlbumArtist = $AlbumArtist
             $applyAlbum = $Album
             $applyYear = $Year
+
+            # Phase 2 UX: derive consensus defaults for ambiguous cases (opt-in)
+            if ($UseConsensusHints -and (-not $applyAlbum -or -not $applyYear -or -not $applyAlbumArtist)) {
+                try {
+                    $cons = Get-FolderTagConsensus -Path $folder -AudioExtensions $musicExtensions
+                    if (-not $applyYear -and $cons.YearConsensus -and $cons.SuggestedYear) { $currentYear = [int]$cons.SuggestedYear }
+                    if (-not $applyAlbum -and $cons.AlbumConsensus -and $cons.SuggestedAlbum) { $currentAlbum = $cons.SuggestedAlbum }
+                    if (-not $applyAlbumArtist -and $cons.ArtistConsensus -and $cons.SuggestedArtist) { $currentAlbumArtist = $cons.SuggestedArtist }
+                    if (-not $Quiet -and $Interactive) { Write-Output "Consensus defaults inferred (Year=$currentYear, Album='$currentAlbum', Artist='$currentAlbumArtist')" }
+                } catch { }
+            }
 
             # Use loaded metadata if available and (no parameters provided OR metadata looks corrupted)
             if ($loadedMetadata.ContainsKey($folder)) {

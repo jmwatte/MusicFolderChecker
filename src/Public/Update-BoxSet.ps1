@@ -355,25 +355,27 @@ function Update-BoxSet {
 
                 if (-not $Quiet) { Write-Host "Moving BoxSet to: $finalDestination" -ForegroundColor Cyan }
 
-                if ($WhatIfPreference) {
-                    Write-Host "🔍 WhatIf: Would move '$boxSetPath' to '$finalDestination'" -ForegroundColor Cyan
-                } else {
-                    try {
-                        # Move the entire BoxSet folder
-                        Move-Item -Path $boxSetPath -Destination $finalDestination -Force
+                if ($PSCmdlet.ShouldProcess($boxSetPath, "Move to $finalDestination")) {
+                    if ($WhatIfPreference) {
+                        Write-Host "🔍 WhatIf: Would move '$boxSetPath' to '$finalDestination'" -ForegroundColor Cyan
+                    } else {
+                        try {
+                            # Move the entire BoxSet folder
+                            Move-Item -Path $boxSetPath -Destination $finalDestination -Force
 
-                        Write-Host "✅ BoxSet moved successfully to: $finalDestination" -ForegroundColor Green
-                        $processedBoxSets += @{
-                            Name = $boxSetName
-                            OriginalPath = $boxSetPath
-                            FinalPath = $finalDestination
-                            AlbumsProcessed = $processedAlbums.Count
-                            AlbumsSkipped = $skippedAlbums.Count
+                            Write-Host "✅ BoxSet moved successfully to: $finalDestination" -ForegroundColor Green
+                            $processedBoxSets += @{
+                                Name = $boxSetName
+                                OriginalPath = $boxSetPath
+                                FinalPath = $finalDestination
+                                AlbumsProcessed = $processedAlbums.Count
+                                AlbumsSkipped = $skippedAlbums.Count
+                            }
                         }
-                    }
-                    catch {
-                        Write-Host "❌ Failed to move BoxSet: $_" -ForegroundColor Red
-                        continue
+                        catch {
+                            Write-Host "❌ Failed to move BoxSet: $_" -ForegroundColor Red
+                            continue
+                        }
                     }
                 }
             } elseif ($Move.IsPresent -and -not $DestinationFolder) {
