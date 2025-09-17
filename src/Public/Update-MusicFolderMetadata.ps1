@@ -134,6 +134,9 @@ function Update-MusicFolderMetadata {
         [Parameter()]
         [switch]$Interactive,
 
+    [Parameter()]
+    [switch]$NonInteractive,
+
         [Parameter()]
         [switch]$SkipMode,
 
@@ -395,7 +398,10 @@ function Update-MusicFolderMetadata {
             }
 
             $doInteractive = $false
-            if ($Interactive.IsPresent) { 
+            if ($NonInteractive.IsPresent) {
+                $doInteractive = $false
+            }
+            elseif ($Interactive.IsPresent) { 
                 $doInteractive = $true 
             }
             elseif ((-not $AlbumArtist -or -not $Album -or -not $Year) -and -not $loadedMetadata.ContainsKey($folder)) { 

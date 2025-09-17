@@ -45,11 +45,10 @@ function Get-FolderTagConsensus {
         [double]$ArtistThreshold = 0.6
     )
 
-    # Gather audio files recursively
-    $audioFiles = @()
-    foreach ($ext in $AudioExtensions) {
-        $audioFiles += Get-ChildItem -LiteralPath $Path -File -Filter "*${ext}" -Recurse -ErrorAction SilentlyContinue
-    }
+    # Gather audio files recursively (use -Include for reliability)
+    $include = @()
+    foreach ($ext in $AudioExtensions) { $include += ("*{0}" -f $ext) }
+    $audioFiles = Get-ChildItem -Path (Join-Path $Path '*') -File -Recurse -Include $include -ErrorAction SilentlyContinue
 
     $fileCount = $audioFiles.Count
     if ($fileCount -lt $MinFiles) {
@@ -78,9 +77,14 @@ function Get-FolderTagConsensus {
     $yearCounts = @{}
     $albumCounts = @{}
     $artistCounts = @{}
+    # Count of files with numeric Tag.Year present (for coverage reporting)
     $validYear = 0
+    # Count of files that contributed any Year sample (Tag.Year or derived from DATE/TDRC/etc.)
+    $yearSampleCount = 0
     $validAlbum = 0
     $validArtist = 0
+
+    # Year derivation is split into a separate private helper for testability
 
     foreach ($f in $audioFiles) {
         $tagFile = $null
@@ -98,9 +102,23 @@ function Get-FolderTagConsensus {
             $y = $tagFile.Tag.Year
             if ($y -and [int]$y -gt 0) {
                 $validYear++
+                $yearSampleCount++
                 $keyY = [string][int]$y
                 if (-not $yearCounts.ContainsKey($keyY)) { $yearCounts[$keyY] = 0 }
                 $yearCounts[$keyY]++
+            } else {
+                # Fallback: try to derive from date-like tags
+                $derived = Get-DerivedYearFromTag -TagFile $tagFile
+                if ($derived -and $derived.Year) {
+                    $yearSampleCount++
+                    $keyY2 = [string][int]$derived.Year
+                    if (-not $yearCounts.ContainsKey($keyY2)) { $yearCounts[$keyY2] = 0 }
+                    $yearCounts[$keyY2]++
+                    # track detail on first few occurrences (details aggregated later)
+                    if (-not $script:__MFC_YearSources) { $script:__MFC_YearSources = @{} }
+                    if (-not $script:__MFC_YearSources.ContainsKey($derived.Source)) { $script:__MFC_YearSources[$derived.Source] = 0 }
+                    $script:__MFC_YearSources[$derived.Source]++
+                }
             }
 
             # Album (normalize by removing disc suffixes like 'Disc 1', 'CD2', 'Part 1', trailing brackets)
@@ -146,14 +164,14 @@ function Get-FolderTagConsensus {
         return [PSCustomObject]@{ Key = $entry.Key; Ratio = [double]$ratio; Value = [int]$entry.Value }
     }
 
-    $yt = Get-Top -Counts $yearCounts -Valid $validYear
+    $yt = Get-Top -Counts $yearCounts -Valid $yearSampleCount
     $at = Get-Top -Counts $albumCounts -Valid $validAlbum
     $art = Get-Top -Counts $artistCounts -Valid $validArtist
     $yearTop = $yt.Key; $yearRatio = $yt.Ratio
     $albumTop = $at.Key; $albumRatio = $at.Ratio
     $artistTop = $art.Key; $artistRatio = $art.Ratio
 
-    $hasYearTop = ($validYear -gt 0 -and $yearCounts.Count -gt 0)
+    $hasYearTop = ($yearSampleCount -gt 0 -and $yearCounts.Count -gt 0)
     $hasAlbumTop = ($validAlbum -gt 0 -and $albumCounts.Count -gt 0)
     $hasArtistTop = ($validArtist -gt 0 -and $artistCounts.Count -gt 0)
     $yearConsensus = ($hasYearTop -and $yearRatio -ge $YearThreshold)
@@ -178,14 +196,26 @@ function Get-FolderTagConsensus {
 
     # Confidence: simple average of available consensuses weighted by valid counts
     $signals = @()
-    if ($validYear -gt 0) { $signals += $yearRatio }
+    if ($yearSampleCount -gt 0) { $signals += $yearRatio }
     if ($validAlbum -gt 0) { $signals += $albumRatio }
     if ($validArtist -gt 0) { $signals += $artistRatio }
     $confidence = if ($signals.Count -gt 0) { [math]::Min(0.95, ($signals | Measure-Object -Average).Average) } else { 0.0 }
 
     $yearTopValueOut = $null
-    if ($yearTop -ne $null) {
+    if ($null -ne $yearTop) {
         try { $yearTopValueOut = [int]$yearTop } catch { $yearTopValueOut = $null }
+    }
+
+    # Add an awareness detail when many files lack Tag.Year (common when only DATE/TDRC exists)
+    $yearCoverageRatio = if ($fileCount -gt 0) { [double]$validYear / [double]$fileCount } else { 0.0 }
+    $detailsMsgs = @()
+    if ($fileCount -gt 0 -and $validYear -lt [math]::Ceiling(0.5 * $fileCount)) {
+        $detailsMsgs += "Only $validYear of $fileCount files have numeric Tag.Year; other tools may show Year from DATE/TDRC fields"
+    }
+    if ($script:__MFC_YearSources) {
+        $srcParts = @()
+        foreach ($k in $script:__MFC_YearSources.Keys) { $srcParts += ("{0}:{1}" -f $k, $script:__MFC_YearSources[$k]) }
+        if ($srcParts.Count -gt 0) { $detailsMsgs += ("Derived Year from {0}" -f ($srcParts -join ', ')) }
     }
 
     return [PSCustomObject]@{
@@ -194,6 +224,8 @@ function Get-FolderTagConsensus {
         YearTopValue = $yearTopValueOut
         YearTopRatio = [math]::Round($yearRatio, 3)
         YearConsensus = $yearConsensus
+        YearValidCount = $validYear
+        YearCoverageRatio = [math]::Round($yearCoverageRatio, 3)
         AlbumTopValue = $albumTop
         AlbumTopRatio = [math]::Round($albumRatio, 3)
         AlbumConsensus = $albumConsensus
@@ -205,6 +237,6 @@ function Get-FolderTagConsensus {
         SuggestedArtist = $suggestedArtist
         SuggestedFolderName = $suggestedFolderName
         Confidence = [math]::Round($confidence, 3)
-        Details = @()
+        Details = $detailsMsgs
     }
 }

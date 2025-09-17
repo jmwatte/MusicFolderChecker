@@ -104,6 +104,8 @@ function New-MfcConsensusPlan {
                     Consensus = [PSCustomObject]@{
                         YearConsensus = $cons.YearConsensus
                         YearTopRatio = $cons.YearTopRatio
+                        YearValidCount = $cons.YearValidCount
+                        YearCoverageRatio = $cons.YearCoverageRatio
                         AlbumConsensus = $cons.AlbumConsensus
                         AlbumTopRatio = $cons.AlbumTopRatio
                         ArtistConsensus = $cons.ArtistConsensus
@@ -114,6 +116,7 @@ function New-MfcConsensusPlan {
                     StructureConfidence = if ($analysis) { $analysis.Confidence } else { $null }
                     RequiresAllowCollectionChanges = ($analysis -and ($analysis.StructureType -in @('ArtistFolder','BoxSet')))
                     Reason = if ($analysis -and $analysis.Details) { ($analysis.Details -join '; ') } else { 'Consensus-derived' }
+                    Notes = $cons.Details
                 }
                 $plan += $item
             }
