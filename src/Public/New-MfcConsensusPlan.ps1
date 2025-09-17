@@ -32,6 +32,9 @@ function New-MfcConsensusPlan {
     .PARAMETER OutputPath
         Optional path to write the plan as JSON (array). If not specified, writes objects to the pipeline.
 
+    .PARAMETER Fast
+        Enable fast sampling mode for consensus (limited files per subfolder and overall). Useful for large trees or quick previews.
+
     .EXAMPLE
         New-MfcConsensusPlan -Path 'D:\Music' -Recurse | Format-Table Path,SuggestedFolderName,ProposedAlbum,ProposedYear
 
@@ -52,6 +55,8 @@ function New-MfcConsensusPlan {
         [double]$YearThreshold = 0.6,
         [double]$AlbumThreshold = 0.6,
         [double]$ArtistThreshold = 0.6,
+
+        [switch]$Fast,
 
         [string]$OutputPath
     )
@@ -85,7 +90,7 @@ function New-MfcConsensusPlan {
                 # Consensus
                 $cons = $null
                 try {
-                    $cons = Get-FolderTagConsensus -Path $folder -AudioExtensions $audioExtensions -MinFiles $MinFiles -YearThreshold $YearThreshold -AlbumThreshold $AlbumThreshold -ArtistThreshold $ArtistThreshold
+                    $cons = Get-FolderTagConsensus -Path $folder -AudioExtensions $audioExtensions -MinFiles $MinFiles -YearThreshold $YearThreshold -AlbumThreshold $AlbumThreshold -ArtistThreshold $ArtistThreshold -Fast:$Fast
                 } catch { }
                 if (-not $cons) { continue }
 

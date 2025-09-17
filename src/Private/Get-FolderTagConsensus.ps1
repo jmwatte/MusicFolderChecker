@@ -27,6 +27,17 @@ function Get-FolderTagConsensus {
     .PARAMETER ArtistThreshold
         Ratio threshold (0-1) to consider Artist values "consistent enough". Default 0.6.
 
+    .PARAMETER Fast
+        Enable fast sampling mode: analyze a limited number of files per subfolder and overall
+        to speed up large folders while producing stable consensus. Defaults: 10 files per
+        directory, up to 40 total per folder tree.
+
+    .PARAMETER MaxTotalFiles
+        When -Fast is used, cap total analyzed files to this number (default 40).
+
+    .PARAMETER MaxFilesPerDirectory
+        When -Fast is used, cap analyzed files per subfolder to this number (default 10).
+
     .OUTPUTS
         PSCustomObject with fields: Path, FileCount, YearTopValue, YearTopRatio, YearConsensus,
         AlbumTopValue, AlbumTopRatio, AlbumConsensus, ArtistTopValue, ArtistTopRatio, ArtistConsensus,
@@ -42,13 +53,28 @@ function Get-FolderTagConsensus {
         [int]$MinFiles = 3,
         [double]$YearThreshold = 0.6,
         [double]$AlbumThreshold = 0.6,
-        [double]$ArtistThreshold = 0.6
+        [double]$ArtistThreshold = 0.6,
+
+        [switch]$Fast,
+        [int]$MaxTotalFiles = 40,
+        [int]$MaxFilesPerDirectory = 10
     )
 
     # Gather audio files recursively (use -Include for reliability)
     $include = @()
     foreach ($ext in $AudioExtensions) { $include += ("*{0}" -f $ext) }
     $audioFiles = Get-ChildItem -Path (Join-Path $Path '*') -File -Recurse -Include $include -ErrorAction SilentlyContinue
+    $allCount = $audioFiles.Count
+
+    if ($Fast -and $audioFiles.Count -gt 0) {
+        # Deterministic sampling: up to MaxFilesPerDirectory per subfolder, capped by MaxTotalFiles
+        $sampled = @()
+        $groups = $audioFiles | Sort-Object DirectoryName, Name | Group-Object DirectoryName
+        foreach ($g in $groups) {
+            $sampled += ($g.Group | Select-Object -First $MaxFilesPerDirectory)
+        }
+        $audioFiles = $sampled | Select-Object -First $MaxTotalFiles
+    }
 
     $fileCount = $audioFiles.Count
     if ($fileCount -lt $MinFiles) {
@@ -86,11 +112,16 @@ function Get-FolderTagConsensus {
 
     # Year derivation is split into a separate private helper for testability
 
+    # Avoid clearing TagLib file cache per-file in Fast mode
+    $clearPerFileCache = -not $Fast
+
     foreach ($f in $audioFiles) {
         $tagFile = $null
         try {
-            # Best effort to clear TagLib cache to avoid stale references
-            try { $cache = [TagLib.File]::Cache; if ($cache) { $cache.Clear() } } catch { }
+            if ($clearPerFileCache) {
+                # Best effort to clear TagLib cache to avoid stale references
+                try { $cache = [TagLib.File]::Cache; if ($cache) { $cache.Clear() } } catch { }
+            }
             $tagFile = Invoke-TagLibCreate -Path $f.FullName
         } catch {
             $tagFile = $null
@@ -147,7 +178,7 @@ function Get-FolderTagConsensus {
                 $artistCounts[$artist]++
             }
         } finally {
-            $tagFile.Dispose()
+            try { $tagFile.Dispose() } catch { }
             $tagFile = $null
         }
     }
@@ -212,6 +243,7 @@ function Get-FolderTagConsensus {
     if ($fileCount -gt 0 -and $validYear -lt [math]::Ceiling(0.5 * $fileCount)) {
         $detailsMsgs += "Only $validYear of $fileCount files have numeric Tag.Year; other tools may show Year from DATE/TDRC fields"
     }
+    if ($Fast) { $detailsMsgs += ("Fast mode: analyzed {0} of {1} files" -f $fileCount, $allCount) }
     if ($script:__MFC_YearSources) {
         $srcParts = @()
         foreach ($k in $script:__MFC_YearSources.Keys) { $srcParts += ("{0}:{1}" -f $k, $script:__MFC_YearSources[$k]) }

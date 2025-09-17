@@ -52,7 +52,21 @@ function Invoke-MfcConsensusPlan {
         [double]$MinYearCoverage = 0.4
     )
 
-    begin { $applied = 0; $skipped = 0 }
+    begin {
+        $applied = 0; $skipped = 0
+        # Cache for structure analyses to avoid recomputation across items
+        $analysisCache = @{}
+
+        function Get-AnalysisCached {
+            param([string]$Path)
+            if (-not $Path) { return $null }
+            if ($analysisCache.ContainsKey($Path)) { return $analysisCache[$Path] }
+            $res = $null
+            try { $res = Get-FolderStructureAnalysis -Path $Path -UseConsensusHints } catch { }
+            $analysisCache[$Path] = $res
+            return $res
+        }
+    }
 
     process {
         foreach ($item in $Plan) {
@@ -114,19 +128,20 @@ function Invoke-MfcConsensusPlan {
 
             # Automatic inheritance: if parent is BoxSet or MultiDiscAlbum and grandparent is ArtistFolder, push artist down
             $artistInherited = $false
-            try {
-                $parentDir = Split-Path -Parent $folder
-                $grandDir  = if ($parentDir) { Split-Path -Parent $parentDir } else { $null }
-                $pa = $null; $ga = $null
-                if ($parentDir) { try { $pa = Get-FolderStructureAnalysis -Path $parentDir -UseConsensusHints } catch { } }
-                if ($grandDir)  { try { $ga = Get-FolderStructureAnalysis -Path $grandDir  -UseConsensusHints } catch { } }
-                if ($pa -and ($pa.StructureType -in @('BoxSet','MultiDiscAlbum')) -and $ga -and $ga.StructureType -eq 'ArtistFolder') {
-                    $artistFromGrand = Split-Path -Leaf $grandDir
-                    # Only override when consensus is absent/weak or no proposal present
-                    $hasStrongArtist = ($cons -and $cons.ArtistConsensus -and $item.ProposedAlbumArtist)
-                    if (-not $hasStrongArtist) { $applyArtist = $artistFromGrand; $artistInherited = $true }
-                }
-            } catch { }
+            # Short-circuit inheritance lookup if we already have a strong artist applied
+            $hasStrongArtist = ($cons -and $cons.ArtistConsensus -and $item.ProposedAlbumArtist)
+            if (-not $hasStrongArtist -and -not $applyArtist) {
+                try {
+                    $parentDir = Split-Path -Parent $folder
+                    $grandDir  = if ($parentDir) { Split-Path -Parent $parentDir } else { $null }
+                    $pa = Get-AnalysisCached -Path $parentDir
+                    $ga = Get-AnalysisCached -Path $grandDir
+                    if ($pa -and ($pa.StructureType -in @('BoxSet','MultiDiscAlbum')) -and $ga -and $ga.StructureType -eq 'ArtistFolder') {
+                        $artistFromGrand = Split-Path -Leaf $grandDir
+                        $applyArtist = $artistFromGrand; $artistInherited = $true
+                    }
+                } catch { }
+            }
 
             if ($artistInherited) { Write-Verbose ("Artist: inherited from ArtistFolder '{0}' due to parent structure {1}" -f (Split-Path -Leaf $grandDir), ($pa.StructureType)) }
 
@@ -143,10 +158,17 @@ function Invoke-MfcConsensusPlan {
                 $actionMsg = if ($changes.Count -gt 0) { 'Apply tags: ' + ($changes -join '; ') } else { 'Apply tags (no changes)' }
 
                 if ($PSCmdlet.ShouldProcess($folder, $actionMsg)) {
-                    Update-MusicFolderMetadata -FolderPath $folder `
-                        -Year $applyYear -Album $applyAlbum -AlbumArtist $applyArtist `
-                        -NonInteractive -UseConsensusHints -AllowCollectionChanges:$AllowCollectionChanges `
-                        -LogPath $LogPath -WhatIf:$WhatIfPreference
+                    if (-not $WhatIfPreference) {
+                        Update-MusicFolderMetadata -FolderPath $folder `
+                            -Year $applyYear -Album $applyAlbum -AlbumArtist $applyArtist `
+                            -NonInteractive -UseConsensusHints -AllowCollectionChanges:$AllowCollectionChanges `
+                            -LogPath $LogPath -WhatIf:$WhatIfPreference
+                    } else {
+                        # Avoid expensive per-file TagLib operations during WhatIf; just log intended action
+                        if ($LogPath) {
+                            Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcConsensusPlan'; Level='Info'; Status='WillApply'; Path=$folder; Changes=$changes -join '; ' }
+                        }
+                    }
                 }
             }
 
