@@ -23,6 +23,11 @@ function Invoke-MfcConsensusPlan {
     .PARAMETER OnConflict
     For renames: choose behavior when target exists. Default Skip.
 
+    .NOTES
+    Automatic artist inheritance: If the parent folder classifies as a BoxSet or MultiDiscAlbum and the
+    grandparent as an ArtistFolder, AlbumArtist is inherited from the artist folder (grandparent leaf)
+    for child items unless a strong artist consensus/proposal already exists.
+
     .EXAMPLE
     New-MfcConsensusPlan -Path 'D:\Music' -Recurse | Invoke-MfcConsensusPlan -WhatIf
     # Preview apply changes.
@@ -83,6 +88,21 @@ function Invoke-MfcConsensusPlan {
                 $applyArtist = $item.ProposedAlbumArtist
             }
 
+            # Automatic inheritance: if parent is BoxSet or MultiDiscAlbum and grandparent is ArtistFolder, push artist down
+            try {
+                $parentDir = Split-Path -Parent $folder
+                $grandDir  = if ($parentDir) { Split-Path -Parent $parentDir } else { $null }
+                $pa = $null; $ga = $null
+                if ($parentDir) { try { $pa = Get-FolderStructureAnalysis -Path $parentDir -UseConsensusHints } catch { } }
+                if ($grandDir)  { try { $ga = Get-FolderStructureAnalysis -Path $grandDir  -UseConsensusHints } catch { } }
+                if ($pa -and ($pa.StructureType -in @('BoxSet','MultiDiscAlbum')) -and $ga -and $ga.StructureType -eq 'ArtistFolder') {
+                    $artistFromGrand = Split-Path -Leaf $grandDir
+                    # Only override when consensus is absent/weak or no proposal present
+                    $hasStrongArtist = ($cons -and $cons.ArtistConsensus -and $item.ProposedAlbumArtist)
+                    if (-not $hasStrongArtist) { $applyArtist = $artistFromGrand }
+                }
+            } catch { }
+
             # Apply tag updates using existing updater in scripted mode (no prompts)
             if ($applyYear -or $applyAlbum -or $applyArtist) {
                 if ($PSCmdlet.ShouldProcess($folder, 'Apply tag consensus')) {
@@ -101,14 +121,47 @@ function Invoke-MfcConsensusPlan {
                     Write-Output ("Rename skipped (exists): {0} -> {1}" -f $folder, $target)
                 } else {
                     if ($PSCmdlet.ShouldProcess((Split-Path $folder -Leaf), ("Rename to {0}" -f $target))) {
+                        # Avoid renaming a folder that is the current working directory; move to parent temporarily
+                        $prevLocation = $null; $movedOut = $false
+                        try {
+                            $prevLocation = (Get-Location).Path
+                            $folderFull = [System.IO.Path]::GetFullPath($folder)
+                            $prevFull = [System.IO.Path]::GetFullPath($prevLocation)
+                            $folderPrefix = if ($folderFull.EndsWith('\')) { $folderFull } else { $folderFull + '\' }
+                            if ($prevFull.Equals($folderFull, [System.StringComparison]::OrdinalIgnoreCase) -or $prevFull.StartsWith($folderPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                                Set-Location -LiteralPath $parent
+                                $movedOut = $true
+                            }
+                        } catch { }
+
                         try {
                             if ((Test-Path -LiteralPath $target) -and $OnConflict -eq 'Overwrite') {
                                 Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
                             }
-                            Rename-Item -LiteralPath $folder -NewName $item.SuggestedFolderName -Force
-                            if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcConsensusPlan'; Level='Info'; Status='Renamed'; Path=$folder; Destination=$target } }
+                            if (-not $WhatIfPreference) {
+                                # Retry a few times to ride out transient locks (indexing, AV, etc.)
+                                $attempts = 0; $max = 3; $renamed = $false
+                                while (-not $renamed -and $attempts -lt $max) {
+                                    try {
+                                        Rename-Item -LiteralPath $folder -NewName $item.SuggestedFolderName -Force -ErrorAction Stop
+                                        $renamed = $true
+                                    } catch {
+                                        $attempts++
+                                        try { [System.GC]::Collect(); [System.GC]::WaitForPendingFinalizers() } catch { }
+                                        if ($attempts -lt $max) { Start-Sleep -Milliseconds (200 * $attempts) }
+                                        else { throw }
+                                    }
+                                }
+                            } else {
+                                if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcConsensusPlan'; Level='Info'; Status='WillRename'; Path=$folder; Destination=$target; DryRun = $true } }
+                            }
+                            if ($LogPath -and -not $WhatIfPreference) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcConsensusPlan'; Level='Info'; Status='Renamed'; Path=$folder; Destination=$target } }
                         } catch {
                             Write-Output ("Rename failed: {0} -> {1}: {2}" -f $folder, $target, $_)
+                        } finally {
+                            if ($movedOut -and $prevLocation) {
+                                try { Set-Location -LiteralPath $prevLocation } catch { }
+                            }
                         }
                     }
                 }

@@ -118,7 +118,16 @@ function Get-FolderStructureAnalysis {
 
     # Analysis logic with confidence scoring
 
-    # 0. Check for Box Set (highest priority - before Artist Folder)
+    # 0a. Prefer Multi-Disc classification when immediate subfolders are disc-like
+    if ($discSubfolders.Count -gt 1 -and -not $hasDirectAudio) {
+        $result.StructureType = $structureTypes.MultiDiscAlbum
+        $result.Confidence = 0.85
+        $result.Details += "Multi-disc album with $($discSubfolders.Count) discs (detected at parent level)"
+        $result.Recommendations += "Process as multi-disc album"
+        return $result
+    }
+
+    # 0b. Check for Box Set (before Artist Folder)
     if ($albumSubfolders.Count -gt 2 -and -not $hasDirectAudio -and $albumSubfolderAudioCount -gt 0) {
         # Analyze if this looks like a box set
         $boxSetIndicators = 0
@@ -140,7 +149,7 @@ function Get-FolderStructureAnalysis {
         }
 
         # Box set indicators
-        if ($folderName -match '(?i)(?:complete|collection|box|set|songbook)') { $boxSetIndicators++ }
+    if ($folderName -match '(?i)(?:complete|collection|box\s*set|box|set|songbook|years|anthology|works|recorded\s*works)') { $boxSetIndicators++ }
         if ($albumSubfolders.Count -gt 3) { $boxSetIndicators++ } # Many albums suggest collection
         if ($totalDiscsInBoxSet -gt $albumSubfolders.Count) { $boxSetIndicators++ } # Multiple discs per album
         if ($artistNames.Count -gt 0 -and ($artistNames | Select-Object -Unique).Count -le 2) { $boxSetIndicators++ } # Consistent artist
