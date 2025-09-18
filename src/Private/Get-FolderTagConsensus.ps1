@@ -78,6 +78,18 @@ function Get-FolderTagConsensus {
 
     $fileCount = $audioFiles.Count
     if ($fileCount -lt $MinFiles) {
+        # Even with too few files, provide useful fallbacks from the folder name so
+        # downstream flows (e.g., Discogs planning) can still proceed.
+        $leaf = Split-Path $Path -Leaf
+        $parsedYear = $null
+        $parsedAlbum = $null
+        if ($leaf -match '^(\d{4})\s*-\s*(.+)$') {
+            $parsedYear = [int]$matches[1]
+            $parsedAlbum = ($matches[2]).Trim()
+        }
+        $suggestedAlbum = if ($parsedAlbum) { $parsedAlbum } else { $leaf }
+        $suggestedYear = if ($parsedYear) { $parsedYear } else { $null }
+
         return [PSCustomObject]@{
             Path = $Path
             FileCount = $fileCount
@@ -90,12 +102,12 @@ function Get-FolderTagConsensus {
             ArtistTopValue = $null
             ArtistTopRatio = 0.0
             ArtistConsensus = $false
-            SuggestedYear = $null
-            SuggestedAlbum = $null
+            SuggestedYear = $suggestedYear
+            SuggestedAlbum = $suggestedAlbum
             SuggestedArtist = $null
-            SuggestedFolderName = Split-Path $Path -Leaf
+            SuggestedFolderName = $leaf
             Confidence = 0.0
-            Details = @("Too few audio files for consensus")
+            Details = @("Too few audio files for consensus; using folder-derived defaults")
         }
     }
 

@@ -68,38 +68,58 @@ function Invoke-MfcDiscogsPlan {
             $artist = $item.ProposedAlbumArtist
             $album  = $item.ProposedAlbum
             $year   = $item.ProposedYear
-            if (-not $artist -and -not $album -and -not $year) { $skipped++; continue }
+            if (-not $artist -and -not $album -and -not $year) { Write-Verbose ("Plan has no proposed tags for {0}; nothing to apply" -f $folder); $skipped++; continue }
+
+            # Gather current consensus to present old->new in WhatIf
+            $curArtist = $null; $curAlbum = $null; $curYear = $null
+            try {
+                $cur = Get-FolderTagConsensus -Path $folder -Fast
+                if ($cur) { $curArtist = $cur.SuggestedArtist; $curAlbum = $cur.SuggestedAlbum; $curYear = $cur.SuggestedYear }
+            } catch { }
 
             $changes = @()
-            if ($artist) { $changes += ("Artist='{0}'" -f $artist) }
-            if ($album)  { $changes += ("Album='{0}'" -f $album) }
-            if ($year)   { $changes += ("Year={0}" -f $year) }
-            $action = if ($changes.Count -gt 0) { 'Apply tags: ' + ($changes -join '; ') } else { 'Apply tags (no changes)' }
+            if ($artist -and (($curArtist ?? '') -ne $artist)) { $changes += ("Artist '{0}'->'{1}'" -f ($curArtist ?? ''), $artist) }
+            if ($album  -and (($curAlbum  ?? '') -ne $album )) { $changes += ("Album '{0}'->'{1}'"  -f ($curAlbum  ?? ''), $album ) }
+            if ($year   -and (($curYear   ?? '') -ne $year  )) { $changes += ("Year {0}->{1}"       -f ($curYear   ?? ''), $year  ) }
+            $hasAlbumChanges = ($changes.Count -gt 0)
+            $action = if ($hasAlbumChanges) { 'Apply tags: ' + ($changes -join '; ') } else { 'Apply tags (no changes)' }
 
             if ($PSCmdlet.ShouldProcess($folder, $action)) {
                 if (-not $WhatIfPreference) {
                     Update-MusicFolderMetadata -FolderPath $folder -AlbumArtist $artist -Album $album -Year $year -NonInteractive -UseConsensusHints -LogPath $LogPath -WhatIf:$WhatIfPreference
-                    if ($Tracks -and $item.ReleaseId) {
-                        try {
-                            # Apply per-track tags as a separate ShouldProcess action per file inside the helper
-                            Set-TrackTagsFromDiscogs -Path $folder -ReleaseId ([int]$item.ReleaseId) -LogPath $LogPath -WhatIf:$WhatIfPreference
-                        } catch {
-                            Write-Verbose ("Per-track apply failed for {0}: {1}" -f $folder, $_)
-                            if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcDiscogsPlan'; Level='Warning'; Status='TracksApplyFailed'; Path=$folder; ReleaseId=$item.ReleaseId; Details = $_.ToString() } }
-                        }
-                    }
                 } else {
                     if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcDiscogsPlan'; Level='Info'; Status='WillApply'; Path=$folder; Changes=$changes -join '; '; Tracks=$Tracks } }
                 }
+
+                # Always invoke per-track applier when -Tracks is set so its own ShouldProcess can emit per-file WhatIf previews
+                if ($Tracks -and $item.ReleaseId) {
+                    try {
+                        if ($item.PSObject.Properties.Name -contains 'Map' -and $item.Map) {
+                            Set-TrackTagsFromDiscogs -Path $folder -Mapping $item.Map -LogPath $LogPath -WhatIf:$WhatIfPreference
+                        } else {
+                            Set-TrackTagsFromDiscogs -Path $folder -ReleaseId ([int]$item.ReleaseId) -LogPath $LogPath -WhatIf:$WhatIfPreference
+                        }
+                    } catch {
+                        Write-Verbose ("Per-track apply failed for {0}: {1}" -f $folder, $_)
+                        if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcDiscogsPlan'; Level='Warning'; Status='TracksApplyFailed'; Path=$folder; ReleaseId=$item.ReleaseId; Details = $_.ToString() } }
+                    }
+                }
             }
+
+            # Count only when there are album-level changes (WhatIf => Planned, else Applied)
+            if ($hasAlbumChanges) { $applied++ }
 
             if ($Rename) {
                 # Optional: we could compute suggested name from consensus again
                 # For now, rely on separate consensus rename pipeline if desired.
             }
-
-            $applied++
         }
     }
-    end { Write-Output ("Applied={0} Skipped={1}" -f $applied, $skipped) }
+    end {
+        if ($WhatIfPreference) {
+            Write-Output ("Planned={0} Skipped={1}" -f $applied, $skipped)
+        } else {
+            Write-Output ("Applied={0} Skipped={1}" -f $applied, $skipped)
+        }
+    }
 }

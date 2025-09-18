@@ -74,6 +74,15 @@ function Find-DiscogsRelease {
         $results = if ($resp) { $resp.results } else { $null }
     }
 
+    # Fallback 3: if artist was specified and still no results, try title/year only (drop artist filter)
+    if ((-not $results -or $results.Count -eq 0) -and $Title) {
+        $qNoArtist = @{ 'type'='release'; 'per_page'=$PerPage; 'release_title'=$Title }
+        if ($Year) { $qNoArtist['year'] = $Year }
+        Write-Verbose ("Discogs search fallback (no-artist): title='{0}', year='{1}'" -f $Title, $Year)
+        $resp = Invoke-DiscogsRequest -Method GET -RelativePath '/database/search' -Query $qNoArtist
+        $results = if ($resp) { $resp.results } else { $null }
+    }
+
     if (-not $results -or $results.Count -eq 0) { Write-Verbose 'Discogs search returned 0 results'; return }
 
     $out = New-Object System.Collections.Generic.List[object]

@@ -61,8 +61,11 @@ function New-MfcDiscogsPlan {
     .PARAMETER ExcludeName
     Leaf name patterns to exclude.
 
+    .PARAMETER IncludeTracks
+    When set, include mapped track list in the plan item (Map.Tracks). Useful to avoid a second Discogs call during apply.
+
     .OUTPUTS
-    PSCustomObject with Path, ReleaseId, ProposedAlbumArtist, ProposedAlbum, ProposedYear, Confidence, Notes
+    PSCustomObject with Path, ReleaseId, ProposedAlbumArtist, ProposedAlbum, ProposedYear, Confidence, Notes, Map (optional)
     #>
     [CmdletBinding()]
     param(
@@ -75,7 +78,8 @@ function New-MfcDiscogsPlan {
         [string]$JsonlPath,
         [switch]$ShowProgress,
         [string[]]$ExcludePath,
-        [string[]]$ExcludeName
+        [string[]]$ExcludeName,
+        [switch]$IncludeTracks
     )
 
     begin {
@@ -101,22 +105,22 @@ function New-MfcDiscogsPlan {
                 # Local consensus
                 $cons = $null
                 try { $cons = Get-FolderTagConsensus -Path $folder -Fast:$Fast } catch { }
-                if (-not $cons) { continue }
+                if (-not $cons) { Write-Verbose ("No consensus for {0}; skipping" -f $folder); continue }
 
                 $artist = $cons.SuggestedArtist
                 $album  = $cons.SuggestedAlbum
                 $year   = $cons.SuggestedYear
-                if (-not $artist -and -not $album) { continue }
+                if (-not $artist -and -not $album) { Write-Verbose ("Insufficient data (no artist/album) for {0}; skipping Discogs search" -f $folder); continue }
 
                 # Search Discogs
                 $cands = $null
                 try { $cands = Find-DiscogsRelease -Artist $artist -Title $album -Year $year -PerPage 10 } catch { }
-                if (-not $cands -or $cands.Count -eq 0) { continue }
+                if (-not $cands -or $cands.Count -eq 0) { Write-Verbose ("No Discogs candidates for {0} (Artist='{1}', Album='{2}', Year={3})" -f $folder, $artist, $album, $year); continue }
 
                 $best = $cands | Select-Object -First 1
                 $rel  = $null
                 try { $rel = Get-DiscogsRelease -Id $best.Id } catch { }
-                if (-not $rel) { continue }
+                if (-not $rel) { Write-Verbose ("Discogs release fetch failed (Id={0}) for {1}" -f $best.Id, $folder); continue }
 
                 $mapped = ConvertFrom-DiscogsRelease -Release $rel
                 $proposedArtist = $mapped.AlbumArtist
@@ -150,6 +154,8 @@ function New-MfcDiscogsPlan {
                     Confidence = [math]::Round($conf,2)
                     Notes = @("Discogs: $($rel.country) $($rel.year) $($rel.label -join ', ') $($rel.format -join ', ')")
                 }
+
+                if ($IncludeTracks) { $item | Add-Member -NotePropertyName Map -NotePropertyValue $mapped }
 
                 if ($JsonlPath) { try { $item | ConvertTo-Json -Depth 5 -Compress | Add-Content -LiteralPath $JsonlPath -Encoding UTF8 } catch { } }
                 Write-Output $item

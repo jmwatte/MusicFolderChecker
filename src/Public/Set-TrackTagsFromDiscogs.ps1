@@ -10,8 +10,11 @@ numbers are missing, files are matched in order. Honors -WhatIf and -Verbose.
 .PARAMETER Path
 Album folder path containing the audio files to update.
 
-.PARAMETER ReleaseId
-Discogs release id to map from.
+    .PARAMETER ReleaseId
+    Discogs release id to map from (ignored when -Mapping is provided).
+
+    .PARAMETER Mapping
+    A precomputed Discogs mapping object as returned by ConvertFrom-DiscogsRelease (contains Tracks with Seconds, Title, Disc, Track).
 
 .PARAMETER MatchBy
 Match strategy. 'Number' uses Disc/Track numbers when available; otherwise order by filename.
@@ -38,8 +41,11 @@ function Set-TrackTagsFromDiscogs {
         [Alias('FullName')]
         [string]$Path,
 
-        [Parameter(Mandatory)]
-        [int]$ReleaseId,
+    [int]$ReleaseId,
+
+    [Parameter(ValueFromPipelineByPropertyName)]
+    [Alias('Map')]
+    [psobject]$Mapping,
 
         [ValidateSet('Number','Order')]
         [string]$MatchBy = 'Number',
@@ -65,12 +71,16 @@ function Set-TrackTagsFromDiscogs {
     process {
         if (-not (Test-Path -LiteralPath $Path)) { Write-Output ("Missing: {0}" -f $Path); return }
 
-        $rel = $null
-        try { $rel = Get-DiscogsRelease -Id $ReleaseId } catch { Write-Output ("Failed to fetch Discogs release {0}: {1}" -f $ReleaseId, $_); return }
-        if (-not $rel) { Write-Output ("Discogs release not found: {0}" -f $ReleaseId); return }
-
         $map = $null
-        try { $map = ConvertFrom-DiscogsRelease -Release $rel } catch { Write-Output ("Failed to map Discogs release {0}: {1}" -f $ReleaseId, $_); return }
+        if ($Mapping) {
+            $map = $Mapping
+        } else {
+            if (-not $ReleaseId) { Write-Output "Provide -ReleaseId or -Mapping"; return }
+            $rel = $null
+            try { $rel = Get-DiscogsRelease -Id $ReleaseId } catch { Write-Output ("Failed to fetch Discogs release {0}: {1}" -f $ReleaseId, $_); return }
+            if (-not $rel) { Write-Output ("Discogs release not found: {0}" -f $ReleaseId); return }
+            try { $map = ConvertFrom-DiscogsRelease -Release $rel } catch { Write-Output ("Failed to map Discogs release {0}: {1}" -f $ReleaseId, $_); return }
+        }
         if (-not $map -or -not $map.Tracks -or $map.Tracks.Count -eq 0) { Write-Output "Discogs mapping has no tracks"; return }
 
         # Enumerate audio files
@@ -99,9 +109,10 @@ function Set-TrackTagsFromDiscogs {
             $fileInfos += [pscustomobject]@{ File=$f; Disc=$disc; Track=$track; Title=$title }
         }
 
-        # Group Discogs tracks by disc (null => 1 if any file uses disc numbers)
+        # Group Discogs tracks by disc. Default to disc=1 when files don't carry disc numbers
+        # so that single-disc albums still map tracks.
         $discUsed = ($fileInfos | Where-Object { $_.Disc })
-        $defaultDisc = if ($discUsed.Count -gt 0) { 1 } else { $null }
+        $defaultDisc = 1
         $tracksByDisc = @{}
         foreach ($t in $map.Tracks) {
             $d = if ($null -ne $t.Disc -and $t.Disc -ne 0) { [int]$t.Disc } else { $defaultDisc }
@@ -110,12 +121,12 @@ function Set-TrackTagsFromDiscogs {
             $tracksByDisc[$d].Add($t)
         }
 
-    $updates = 0; $skipped = 0; $lenMismatches = 0
+    $updates = 0; $planned = 0; $skipped = 0; $lenMismatches = 0
         # For each disc group among files
         $fileGroups = $fileInfos | Group-Object { if ($_.Disc) { $_.Disc } else { $defaultDisc } }
         foreach ($g in $fileGroups) {
             $discKey = $g.Name
-            $discTracks = if ($discKey -ne $null -and $tracksByDisc.ContainsKey([int]$discKey)) { $tracksByDisc[[int]$discKey] } else { $null }
+            $discTracks = if ($null -ne $discKey -and $tracksByDisc.ContainsKey([int]$discKey)) { $tracksByDisc[[int]$discKey] } else { $null }
             if (-not $discTracks -or $discTracks.Count -eq 0) {
                 Write-Verbose ("No Discogs tracks for disc '{0}', skipping group of {1} files" -f $discKey, $g.Count)
                 $skipped += $g.Count
@@ -132,7 +143,8 @@ function Set-TrackTagsFromDiscogs {
                 $filesSorted = $g.Group | Sort-Object { $_.File.Name }
             }
 
-            $discTracksSorted = $discTracks | Sort-Object { if ($_.Track) { $_.Track } else { 0 } }
+            # Choose Discogs track sequence: numeric order for 'Number', original order for 'Order'
+            $discTracksSorted = if ($MatchBy -eq 'Order') { $discTracks } else { ($discTracks | Sort-Object { if ($_.Track) { $_.Track } else { 0 } }) }
             $limit = [math]::Min($filesSorted.Count, $discTracksSorted.Count)
             for ($i=0; $i -lt $limit; $i++) {
                 $fi = $filesSorted[$i]
@@ -142,8 +154,19 @@ function Set-TrackTagsFromDiscogs {
                 $newTitle = $ti.Title
 
                 $leaf = $fi.File.Name
-                $action = "Set track tags: Disc={0}; Track={1}; Title='{2}'" -f $newDisc, $newTrack, $newTitle
-                if ($PSCmdlet.ShouldProcess($leaf, $action)) {
+                $oldDisc = if ($fi.Disc) { [int]$fi.Disc } else { 0 }
+                $oldTrack = if ($fi.Track) { [int]$fi.Track } else { 0 }
+                $oldTitle = $fi.Title
+                $changeNeeded = ($oldDisc -ne $newDisc) -or ($oldTrack -ne $newTrack) -or (($oldTitle ?? '') -ne ($newTitle ?? ''))
+                if (-not $changeNeeded) { continue }
+                $action = "Set track tags: Disc {0}->{1}; Track {2}->{3}; Title '{4}'->'{5}'" -f $oldDisc, $newDisc, $oldTrack, $newTrack, ($oldTitle ?? ''), ($newTitle ?? '')
+                $should = $PSCmdlet.ShouldProcess($leaf, $action)
+                if ($WhatIfPreference) {
+                    # In WhatIf, record planned changes and do not write; the ShouldProcess above emits the WhatIf message
+                    $planned++
+                    continue
+                }
+                if ($should) {
                     try {
                         # Clear TagLib cache; reopen for write
                         try { $cache = [TagLib.File]::Cache; if ($cache) { $cache.Clear() } } catch { }
@@ -156,7 +179,7 @@ function Set-TrackTagsFromDiscogs {
                                     if ($tf2.PSObject.Properties.Name -contains 'Properties' -and $tf2.Properties -and $tf2.Properties.Duration) {
                                         $dur = [int][Math]::Round($tf2.Properties.Duration.TotalSeconds)
                                     }
-                                    if ($dur -ne $null) {
+                                    if ($null -ne $dur) {
                                         $diff = [math]::Abs($dur - [int]$ti.Seconds)
                                         if ($diff -gt $LengthToleranceSec) {
                                             $lenMismatches++
@@ -168,10 +191,11 @@ function Set-TrackTagsFromDiscogs {
                                     }
                                 } catch { }
                             }
+                            # Apply changes (or just count them in WhatIf)
                             if ($newDisc -gt 0) { $tf2.Tag.Disc = $newDisc }
                             $tf2.Tag.Track = $newTrack
                             if ($newTitle) { $tf2.Tag.Title = $newTitle }
-                            if (-not $WhatIfPreference) { $tf2.Save() }
+                            $tf2.Save()
                             try { $tf2.Dispose() } catch { }
                             $updates++
                             if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Set-TrackTagsFromDiscogs'; Level='Info'; Status='UpdatedTrack'; Path=$Path; File=$fi.File.FullName; Disc=$newDisc; Track=$newTrack; Title=$newTitle } }
@@ -183,7 +207,11 @@ function Set-TrackTagsFromDiscogs {
             }
         }
 
-        $summary = "Track updates={0} Skipped={1}" -f $updates, $skipped
+        $summary = if ($WhatIfPreference) {
+            "Track planned={0} Skipped={1}" -f $planned, $skipped
+        } else {
+            "Track updates={0} Skipped={1}" -f $updates, $skipped
+        }
         if ($ValidateLength) { $summary += (" LengthMismatches={0}" -f $lenMismatches) }
         Write-Output $summary
     }
