@@ -90,6 +90,10 @@ Provides comprehensive summaries of structure analysis results with beautiful re
 - `Merge-AlbumInArtistFolder`: Organizes album folders into artist subfolders
 - `Get-MfcLogSummary`: Analyzes JSONL log files and provides statistical summaries
 
+## Guides
+
+- Order in Your Music — Beginner → Advanced: `docs/ORDER_IN_YOUR_MUSIC.md`
+
 ## Usage Examples
 
 ### Basic Interactive Processing
