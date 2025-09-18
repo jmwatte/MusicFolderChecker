@@ -53,3 +53,5 @@ Get-ChildItem -Path "$PSScriptRoot/src/Public/*.ps1" | ForEach-Object {
 Export-ModuleMember -Function 'Get-FolderStructureAnalysis'
 Export-ModuleMember -Function 'Invoke-TagLibCreate'
 Export-ModuleMember -Function 'Get-FolderTagConsensus'
+Export-ModuleMember -Function 'Get-DiscogsRelease'
+Export-ModuleMember -Function 'ConvertFrom-DiscogsRelease'

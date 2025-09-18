@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+Applies a consensus plan to update tags and optionally rename folders.
+
+.DESCRIPTION
+Takes items produced by New-MfcConsensusPlan and applies AlbumArtist/Album/Year and optional renames,
+with guardrails for ArtistFolder/BoxSet and clear WhatIf previews.
+
+.PARAMETER Plan
+Plan objects from New-MfcConsensusPlan.
+
+.PARAMETER Rename
+Also rename folders to SuggestedFolderName when appropriate.
+
+.PARAMETER AllowCollectionChanges
+Permit changes on collection roots.
+
+.PARAMETER LogPath
+Structured JSONL log path.
+
+.EXAMPLE
+New-MfcConsensusPlan -Path 'D:\\Music' -Recurse | Invoke-MfcConsensusPlan -WhatIf
+#>
 function Invoke-MfcConsensusPlan {
     <#
     .SYNOPSIS

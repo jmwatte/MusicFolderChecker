@@ -1,3 +1,23 @@
+<#
+.SYNOPSIS
+Summarizes structure analysis results from Find-BadMusicFolderStructure.
+
+.DESCRIPTION
+Accepts analysis results via pipeline or loads from a log file, groups by StructureType with confidence stats,
+and returns a summary object. Supports JSON and list displays.
+
+.PARAMETER AnalysisResults
+Objects from Find-BadMusicFolderStructure -AnalyzeStructure.
+
+.PARAMETER LogPath
+Path to a log file to parse and summarize.
+
+.PARAMETER OutputFormat
+Format of the summary: Table (default), List, or JSON.
+
+.EXAMPLE
+$r = Find-BadMusicFolderStructure -StartingPath 'E:\\Music' -AnalyzeStructure; $r | Get-MusicFolderStructureSummary
+#>
 function Get-MusicFolderStructureSummary {
     <#
     .SYNOPSIS

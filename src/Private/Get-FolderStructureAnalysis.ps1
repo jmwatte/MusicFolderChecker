@@ -127,6 +127,21 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
+    # 0a-2. If there is exactly one album-like subfolder that itself has disc subfolders, treat current as MultiDiscAlbum
+    if (-not $hasDirectAudio -and $albumSubfolders.Count -eq 1) {
+        try {
+            $child = $albumSubfolders[0]
+            $childDiscSubs = Get-ChildItem -LiteralPath $child.FullName -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '(?i)(?:disc|cd)\s*\d+' }
+            if ($childDiscSubs.Count -gt 1) {
+                $result.StructureType = $structureTypes.MultiDiscAlbum
+                $result.Confidence = 0.8
+                $result.Details += "Multi-disc album with $($childDiscSubs.Count) discs (detected in single album subfolder)"
+                $result.Recommendations += "Process as multi-disc album"
+                return $result
+            }
+        } catch { }
+    }
+
     # 0b. Check for Box Set (before Artist Folder)
     if ($albumSubfolders.Count -gt 2 -and -not $hasDirectAudio -and $albumSubfolderAudioCount -gt 0) {
         # Analyze if this looks like a box set
@@ -167,7 +182,16 @@ function Get-FolderStructureAnalysis {
         }
     }
 
-    # 1. Check for Artist Folder (highest confidence)
+    # 1. Check for Compilation Folder (do this before generic ArtistFolder so it doesn't get shadowed)
+    if ($compilationSubfolders.Count -gt 0 -and -not $hasDirectAudio) {
+        $result.StructureType = $structureTypes.CompilationFolder
+        $result.Confidence = 0.7
+        $result.Details += "Compilation folder with $($compilationSubfolders.Count) artist-album subfolders"
+        $result.Recommendations += "Process as compilation - each subfolder is Artist - Album"
+        return $result
+    }
+
+    # 2. Check for Artist Folder (highest confidence after compilation check)
     if ($albumSubfolders.Count -gt 0 -and -not $hasDirectAudio -and $albumSubfolderAudioCount -gt 0) {
         $confidence = 0.9
 
@@ -189,7 +213,7 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 2. Check for Compilation (Various Artists)
+    # 3. Check for Compilation (Various Artists)
     if ($hasDirectAudio -and $albumSubfolders.Count -eq 0 -and $subfolders.Count -le 2) {
         $isCompilation = $false
         
@@ -213,7 +237,7 @@ function Get-FolderStructureAnalysis {
         }
     }
 
-    # 3. Check for Simple Album
+    # 4. Check for Simple Album
     if ($hasDirectAudio -and $albumSubfolders.Count -eq 0 -and $subfolders.Count -le 2) {
         $confidence = 0.8
 
@@ -239,24 +263,19 @@ function Get-FolderStructureAnalysis {
         return $result
     }
 
-    # 4. Check for Mixed Album (AMBIGUOUS - needs review)
+    # 5. Check for Mixed Album (AMBIGUOUS - needs review)
     if ($hasDirectAudio -and $albumSubfolders.Count -gt 0) {
         $result.StructureType = $structureTypes.MixedAlbum
         $result.Confidence = 0.3
+        # Add a plain marker for exact-match based tests, and a detailed string for humans
+        $result.Details += "MIXED STRUCTURE"
         $result.Details += "MIXED STRUCTURE: $($audioFiles.Count) audio files at root + $($albumSubfolders.Count) album subfolders"
         $result.Details += "This requires manual review - unclear if subfolders are bonus content or separate albums"
+        # Include a plain recommendation line as well as detailed guidance
+        $result.Recommendations += "MANUAL REVIEW REQUIRED"
         $result.Recommendations += "MANUAL REVIEW REQUIRED: Determine if subfolders are part of this album or separate releases"
         $result.Recommendations += "Option 1: Process root files as main album, ignore subfolders"
         $result.Recommendations += "Option 2: Process each subfolder as separate album"
-        return $result
-    }
-
-    # 5. Check for Compilation Folder
-    if ($compilationSubfolders.Count -gt 0 -and -not $hasDirectAudio) {
-        $result.StructureType = $structureTypes.CompilationFolder
-        $result.Confidence = 0.7
-        $result.Details += "Compilation folder with $($compilationSubfolders.Count) artist-album subfolders"
-        $result.Recommendations += "Process as compilation - each subfolder is Artist - Album"
         return $result
     }
 

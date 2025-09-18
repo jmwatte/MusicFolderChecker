@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+Sets Disc tag numbers based on disc folder names.
+
+.DESCRIPTION
+Detects disc subfolders (CD 1, Disc 2, etc.) and sets TagLib Disc and DiscCount
+in all contained audio files. Supports recursive scanning.
+
+.PARAMETER FolderPath
+Album or collection folder path.
+
+.PARAMETER Recursive
+Scan subfolders for album folders when true.
+
+.PARAMETER AlbumPattern
+Regex for album folder names when using -Recursive.
+
+.PARAMETER ConfirmAlbums
+Prompt before processing each album.
+
+.EXAMPLE
+Set-DiscFromFolderName -FolderPath 'E:\\Artist\\1997 - OK Computer'
+#>
 function Set-DiscFromFolderName {
     <#
     .SYNOPSIS

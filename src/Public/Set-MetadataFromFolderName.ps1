@@ -1,5 +1,4 @@
-function Set-MetadataFromFolderName {
-    <#
+<#
     .SYNOPSIS
         Parses folder name to extract artist, year, and album, then sets metadata in audio files.
 
@@ -18,7 +17,8 @@ function Set-MetadataFromFolderName {
 
     .EXAMPLE
         Set-MetadataFromFolderName -FolderPath "E:\Music\04 Gaspar Cassado (VoxBox, 1957)"
-    #>
+     #>
+ function Set-MetadataFromFolderName {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
@@ -87,13 +87,8 @@ function Set-MetadataFromFolderName {
     }
 
     foreach ($file in $audioFiles) {
-        try {
-            $tagFile = Invoke-TagLibCreate -Path $file.FullName
-        }
-        catch {
-            Write-Output "Failed to read tags from $($file.FullName): $_"
-            continue
-        }
+        try { $tagFile = Invoke-TagLibCreate -Path $file.FullName }
+        catch { Write-Output "Failed to read tags from $($file.FullName): $_"; continue }
 
         $currentArtist = ($null -ne $tagFile.Tag.AlbumArtists -and $tagFile.Tag.AlbumArtists.Count -gt 0) ? $tagFile.Tag.AlbumArtists[0] : ($null -ne $tagFile.Tag.Performers -and $tagFile.Tag.Performers.Count -gt 0 ? $tagFile.Tag.Performers[0] : '')
         $currentAlbum = $tagFile.Tag.Album
@@ -124,6 +119,9 @@ function Set-MetadataFromFolderName {
                 Write-Output "Failed to update metadata for $($file.FullName): $_"
             }
         }
+
+        # Dispose if available
+        if ($tagFile) { try { if ($tagFile.PSObject.Methods.Name -contains 'Dispose') { $tagFile.Dispose() } } catch { } $tagFile = $null }
     }
 
     Write-Output "Metadata update complete for $FolderPath"

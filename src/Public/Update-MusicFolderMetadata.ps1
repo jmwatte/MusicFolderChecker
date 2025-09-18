@@ -307,9 +307,9 @@ function Update-MusicFolderMetadata {
 
                 # Dispose TagLib object immediately after reading metadata
                 if ($tagFile) {
-                    $tagFile.Dispose()
+                    try { if ($tagFile.PSObject.Methods.Name -contains 'Dispose') { $tagFile.Dispose() } } catch { }
                     $tagFile = $null
-                    [System.GC]::Collect()
+                    try { [System.GC]::Collect() } catch { }
                 }
             } else {
                 # Use folder name parsing when tag reading fails
@@ -587,7 +587,7 @@ function Update-MusicFolderMetadata {
                                 Write-Output ""
                                 
                                 # Dispose TagLib object
-                                $tag.Dispose()
+                                try { if ($tag.PSObject.Methods.Name -contains 'Dispose') { $tag.Dispose() } } catch { }
                                 $tag = $null
                             } else {
                                 Write-Output "  $($f.Name) - (could not read tags)"
@@ -807,10 +807,7 @@ function Update-MusicFolderMetadata {
                 if (-not $needUpdate) {
                     if (-not $Quiet) { Write-Output "No tag changes for $($f.FullName)" }
                     # Dispose TagLib object
-                    if ($t) {
-                        $t.Dispose()
-                        $t = $null
-                    }
+                    if ($t) { try { if ($t.PSObject.Methods.Name -contains 'Dispose') { $t.Dispose() } } catch { }; $t = $null }
                     continue
                 }
 
@@ -843,10 +840,7 @@ function Update-MusicFolderMetadata {
                 }
                 
                 # Dispose TagLib object
-                if ($t) {
-                    $t.Dispose()
-                    $t = $null
-                }
+                if ($t) { try { if ($t.PSObject.Methods.Name -contains 'Dispose') { $t.Dispose() } } catch { }; $t = $null }
             }
 
             # Collect metadata for output if requested

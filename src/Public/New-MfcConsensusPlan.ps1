@@ -1,3 +1,44 @@
+<#
+.SYNOPSIS
+Builds a plan of suggested tag updates and folder renames using tag consensus.
+
+.DESCRIPTION
+Scans folders, derives consensus for Year/Album/Artist, proposes normalized folder names, and emits plan items.
+Supports sampling, exclusions, streaming JSONL, and a progress bar.
+
+.PARAMETER Path
+Root folders to analyze.
+
+.PARAMETER Recurse
+Recurse into subfolders.
+
+.PARAMETER UseConsensusHints
+Include analyzer hints for structure and inheritance.
+
+.PARAMETER Fast
+Enable fast sampling mode for consensus.
+
+.PARAMETER ExcludePath
+Exclude by path wildcard.
+
+.PARAMETER ExcludeName
+Exclude by folder name wildcard.
+
+.PARAMETER OutputPath
+Write plan JSON to a file.
+
+.PARAMETER JsonlPath
+Append JSONL items to a file as they are computed.
+
+.PARAMETER ShowProgress
+Display a progress bar while scanning.
+
+.PARAMETER MaxFolders
+Limit the number of folders analyzed.
+
+.EXAMPLE
+New-MfcConsensusPlan -Path 'D:\\Music' -Recurse -Fast -ShowProgress
+#>
 function New-MfcConsensusPlan {
     <#
     .SYNOPSIS

@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+Merges numbered duplicate folders into the base folder.
+
+.DESCRIPTION
+Finds folders with names like "Album (2)", "Album (3)" and moves their contents into the base
+folder, creating any missing subdirectories, then removes the duplicates. Honors -WhatIf.
+
+.PARAMETER BasePath
+Root path containing the folders.
+
+.PARAMETER BaseName
+Base folder name to consolidate into.
+
+.EXAMPLE
+Merge-MusicFolders -BasePath 'E:\\Music\\Artist' -BaseName '1997 - OK Computer'
+#>
 function Merge-MusicFolders {
     <#
     .SYNOPSIS

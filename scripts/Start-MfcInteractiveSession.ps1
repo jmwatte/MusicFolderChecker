@@ -164,7 +164,7 @@ for ($i = $state.Index; $i -lt $state.Items.Count; $i++) {
     $item = $state.Items[$i]
     Write-Output ('-' * 80)
     Format-PlanSummary -Item $item
-    Write-Output "[A]pply  [E]dit  [R]ename-only  [T]ags-only  [M]ove  [S]kip  [Q]uit"
+    Write-Output "[A]pply  [E]dit  [D]iscogs  [R]ename-only  [T]ags-only  [M]ove  [S]kip  [Q]uit"
     $choice = Read-Host "Choose action"
 
     switch -Regex ($choice) {
@@ -201,6 +201,54 @@ for ($i = $state.Index; $i -lt $state.Items.Count; $i++) {
                 } catch {
                     Write-Output ("Error applying manual tags: {0}" -f $_.Exception.Message)
                     $item.Status = 'ErrorManual'
+                }
+            }
+            $state.Index = $i + 1
+            Save-Session -State $state
+            continue
+        }
+        '^(?i)d' {
+            # Discogs-assisted edit
+            Write-Output "Searching Discogs for: $($item.ProposedAlbumArtist) - $($item.ProposedAlbum) ($($item.ProposedYear))"
+            $cands = $null
+            try {
+                $cands = Find-MfcDiscogsMatch -Path $item.Path -PerPage 15
+            } catch { Write-Output ("Discogs search failed: {0}" -f $_.Exception.Message) }
+            if (-not $cands) {
+                Write-Output "No Discogs candidates found."
+                $state.Index = $i + 1
+                Save-Session -State $state
+                continue
+            }
+
+            $j = 0
+            foreach ($c in $cands) { $j++; Write-Output ("[{0}] {1}  Year={2}  Score={3}  {4}" -f $j, $c.Title, $c.Year, $c.Score, $c.Reasons) }
+            $pick = Read-Host "Pick a release number (blank=skip)"
+            if (-not $pick) { $state.Index = $i + 1; Save-Session -State $state; continue }
+            $idx = 0; [void][int]::TryParse($pick, [ref]$idx)
+            if ($idx -lt 1 -or $idx -gt $cands.Count) { $state.Index = $i + 1; Save-Session -State $state; continue }
+            $chosen = $cands[$idx-1]
+
+            $rel = $null
+            try { $rel = Get-DiscogsRelease -Id $chosen.Id } catch { }
+            if (-not $rel) { Write-Output "Failed to retrieve selected release."; $state.Index = $i + 1; Save-Session -State $state; continue }
+
+            $mapped = ConvertFrom-DiscogsRelease -Release $rel
+            $aa = $mapped.AlbumArtist
+            $al = $mapped.Album
+            $yr = $mapped.Year
+
+            Write-Output ("Discogs proposes -> Artist='{0}', Album='{1}', Year={2}" -f $aa, $al, $yr)
+            $confirm = Read-Host "Apply these tags? (Y/N)"
+            if ($confirm -match '^(?i)y') {
+                if ($PSCmdlet.ShouldProcess($item.Path, "Apply Discogs tags")) {
+                    try {
+                        Update-MusicFolderMetadata -FolderPath $item.Path -AlbumArtist $aa -Album $al -Year $yr -NonInteractive -UseConsensusHints -ErrorAction Stop
+                        $item.Status = 'AppliedDiscogs'
+                    } catch {
+                        Write-Output ("Error applying Discogs tags: {0}" -f $_.Exception.Message)
+                        $item.Status = 'ErrorDiscogs'
+                    }
                 }
             }
             $state.Index = $i + 1

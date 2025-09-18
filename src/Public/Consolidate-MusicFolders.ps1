@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+Merges numbered duplicates back into a single base music folder.
+
+.DESCRIPTION
+Scans for folders named like "Name (2)", "Name (3)" under a base path and moves their contents into the base
+folder, recreating subfolders as needed, then removes emptied duplicates. Honors -WhatIf via ShouldProcess.
+
+.PARAMETER BasePath
+Root folder containing the music folders to consolidate.
+
+.PARAMETER BaseName
+Base folder name to consolidate duplicates into.
+
+.EXAMPLE
+Consolidate-MusicFolders -BasePath 'E:\Music\\Artist' -BaseName '1997 - OK Computer'
+#>
 function Merge-MusicFolders {
     <#
     .SYNOPSIS
