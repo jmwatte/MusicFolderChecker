@@ -243,7 +243,6 @@ function Update-MusicFolderMetadata {
             $currentYear = $null
             $applyAlbumArtist = $null
             $applyAlbum = $null
-            $Album= $null
             $applyYear = $null
             $firstAudio = $null
             $metadataLooksValid = $true
@@ -359,6 +358,7 @@ function Update-MusicFolderMetadata {
                 if (-not $Album -or -not $metadataLooksValid) { $currentAlbum = $possibleAlbum }
             }
 
+            # Initialize apply-* values from parameters (do not mutate incoming parameters)
             $applyAlbumArtist = $AlbumArtist
             $applyAlbum = $Album
             $applyYear = $Year
@@ -739,25 +739,33 @@ function Update-MusicFolderMetadata {
                     # Skip files that can't be read
                 }
             }
-            $Album = $null
+            # Do not reset the input parameter $Album; keep it intact for apply-* logic
             # Only warn if we have multiple albums AND multiple artists (indicating mixed content)
             # For compilations, we expect multiple artists but usually one album name
             if ($albumsInFolder.Count -gt 1 -and $artistsInFolder.Count -gt 1) {
                 Write-Warning "Multiple albums and artists detected in folder '$folder':"
                 Write-Warning "Albums: $($albumsInFolder -join ', ')"
                 Write-Warning "Artists: $($artistsInFolder -join ', ')"
-                $response = Read-Host "This appears to be mixed content from different albums. Continue processing? (Y/N)"
-                if ($response -ne 'Y' -and $response -ne 'y') {
-                    Write-Output "Skipping folder: $folder"
-                    continue
+                if ($NonInteractive) {
+                    Write-Verbose "NonInteractive mode: continuing without prompt despite mixed content."
+                } else {
+                    $response = Read-Host "This appears to be mixed content from different albums. Continue processing? (Y/N)"
+                    if ($response -ne 'Y' -and $response -ne 'y') {
+                        Write-Output "Skipping folder: $folder"
+                        continue
+                    }
                 }
             } elseif ($albumsInFolder.Count -gt 1) {
                 Write-Warning "Multiple album names detected: $($albumsInFolder -join ', ')"
                 Write-Warning "This might be a compilation or incorrectly tagged files."
-                $response = Read-Host "Continue processing as a single album? (Y/N)"
-                if ($response -ne 'Y' -and $response -ne 'y') {
-                    Write-Output "Skipping folder: $folder"
-                    continue
+                if ($NonInteractive) {
+                    Write-Verbose "NonInteractive mode: continuing without prompt for multiple album names."
+                } else {
+                    $response = Read-Host "Continue processing as a single album? (Y/N)"
+                    if ($response -ne 'Y' -and $response -ne 'y') {
+                        Write-Output "Skipping folder: $folder"
+                        continue
+                    }
                 }
             } 
 
@@ -804,14 +812,21 @@ function Update-MusicFolderMetadata {
                 if ($applyAlbum -and $applyAlbum -ne '' -and $applyAlbum -ne $curAlbum) { $needUpdate = $true }
                 if ($applyYear -and ([int]$applyYear -ne 0) -and $applyYear -ne $curYear) { $needUpdate = $true }
 
-                if (-not $needUpdate) {
+        if (-not $needUpdate) {
                     if (-not $Quiet) { Write-Output "No tag changes for $($f.FullName)" }
                     # Dispose TagLib object
                     if ($t) { try { if ($t.PSObject.Methods.Name -contains 'Dispose') { $t.Dispose() } } catch { }; $t = $null }
                     continue
                 }
 
-                        if ($PSCmdlet.ShouldProcess((Split-Path $f.FullName -Leaf), 'Update music tags')) {
+            # Build a detailed action string for ShouldProcess/WhatIf
+            $detailChanges = @()
+            if ($applyAlbumArtist -and $applyAlbumArtist -ne '' -and $applyAlbumArtist -ne $curArtist) { $detailChanges += ("Artist '{0}'->'{1}'" -f ($curArtist ?? ''), $applyAlbumArtist) }
+            if ($applyAlbum -and $applyAlbum -ne '' -and $applyAlbum -ne $curAlbum) { $detailChanges += ("Album '{0}'->'{1}'" -f ($curAlbum ?? ''), $applyAlbum) }
+            if ($applyYear -and ([int]$applyYear -ne 0) -and $applyYear -ne $curYear) { $detailChanges += ("Year {0}->{1}" -f ($curYear ?? ''), $applyYear) }
+            $actionDesc = if ($detailChanges.Count -gt 0) { 'Update tags: ' + ($detailChanges -join '; ') } else { 'Update music tags' }
+
+            if ($PSCmdlet.ShouldProcess((Split-Path $f.FullName -Leaf), $actionDesc)) {
                     try {
                         # Reuse $t opened above
                         if ($applyAlbumArtist -and $applyAlbumArtist -ne '') {

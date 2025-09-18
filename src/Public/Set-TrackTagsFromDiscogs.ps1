@@ -115,7 +115,7 @@ function Set-TrackTagsFromDiscogs {
         # so that single-disc albums still map tracks.
         $discUsed = ($fileInfos | Where-Object { $_.Disc })
         $defaultDisc = 1
-        $tracksByDisc = {}
+    $tracksByDisc = @{}
         foreach ($t in $map.Tracks) {
             $d = if ($null -ne $t.Disc -and $t.Disc -ne 0) { [int]$t.Disc } else { $defaultDisc }
             if ($null -eq $d) { continue }
@@ -280,14 +280,15 @@ function Set-TrackTagsFromDiscogs {
                     }
                 }
             }
-            $summary = if ($WhatIfPreference) {
-                "Track planned={0} Skipped={1}" -f $planned, $skipped
-            }
-            else {
-                "Track updates={0} Skipped={1}" -f $updates, $skipped
-            }
-            if ($ValidateLength) { $summary += (" LengthMismatches={0}" -f $lenMismatches) }
-            Write-Output $summary
         }
+        # Always emit a summary after processing either branch
+        $summary = if ($WhatIfPreference) {
+            "Track planned={0} Skipped={1}" -f $planned, $skipped
+        }
+        else {
+            "Track updates={0} Skipped={1}" -f $updates, $skipped
+        }
+        if ($ValidateLength) { $summary += (" LengthMismatches={0}" -f $lenMismatches) }
+        Write-Output $summary
     }
 }
