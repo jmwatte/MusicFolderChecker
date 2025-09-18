@@ -17,7 +17,7 @@ Describe 'Update-MusicFolderMetadata - edge cases' {
         New-Item -ItemType Directory -Path $tmp | Out-Null
         New-Item -Path (Join-Path $tmp 'cover.jpg') -ItemType File | Out-Null
 
-        $output = Update-MusicFolderMetadata -FolderPath $tmp -AlbumArtist 'TestArtist' -ErrorAction Stop | Out-String
+    $output = Update-MusicFolderMetadata -FolderPath $tmp -AlbumArtist 'TestArtist' -ErrorAction Stop -NonInteractive | Out-String
 
         $output | Should -Match "No audio files found in:"
 
@@ -31,7 +31,7 @@ Describe 'Update-MusicFolderMetadata - edge cases' {
         $bad  = Join-Path $tmp 'bad.mp3';  New-Item -Path $bad  -ItemType File | Out-Null
 
         # Running against empty/invalid mp3 files may cause TagLib to throw for some files; ensure overall function does not throw
-        { Update-MusicFolderMetadata -FolderPath $tmp -AlbumArtist 'TestArtist' } | Should -Not -Throw
+    { Update-MusicFolderMetadata -FolderPath $tmp -AlbumArtist 'TestArtist' -NonInteractive } | Should -Not -Throw
 
         Remove-Item -Recurse -Force $tmp
     }
@@ -42,7 +42,7 @@ Describe 'Update-MusicFolderMetadata - edge cases' {
         # Make read-only
         (Get-Item $f).Attributes = 'ReadOnly'
 
-        { Update-MusicFolderMetadata -FolderPath $tmp -AlbumArtist 'TestArtist' } | Should -Not -Throw
+    { Update-MusicFolderMetadata -FolderPath $tmp -AlbumArtist 'TestArtist' -NonInteractive } | Should -Not -Throw
 
         Remove-Item -Recurse -Force $tmp
     }
@@ -51,7 +51,7 @@ Describe 'Update-MusicFolderMetadata - edge cases' {
         $tmp = Join-Path $env:TEMP ([Guid]::NewGuid().Guid); New-Item -ItemType Directory -Path $tmp | Out-Null
         $f = Join-Path $tmp 'tést-únaíçódé.mp3'; New-Item -Path $f -ItemType File | Out-Null
 
-        { Update-MusicFolderMetadata -FolderPath $tmp -Album 'Álbum' -AlbumArtist 'Årtíst' -Year 2000 -ErrorAction Stop } | Should -Not -Throw
+    { Update-MusicFolderMetadata -FolderPath $tmp -Album 'Álbum' -AlbumArtist 'Årtíst' -Year 2000 -ErrorAction Stop -NonInteractive } | Should -Not -Throw
 
         Remove-Item -Recurse -Force $tmp
     }

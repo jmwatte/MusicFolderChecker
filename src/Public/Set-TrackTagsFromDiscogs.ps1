@@ -92,6 +92,7 @@ function Set-TrackTagsFromDiscogs {
         $tracksByDisc = @{}
         foreach ($t in $map.Tracks) {
             $d = if ($null -ne $t.Disc -and $t.Disc -ne 0) { [int]$t.Disc } else { $defaultDisc }
+            if ($null -eq $d) { continue }
             if (-not $tracksByDisc.ContainsKey($d)) { $tracksByDisc[$d] = New-Object System.Collections.Generic.List[object] }
             $tracksByDisc[$d].Add($t)
         }
@@ -101,7 +102,7 @@ function Set-TrackTagsFromDiscogs {
         $fileGroups = $fileInfos | Group-Object { if ($_.Disc) { $_.Disc } else { $defaultDisc } }
         foreach ($g in $fileGroups) {
             $discKey = $g.Name
-            $discTracks = if ($tracksByDisc.ContainsKey($discKey)) { $tracksByDisc[$discKey] } else { $null }
+            $discTracks = if ($discKey -ne $null -and $tracksByDisc.ContainsKey([int]$discKey)) { $tracksByDisc[[int]$discKey] } else { $null }
             if (-not $discTracks -or $discTracks.Count -eq 0) {
                 Write-Verbose ("No Discogs tracks for disc '{0}', skipping group of {1} files" -f $discKey, $g.Count)
                 $skipped += $g.Count

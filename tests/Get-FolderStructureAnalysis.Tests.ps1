@@ -1,8 +1,8 @@
 Describe "Get-FolderStructureAnalysis" {
     BeforeAll {
         # Import the module
-        $modulePath = Join-Path $PSScriptRoot "..\..\MusicFolderChecker.psm1"
-        Import-Module $modulePath -Force
+    $modulePath = Join-Path $PSScriptRoot "..\MusicFolderChecker.psd1"
+    Import-Module $modulePath -Force
 
         # Test fixtures path
         $fixturesPath = Join-Path $PSScriptRoot "fixtures"

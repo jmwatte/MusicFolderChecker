@@ -26,11 +26,12 @@ Describe 'Update-MusicFolderMetadata' {
     $mockTagObj = New-Object PSObject
     $mockTagObj | Add-Member -MemberType NoteProperty -Name Tag -Value $tag
     $mockTagObj | Add-Member -MemberType ScriptMethod -Name Save -Value { }
+    $mockTagObj | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
 
     Mock -CommandName Invoke-TagLibCreate -MockWith { return $mockTagObj }
 
         # Run the function non-interactively
-        Update-MusicFolderMetadata -FolderPath $temp -AlbumArtist 'Test Artist' -Album 'Test Album' -Year 2025 -Quiet
+    Update-MusicFolderMetadata -FolderPath $temp -AlbumArtist 'Test Artist' -Album 'Test Album' -Year 2025 -Quiet -NonInteractive
 
         # Assert Invoke-TagLibCreate was called twice (once per file)
         Assert-MockCalled -CommandName Invoke-TagLibCreate -Times 2
@@ -76,19 +77,20 @@ Describe 'Update-MusicFolderMetadata' {
         $tag | Add-Member -MemberType NoteProperty -Name Track -Value 1
         $tag | Add-Member -MemberType NoteProperty -Name Title -Value 'TestTrack'
 
-        $mockTagObj = New-Object PSObject
-        $mockTagObj | Add-Member -MemberType NoteProperty -Name Tag -Value $tag
-        $mockTagObj | Add-Member -MemberType ScriptMethod -Name Save -Value { }
+    $mockTagObj = New-Object PSObject
+    $mockTagObj | Add-Member -MemberType NoteProperty -Name Tag -Value $tag
+    $mockTagObj | Add-Member -MemberType ScriptMethod -Name Save -Value { }
+    $mockTagObj | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
 
         # Mock the Invoke-TagLibCreate function instead of the .NET method directly
         Mock -CommandName Invoke-TagLibCreate -MockWith { return $mockTagObj }
         Mock -CommandName Read-Host -MockWith { return 'y' }  # Auto-confirm prompts
         
         # Test WhatIf mode - should show summary of planned moves
-        $whatIfOutput = Update-MusicFolderMetadata -FolderPath $tmp -DestinationFolder $dest -Move -WhatIf -AlbumArtist 'TestArtist' 2>&1 | Out-String
+    $whatIfOutput = Update-MusicFolderMetadata -FolderPath $tmp -DestinationFolder $dest -Move -WhatIf -AlbumArtist 'TestArtist' -NonInteractive 2>&1 | Out-String
         
         # Verify WhatIf output contains expected information
-        $whatIfOutput | Should -Match 'WhatIf planned moves'
+    $whatIfOutput | Should -Match 'WhatIf planned \(\d+\) moves'
         $whatIfOutput | Should -Match 'TestArtist'
         $whatIfOutput | Should -Match 'track01\.mp3'
         
