@@ -45,6 +45,12 @@ function New-MfcConsensusPlan {
     .PARAMETER Fast
         Enable fast sampling mode for consensus (limited files per subfolder and overall). Useful for large trees or quick previews.
 
+    .PARAMETER ExcludePath
+        One or more paths to exclude from analysis. Accepts wildcards. Matches are compared case-insensitively.
+
+    .PARAMETER ExcludeName
+        One or more folder name patterns to exclude (e.g. 'Archives*', '_Corrected*'). Accepts wildcards.
+
     .EXAMPLE
         New-MfcConsensusPlan -Path 'D:\Music' -Recurse | Format-Table Path,SuggestedFolderName,ProposedAlbum,ProposedYear
 
@@ -66,7 +72,10 @@ function New-MfcConsensusPlan {
         [double]$AlbumThreshold = 0.6,
         [double]$ArtistThreshold = 0.6,
 
-        [switch]$Fast,
+    [switch]$Fast,
+
+    [string[]]$ExcludePath,
+    [string[]]$ExcludeName,
 
         [string]$OutputPath,
 
@@ -90,6 +99,20 @@ function New-MfcConsensusPlan {
             if ($Recurse) {
                 $targets += (Get-ChildItem -LiteralPath $root -Directory -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
                 $targets = $targets | Select-Object -Unique
+            }
+
+            # Apply exclusions by path and by name
+            if ($ExcludePath -and $ExcludePath.Count -gt 0) {
+                $targets = $targets | Where-Object {
+                    $p = $_
+                    -not ($ExcludePath | Where-Object { $p -like $_ }).Count
+                }
+            }
+            if ($ExcludeName -and $ExcludeName.Count -gt 0) {
+                $targets = $targets | Where-Object {
+                    $leaf = Split-Path $_ -Leaf
+                    -not ($ExcludeName | Where-Object { $leaf -like $_ }).Count
+                }
             }
 
             $total = $targets.Count
