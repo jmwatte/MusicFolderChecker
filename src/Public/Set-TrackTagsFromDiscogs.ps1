@@ -19,7 +19,16 @@ Match strategy. 'Number' uses Disc/Track numbers when available; otherwise order
 .PARAMETER LogPath
 Optional structured JSONL log path.
 
-.EXAMPLE
+    .PARAMETER ValidateLength
+    When set, compares local file duration to Discogs track length and logs mismatches.
+
+    .PARAMETER LengthToleranceSec
+    Allowed absolute difference in seconds when validating length. Default 2 seconds.
+
+    .PARAMETER StrictLength
+    When used with -ValidateLength, fail (throw) if any file length differs beyond tolerance.
+
+    .EXAMPLE
 Set-TrackTagsFromDiscogs -Path 'D:\\_CorrectedMusic\\Abba\\1976 - Arrival' -ReleaseId 10988576 -WhatIf -Verbose
 #>
 function Set-TrackTagsFromDiscogs {
@@ -35,7 +44,11 @@ function Set-TrackTagsFromDiscogs {
         [ValidateSet('Number','Order')]
         [string]$MatchBy = 'Number',
 
-        [string]$LogPath
+        [string]$LogPath,
+
+        [switch]$ValidateLength,
+        [int]$LengthToleranceSec = 2,
+        [switch]$StrictLength
     )
 
     begin {
@@ -97,7 +110,7 @@ function Set-TrackTagsFromDiscogs {
             $tracksByDisc[$d].Add($t)
         }
 
-        $updates = 0; $skipped = 0
+    $updates = 0; $skipped = 0; $lenMismatches = 0
         # For each disc group among files
         $fileGroups = $fileInfos | Group-Object { if ($_.Disc) { $_.Disc } else { $defaultDisc } }
         foreach ($g in $fileGroups) {
@@ -136,6 +149,25 @@ function Set-TrackTagsFromDiscogs {
                         try { $cache = [TagLib.File]::Cache; if ($cache) { $cache.Clear() } } catch { }
                         $tf2 = Invoke-TagLibCreate -Path $fi.File.FullName
                         if ($tf2) {
+                            # Optional length validation before writing
+                            if ($ValidateLength -and $ti.PSObject.Properties.Name -contains 'Seconds' -and $ti.Seconds) {
+                                try {
+                                    $dur = $null
+                                    if ($tf2.PSObject.Properties.Name -contains 'Properties' -and $tf2.Properties -and $tf2.Properties.Duration) {
+                                        $dur = [int][Math]::Round($tf2.Properties.Duration.TotalSeconds)
+                                    }
+                                    if ($dur -ne $null) {
+                                        $diff = [math]::Abs($dur - [int]$ti.Seconds)
+                                        if ($diff -gt $LengthToleranceSec) {
+                                            $lenMismatches++
+                                            $msg = "Length mismatch: file=${dur}s vs discogs=$($ti.Seconds)s (diff=$diff)s"
+                                            Write-Verbose $msg
+                                            if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Set-TrackTagsFromDiscogs'; Level='Warning'; Status='LengthMismatch'; Path=$Path; File=$fi.File.FullName; FileSeconds=$dur; DiscogsSeconds=[int]$ti.Seconds; Diff=$diff } }
+                                            if ($StrictLength) { throw $msg }
+                                        }
+                                    }
+                                } catch { }
+                            }
                             if ($newDisc -gt 0) { $tf2.Tag.Disc = $newDisc }
                             $tf2.Tag.Track = $newTrack
                             if ($newTitle) { $tf2.Tag.Title = $newTitle }
@@ -151,6 +183,8 @@ function Set-TrackTagsFromDiscogs {
             }
         }
 
-        Write-Output ("Track updates={0} Skipped={1}" -f $updates, $skipped)
+        $summary = "Track updates={0} Skipped={1}" -f $updates, $skipped
+        if ($ValidateLength) { $summary += (" LengthMismatches={0}" -f $lenMismatches) }
+        Write-Output $summary
     }
 }

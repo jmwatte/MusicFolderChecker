@@ -80,8 +80,13 @@ function Invoke-MfcDiscogsPlan {
                 if (-not $WhatIfPreference) {
                     Update-MusicFolderMetadata -FolderPath $folder -AlbumArtist $artist -Album $album -Year $year -NonInteractive -UseConsensusHints -LogPath $LogPath -WhatIf:$WhatIfPreference
                     if ($Tracks -and $item.ReleaseId) {
-                        # Apply per-track tags as a separate ShouldProcess action per file inside the helper
-                        Set-TrackTagsFromDiscogs -Path $folder -ReleaseId ([int]$item.ReleaseId) -LogPath $LogPath -WhatIf:$WhatIfPreference
+                        try {
+                            # Apply per-track tags as a separate ShouldProcess action per file inside the helper
+                            Set-TrackTagsFromDiscogs -Path $folder -ReleaseId ([int]$item.ReleaseId) -LogPath $LogPath -WhatIf:$WhatIfPreference
+                        } catch {
+                            Write-Verbose ("Per-track apply failed for {0}: {1}" -f $folder, $_)
+                            if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcDiscogsPlan'; Level='Warning'; Status='TracksApplyFailed'; Path=$folder; ReleaseId=$item.ReleaseId; Details = $_.ToString() } }
+                        }
                     }
                 } else {
                     if ($LogPath) { Write-StructuredLog -Path $LogPath -Entry @{ Function='Invoke-MfcDiscogsPlan'; Level='Info'; Status='WillApply'; Path=$folder; Changes=$changes -join '; '; Tracks=$Tracks } }
