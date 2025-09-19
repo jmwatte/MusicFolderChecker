@@ -12,10 +12,34 @@ function Get-FolderStructureAnalysis {
         The folder path to analyze.
 
     .PARAMETER AudioExtensions
-        Array of audio file extensions to consider.
+        Array of audio file extensions to consider when scanning for audio files within the folder tree.
+        Defaults to common formats like '.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.ape', '.dsd', '.aiff', '.aif'.
+
+    .PARAMETER UseConsensusHints
+        Deprecated (kept for backward compatibility). Consensus-based hints are now always computed for
+        ambiguous structures. This switch currently has no effect in that case. In the future it may enable
+        extended hints for non-ambiguous structures.
 
     .OUTPUTS
-        PSCustomObject with StructureType, Confidence, Details, and Recommendations
+        PSCustomObject with properties:
+        - Path, FolderName
+        - StructureType (ArtistFolder, SimpleAlbum, MixedAlbum, MultiDiscAlbum, CompilationFolder, BoxSet, AmbiguousStructure, NonMusicFolder)
+        - Confidence (0.0 - 1.0)
+        - Details (string[])
+        - Recommendations (string[])
+        - Metadata (hashtable: indicators and counts, e.g. HasDirectAudio, DiscSubfolderCount, ConsensusSuggestions)
+
+    .EXAMPLE
+        Get-FolderStructureAnalysis -Path 'D:\Music\Radiohead\1997 - OK Computer'
+        Returns a classification and confidence for the specified folder.
+
+    .EXAMPLE
+        # For ambiguous or messy collections, enable consensus hints to surface album-like groups
+        Get-FolderStructureAnalysis -Path 'D:\Music\_Unsorted\Collections' -UseConsensusHints
+        # Output includes Metadata.ConsensusSuggestions with per-subfolder suggested Artist/Album/Year
+
+    .NOTES
+        Private helper. One function per file. No top-level execution. Follows module conventions.
     #>
     [CmdletBinding()]
     param (
@@ -188,6 +212,38 @@ function Get-FolderStructureAnalysis {
         $result.Confidence = 0.7
         $result.Details += "Compilation folder with $($compilationSubfolders.Count) artist-album subfolders"
         $result.Recommendations += "Process as compilation - each subfolder is Artist - Album"
+
+        # Attach consensus suggestions for each artist-album subfolder to guide user actions
+        try {
+            $consensusSummaries = @()
+            # Limit analysis to a reasonable number to avoid excessive work on giant collections
+            $maxAnalyze = [Math]::Min(50, $compilationSubfolders.Count)
+            foreach ($albumFolder in $compilationSubfolders | Select-Object -First $maxAnalyze) {
+                $filesHere = Get-ChildItem -LiteralPath $albumFolder.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }
+                if ($filesHere.Count -lt 3) { continue }
+                $cons = Get-FolderTagConsensus -Path $albumFolder.FullName -AudioExtensions $AudioExtensions -MinFiles 3
+                if ($cons.FileCount -ge 3) {
+                    $consensusSummaries += [PSCustomObject]@{
+                        Folder = $albumFolder.FullName
+                        Name = $albumFolder.Name
+                        Suggested = $cons.SuggestedFolderName
+                        Year = $cons.SuggestedYear
+                        Album = $cons.SuggestedAlbum
+                        Artist = $cons.SuggestedArtist
+                        Confidence = $cons.Confidence
+                    }
+                }
+            }
+            if ($consensusSummaries.Count -gt 0) {
+                $result.Metadata.ConsensusSuggestions = $consensusSummaries
+                $result.Details += ("Consensus suggestions computed for {0} subfolder(s)" -f $consensusSummaries.Count)
+                $top = $consensusSummaries | Sort-Object Confidence -Descending | Select-Object -First 3
+                foreach ($s in $top) {
+                    $result.Recommendations += ("Suggested: {0} — {1} - {2} ({3})" -f $s.Name, $s.Year, $s.Album, $s.Artist)
+                }
+            }
+        } catch { }
+
         return $result
     }
 
@@ -210,6 +266,37 @@ function Get-FolderStructureAnalysis {
         $result.Confidence = [math]::Max(0.1, $confidence)
         $result.Details += "Artist folder with $($albumSubfolders.Count) album subfolders"
         $result.Recommendations += "Process as artist '$folderName' with $($albumSubfolders.Count) albums"
+
+        # Attach consensus suggestions across album subfolders to guide next actions
+        try {
+            $consensusSummaries = @()
+            $maxAnalyze = [Math]::Min(50, $albumSubfolders.Count)
+            foreach ($albumFolder in $albumSubfolders | Select-Object -First $maxAnalyze) {
+                $filesHere = Get-ChildItem -LiteralPath $albumFolder.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }
+                if ($filesHere.Count -lt 3) { continue }
+                $cons = Get-FolderTagConsensus -Path $albumFolder.FullName -AudioExtensions $AudioExtensions -MinFiles 3
+                if ($cons.FileCount -ge 3) {
+                    $consensusSummaries += [PSCustomObject]@{
+                        Folder = $albumFolder.FullName
+                        Name = $albumFolder.Name
+                        Suggested = $cons.SuggestedFolderName
+                        Year = $cons.SuggestedYear
+                        Album = $cons.SuggestedAlbum
+                        Artist = $cons.SuggestedArtist
+                        Confidence = $cons.Confidence
+                    }
+                }
+            }
+            if ($consensusSummaries.Count -gt 0) {
+                $result.Metadata.ConsensusSuggestions = $consensusSummaries
+                $result.Details += ("Consensus suggestions computed for {0} album subfolder(s)" -f $consensusSummaries.Count)
+                $top = $consensusSummaries | Sort-Object Confidence -Descending | Select-Object -First 3
+                foreach ($s in $top) {
+                    $result.Recommendations += ("Suggested: {0} — {1} - {2}" -f $s.Name, $s.Year, $s.Album)
+                }
+            }
+        } catch { }
+
         return $result
     }
 
@@ -295,54 +382,51 @@ function Get-FolderStructureAnalysis {
         $result.Confidence = 0.2
         $result.Details += "Ambiguous structure: audio files found but unclear organization"
 
-        if ($UseConsensusHints) {
-            # Try to detect album-like sub-subfolders (e.g., nested under 'vol1', etc.)
-            $deepAlbumCandidates = Get-ChildItem -LiteralPath $Path -Directory -Recurse -ErrorAction SilentlyContinue |
-                Where-Object { $_.FullName -ne $Path -and (Get-ChildItem -LiteralPath $_.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }).Count -gt 0 } |
-                Sort-Object FullName -Unique
+        # Always compute consensus-based hints for ambiguous structures
+        # Try to detect album-like sub-subfolders (e.g., nested under 'vol1', etc.)
+        $deepAlbumCandidates = Get-ChildItem -LiteralPath $Path -Directory -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -ne $Path -and (Get-ChildItem -LiteralPath $_.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }).Count -gt 0 } |
+            Sort-Object FullName -Unique
 
-            $consensusSummaries = @()
-            $albumLikeCount = 0
-            foreach ($cand in $deepAlbumCandidates) {
-                # Skip the root itself
-                if ($cand.FullName -eq $Path) { continue }
-                # Gather consensus for each leaf folder that directly contains audio or disc subfolders
-                $filesHere = Get-ChildItem -LiteralPath $cand.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }
-                if ($filesHere.Count -lt 3) { continue }
+        $consensusSummaries = @()
+        $albumLikeCount = 0
+        foreach ($cand in $deepAlbumCandidates) {
+            # Skip the root itself
+            if ($cand.FullName -eq $Path) { continue }
+            # Gather consensus for each leaf folder that directly contains audio or disc subfolders
+            $filesHere = Get-ChildItem -LiteralPath $cand.FullName -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $AudioExtensions -contains $_.Extension.ToLower() }
+            if ($filesHere.Count -lt 3) { continue }
 
-                $cons = Get-FolderTagConsensus -Path $cand.FullName -AudioExtensions $AudioExtensions -MinFiles 3
-                if ($cons.FileCount -ge 3) {
-                    $albumLikeCount++
-                    $consensusSummaries += [PSCustomObject]@{
-                        Folder = $cand.FullName
-                        Name = $cand.Name
-                        Suggested = $cons.SuggestedFolderName
-                        Year = $cons.SuggestedYear
-                        Album = $cons.SuggestedAlbum
-                        Artist = $cons.SuggestedArtist
-                        Confidence = $cons.Confidence
-                    }
+            $cons = Get-FolderTagConsensus -Path $cand.FullName -AudioExtensions $AudioExtensions -MinFiles 3
+            if ($cons.FileCount -ge 3) {
+                $albumLikeCount++
+                $consensusSummaries += [PSCustomObject]@{
+                    Folder = $cand.FullName
+                    Name = $cand.Name
+                    Suggested = $cons.SuggestedFolderName
+                    Year = $cons.SuggestedYear
+                    Album = $cons.SuggestedAlbum
+                    Artist = $cons.SuggestedArtist
+                    Confidence = $cons.Confidence
                 }
             }
+        }
 
-            if ($albumLikeCount -ge 3) {
-                # If many album-like groups exist and folder name hints at collection, elevate to BoxSet with moderate confidence
-                $nameHint = ($folderName -match '(?i)(complete|collection|box|set|songbook)')
-                $result.StructureType = $structureTypes.BoxSet
-                $result.Confidence = if ($nameHint) { 0.7 } else { 0.6 }
-                $result.Details += "Consensus-based BoxSet hint: $albumLikeCount album-like groups detected"
-                if ($nameHint) { $result.Details += "Folder name contains collection keyword" }
-                $result.Recommendations += "Process as box set or confirm per-album processing"
-            } else {
-                $result.Recommendations += "Manual review recommended - unclear folder structure"
-            }
-
-            # Attach consensus suggestions to metadata so interactive flows can propose defaults
-            $result.Metadata.ConsensusSuggestions = $consensusSummaries
-            $result.Metadata.AlbumLikeCount = $albumLikeCount
+        if ($albumLikeCount -ge 3) {
+            # If many album-like groups exist and folder name hints at collection, elevate to BoxSet with moderate confidence
+            $nameHint = ($folderName -match '(?i)(complete|collection|box|set|songbook)')
+            $result.StructureType = $structureTypes.BoxSet
+            $result.Confidence = if ($nameHint) { 0.7 } else { 0.6 }
+            $result.Details += "Consensus-based BoxSet hint: $albumLikeCount album-like groups detected"
+            if ($nameHint) { $result.Details += "Folder name contains collection keyword" }
+            $result.Recommendations += "Process as box set or confirm per-album processing"
         } else {
             $result.Recommendations += "Manual review recommended - unclear folder structure"
         }
+
+        # Attach consensus suggestions to metadata so interactive flows can propose defaults
+        $result.Metadata.ConsensusSuggestions = $consensusSummaries
+        $result.Metadata.AlbumLikeCount = $albumLikeCount
     } else {
         $result.StructureType = $structureTypes.NonMusicFolder
         $result.Confidence = 0.9
