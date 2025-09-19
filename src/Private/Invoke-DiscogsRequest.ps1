@@ -80,12 +80,18 @@ function Invoke-DiscogsRequest {
                     Start-Sleep -Seconds $delay
                     continue
                 }
+                if ($status -eq 401) {
+                    throw "Authentication required for Discogs API. Please set your personal access token: `$env:DISCOGS_TOKEN = 'your_token_here'"
+                }
                 Write-Verbose ("Discogs request failed: {0}" -f $_)
                 return $null
             }
         }
     } catch {
         Write-Verbose ("Discogs request setup failed: {0}" -f $_)
+        if ($_.Exception.Message -like "*Authentication required*") {
+            throw
+        }
         return $null
     }
 }

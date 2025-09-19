@@ -91,7 +91,13 @@ function Find-MfcDiscogsMatch {
     }
 
     $cands = $null
-    try { $cands = Find-DiscogsRelease -Artist $artist -Title $title -Year $year -PerPage $PerPage } catch { }
+    try { $cands = Find-DiscogsRelease -Artist $artist -Title $title -Year $year -PerPage $PerPage } catch {
+        if ($_.Exception.Message -like "*Authentication required*") {
+            Write-Output $_.Exception.Message
+            return
+        }
+        # Other errors: continue silently or log
+    }
     if (-not $cands -or $cands.Count -eq 0) {
         # If requested, open a general Discogs search in browser so user can refine manually
         if ($OpenInBrowser) {

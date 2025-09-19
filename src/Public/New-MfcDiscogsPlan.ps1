@@ -114,12 +114,22 @@ function New-MfcDiscogsPlan {
 
                 # Search Discogs
                 $cands = $null
-                try { $cands = Find-DiscogsRelease -Artist $artist -Title $album -Year $year -PerPage 10 } catch { }
+                try { $cands = Find-DiscogsRelease -Artist $artist -Title $album -Year $year -PerPage 10 } catch {
+                    if ($_.Exception.Message -like "*Authentication required*") {
+                        Write-Output $_.Exception.Message
+                        continue
+                    }
+                }
                 if (-not $cands -or $cands.Count -eq 0) { Write-Verbose ("No Discogs candidates for {0} (Artist='{1}', Album='{2}', Year={3})" -f $folder, $artist, $album, $year); continue }
 
                 $best = $cands | Select-Object -First 1
                 $rel  = $null
-                try { $rel = Get-DiscogsRelease -Id $best.Id } catch { }
+                try { $rel = Get-DiscogsRelease -Id $best.Id } catch {
+                    if ($_.Exception.Message -like "*Authentication required*") {
+                        Write-Output $_.Exception.Message
+                        continue
+                    }
+                }
                 if (-not $rel) { Write-Verbose ("Discogs release fetch failed (Id={0}) for {1}" -f $best.Id, $folder); continue }
 
                 $mapped = ConvertFrom-DiscogsRelease -Release $rel
